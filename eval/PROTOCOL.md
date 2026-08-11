@@ -103,6 +103,16 @@ Run `python eval/run_exam.py verify` to re-check all of these at any time:
    shared with `gold_sql.py` or `tests/*.py`. The exam was authored independently of
    the demo-beat SQL (different aliases, different query structure).
 
+   **Checker correction, 2026-08-11 (post-freeze, no frozen artifact touched).** As
+   first written, this check re-read `tests/` from the working tree, so tests added
+   *after* the freeze could fail a claim about authorship *before* it. Cursor
+   subsequently added `test_distill.py` cases using the exam's join patterns — correct
+   work, but it tripped the check. Leakage is now evaluated against `gold_sql.py` and
+   `tests/*.py` **as of the freeze commit `b043aea`** (plus `gold_sql.py` at HEAD, since
+   "demo SQL stays distinct from exam SQL" is a live invariant). `verify` prints which
+   scope it used and warns if git is unavailable. `questions.json` and `labels.json`
+   were not modified: their sha256 still match `FREEZE.md` exactly.
+
 Baseline smoke test: grading the `naive_sql` set as if it were an agent scores
 **6/50 = 12%** — exactly the unaffected stratum. That is the exam's zero-knowledge
 floor for a competent SQL writer; the memory-zero baseline agent is expected to land

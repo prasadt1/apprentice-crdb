@@ -65,6 +65,27 @@ def _norm_lines(text: str) -> set[str]:
             if len(re.sub(r"\s+", " ", ln.strip())) >= 30}
 
 
+# Commit that froze eval/questions.json + eval/labels.json.
+FREEZE_COMMIT = "b043aea8f6d496de09cc5b668368d19c3b4ca021"
+
+
+def _texts_at_freeze() -> list[str] | None:
+    """gold_sql.py + tests/*.py as they stood at the freeze commit, or None if git is unavailable."""
+    import subprocess
+
+    def git(*args: str) -> str:
+        return subprocess.run(["git", *args], cwd=REPO, capture_output=True,
+                              text=True, check=True).stdout
+
+    try:
+        paths = ["src/apprentice_crdb/gold_sql.py"]
+        listing = git("ls-tree", "--name-only", f"{FREEZE_COMMIT}:tests")
+        paths += [f"tests/{name}" for name in listing.split() if name.endswith(".py")]
+        return [git("show", f"{FREEZE_COMMIT}:{p}") for p in paths]
+    except Exception:  # noqa: BLE001 - git missing, shallow clone, or commit absent
+        return None
+
+
 def cmd_questions() -> int:
     agent_view = [{"id": q["id"], "question": q["question"]} for q in load_questions()]
     print(json.dumps(agent_view, indent=2))
@@ -109,14 +130,27 @@ def cmd_verify() -> int:
             if signatures_match(gsig, bsig):
                 failures.append(f"{qid}: bait == gold — bait proves nothing")
 
-    protected = (REPO / "src/apprentice_crdb/gold_sql.py").read_text()
-    protected_stmts = set()
-    for m in re.findall(r'"""(.*?)"""', protected, flags=re.S):
-        if "select" in m.lower():
-            protected_stmts.add(_norm_stmt(m))
-    protected_lines = _norm_lines(protected)
-    for t in (REPO / "tests").glob("*.py"):
-        protected_lines |= _norm_lines(t.read_text())
+    # Leakage is a claim about AUTHORSHIP: the exam was written independently of the
+    # SQL that existed when it was frozen. So `tests/` is read AS OF the freeze commit,
+    # not as it stands today — tests written afterwards legitimately exercise the same
+    # join patterns (they test the distiller against exam-shaped input) and must not
+    # retroactively fail a claim about the past. gold_sql.py is checked at BOTH the
+    # freeze commit and HEAD, because "demo-beat SQL stays distinct from exam SQL" is
+    # a live invariant worth keeping.
+    protected_texts = [(REPO / "src/apprentice_crdb/gold_sql.py").read_text()]
+    frozen_sources, pinned = _texts_at_freeze(), True
+    if frozen_sources is None:
+        pinned = False
+        frozen_sources = [(REPO / "src/apprentice_crdb/gold_sql.py").read_text()]
+        frozen_sources += [t.read_text() for t in (REPO / "tests").glob("*.py")]
+    protected_texts += frozen_sources
+
+    protected_stmts, protected_lines = set(), set()
+    for text in protected_texts:
+        for m in re.findall(r'"""(.*?)"""', text, flags=re.S):
+            if "select" in m.lower():
+                protected_stmts.add(_norm_stmt(m))
+        protected_lines |= _norm_lines(text)
     for q in questions:
         for field in ("gold_sql", "naive_sql", "bait_sql"):
             sql = q.get(field)
@@ -141,8 +175,9 @@ def cmd_verify() -> int:
     for q in questions:
         strata[q["stratum"]] += 1
     baits = [q["id"] for q in questions if q.get("regression_bait")]
-    print(f"VERIFY OK: 50/50 gold reproduce labels; divergence + leakage invariants hold; "
-          f"strata {dict(strata)}; baits {baits}")
+    scope = f"pinned to {FREEZE_COMMIT[:7]}" if pinned else "WARNING: git unavailable, used working tree"
+    print(f"VERIFY OK: 50/50 gold reproduce labels; divergence holds; "
+          f"leakage clean ({scope}); strata {dict(strata)}; baits {baits}")
     return 0
 
 
