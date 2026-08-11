@@ -17,28 +17,28 @@
     <text x="180" y="160" font-size="14" font-weight="700" fill="#0b0b0b" text-anchor="middle">t0</text>
     <text x="180" y="236" font-size="13" font-weight="700" fill="#0b0b0b" text-anchor="middle">memory_zero</text>
     <text x="180" y="256" font-size="12" fill="#52514e" text-anchor="middle">keys = []</text>
-    <text x="180" y="276" font-size="12" fill="#52514e" text-anchor="middle">6 / 50</text>
+    <text x="180" y="276" font-size="12" fill="#898781" text-anchor="middle">ceiling 6  /  Lite 14</text>
   </g>
   <g>
-    <circle cx="460" cy="200" r="10" fill="#d03b3b" stroke="#d03b3b" stroke-width="3"/>
-    <text x="460" y="160" font-size="14" font-weight="700" fill="#d03b3b" text-anchor="middle">t1</text>
+    <circle cx="460" cy="200" r="10" fill="#ffffff" stroke="#2a78d6" stroke-width="3"/>
+    <text x="460" y="160" font-size="14" font-weight="700" fill="#0b0b0b" text-anchor="middle">t1</text>
     <text x="460" y="236" font-size="13" font-weight="700" fill="#0b0b0b" text-anchor="middle">filters</text>
     <text x="460" y="256" font-size="12" fill="#52514e" text-anchor="middle">2 filter keys</text>
-    <text x="460" y="276" font-size="12" fill="#d03b3b" text-anchor="middle">baits fire  /  7 / 50</text>
+    <text x="460" y="276" font-size="12" fill="#898781" text-anchor="middle">ceiling 7  /  Lite 19</text>
   </g>
   <g>
     <circle cx="740" cy="200" r="10" fill="#ffffff" stroke="#2a78d6" stroke-width="3"/>
     <text x="740" y="160" font-size="14" font-weight="700" fill="#0b0b0b" text-anchor="middle">t2</text>
     <text x="740" y="236" font-size="13" font-weight="700" fill="#0b0b0b" text-anchor="middle">revenue + fiscal</text>
     <text x="740" y="256" font-size="12" fill="#52514e" text-anchor="middle">+ metric, calendar</text>
-    <text x="740" y="276" font-size="12" fill="#52514e" text-anchor="middle">31 / 50</text>
+    <text x="740" y="276" font-size="12" fill="#898781" text-anchor="middle">ceiling 31  /  Lite 19</text>
   </g>
   <g>
-    <circle cx="1020" cy="200" r="10" fill="#0ca30c" stroke="#0ca30c" stroke-width="3"/>
-    <text x="1020" y="160" font-size="14" font-weight="700" fill="#0ca30c" text-anchor="middle">t3</text>
+    <circle cx="1020" cy="200" r="10" fill="#eb6834" stroke="#eb6834" stroke-width="3"/>
+    <text x="1020" y="160" font-size="14" font-weight="700" fill="#eb6834" text-anchor="middle">t3</text>
     <text x="1020" y="236" font-size="13" font-weight="700" fill="#0b0b0b" text-anchor="middle">join_path</text>
     <text x="1020" y="256" font-size="12" fill="#52514e" text-anchor="middle">all five house keys</text>
-    <text x="1020" y="276" font-size="12" fill="#0ca30c" text-anchor="middle">44 / 50</text>
+    <text x="1020" y="276" font-size="12" fill="#eb6834" text-anchor="middle">ceiling 44  /  Lite 16</text>
   </g>
 
   <rect x="60" y="320" width="520" height="280" rx="12" fill="#ffffff" stroke="#2a78d6" stroke-width="2"/>
@@ -49,7 +49,8 @@
   <text x="88" y="476" font-size="15" fill="#52514e">metric:revenue</text>
   <text x="88" y="500" font-size="15" fill="#52514e">calendar:fiscal</text>
   <text x="88" y="524" font-size="15" fill="#52514e">join:orders_customers_regions</text>
-  <text x="88" y="568" font-size="15" font-weight="700" fill="#0b0b0b">Oracle 44/50  /  baits all red</text>
+  <text x="88" y="560" font-size="14" fill="#52514e">Retrieval 44/44. Ceiling 44/50.</text>
+  <text x="88" y="582" font-size="15" font-weight="700" fill="#eb6834">Micro 13  /  Lite 16  - already falling</text>
 
   <rect x="620" y="320" width="520" height="280" rx="12" fill="#ffffff" stroke="#eb6834" stroke-width="2"/>
   <text x="648" y="356" font-size="13" font-weight="600" fill="#eb6834" letter-spacing="0.6">REWIND  t0</text>
