@@ -13,3 +13,10 @@ build/
 .coverage
 htmlcov/
 node_modules/
+
+# Local working notes — not for the public repo
+VERIFY.md
+docs/LABOR.md
+docs/CLAUDE-EXAM-BRIEF.md
+docs/superpowers/
+scripts/ccloud-provision.sh
