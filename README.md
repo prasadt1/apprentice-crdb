@@ -40,6 +40,10 @@ apprentice recall
 apprentice recall --as-of '2026-08-12 12:00:00'
 ```
 
+## Measured curve
+
+Frozen 50-question exam, execution-graded, replayed on Cockroach Cloud Basic with `AS OF SYSTEM TIME` (2026-08-11): **6 → 7 → 31 → 44 / 50**. Filters teach and immediately hurt the bait items; the last six misses are those baits. Numbers and HLC timestamps: [`eval/RESULTS.md`](eval/RESULTS.md).
+
 ## What this is not
 
 - Not a warehouse copilot product, and not a replacement for a dbt or Looker semantic layer.

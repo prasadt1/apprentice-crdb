@@ -20,3 +20,5 @@ docs/LABOR.md
 docs/CLAUDE-EXAM-BRIEF.md
 docs/superpowers/
 scripts/ccloud-provision.sh
+eval/runs/
+eval/answers_memory_zero_naive.json

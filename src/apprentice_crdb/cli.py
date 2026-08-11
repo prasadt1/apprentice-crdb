@@ -31,27 +31,98 @@ def cmd_distill(_: argparse.Namespace) -> int:
     return 0
 
 
-def cmd_migrate(args: argparse.Namespace) -> int:
-    from apprentice_crdb import memory
+def _run_crdb(fn) -> int:
+    from apprentice_crdb.memory import DsnError
 
-    result = memory.migrate(try_vector_index=args.try_vector_index)
-    print(json.dumps(result, indent=2))
-    return 0
+    try:
+        return fn()
+    except DsnError as exc:
+        print(exc, file=sys.stderr)
+        return 2
+
+
+def cmd_migrate(args: argparse.Namespace) -> int:
+    def go() -> int:
+        from apprentice_crdb import memory
+
+        print(json.dumps(memory.migrate(try_vector_index=args.try_vector_index), indent=2))
+        return 0
+
+    return _run_crdb(go)
 
 
 def cmd_gc(_: argparse.Namespace) -> int:
-    from apprentice_crdb import memory
+    def go() -> int:
+        from apprentice_crdb import memory
 
-    print(memory.show_gc_ttl())
-    return 0
+        print(json.dumps(memory.show_gc_ttl(), indent=2, default=str))
+        return 0
+
+    return _run_crdb(go)
 
 
 def cmd_recall(args: argparse.Namespace) -> int:
-    from apprentice_crdb import memory
+    def go() -> int:
+        from apprentice_crdb import memory
 
-    rows = memory.recall_live(limit=args.limit, as_of=args.as_of)
-    print(json.dumps(rows, indent=2, default=str))
-    return 0
+        print(json.dumps(memory.recall_live(limit=args.limit, as_of=args.as_of), indent=2, default=str))
+        return 0
+
+    return _run_crdb(go)
+
+
+def cmd_baseline(_: argparse.Namespace) -> int:
+    from pathlib import Path
+
+    from apprentice_crdb.paths import REPO_ROOT
+
+    questions = json.loads((REPO_ROOT / "eval" / "questions.json").read_text())
+    answers = {q["id"]: q["naive_sql"] for q in questions}
+    out = REPO_ROOT / "eval" / "runs" / "answers_memory_zero.json"
+    out.parent.mkdir(parents=True, exist_ok=True)
+    out.write_text(json.dumps(answers, indent=2) + "\n")
+    print(f"wrote {out}", file=sys.stderr)
+    sys.path.insert(0, str(REPO_ROOT / "eval"))
+    import run_exam  # type: ignore
+
+    return run_exam.cmd_grade(str(out))
+
+
+def cmd_educate(_: argparse.Namespace) -> int:
+    from pathlib import Path
+
+    from apprentice_crdb.educate import run_education
+    from apprentice_crdb.paths import REPO_ROOT
+
+    def go() -> int:
+        plan = run_education()
+        sys.path.insert(0, str(REPO_ROOT / "eval"))
+        import run_exam  # type: ignore
+
+        curve = []
+        import io
+        from contextlib import redirect_stdout
+
+        for ep in plan["epochs"]:
+            buf = io.StringIO()
+            with redirect_stdout(buf):
+                run_exam.cmd_grade(str(REPO_ROOT / ep["answers_path"]))
+            report = json.loads(buf.getvalue())
+            ep["accuracy"] = report["accuracy"]
+            ep["correct"] = report["correct"]
+            ep["by_stratum"] = report["by_stratum"]
+            ep["regression_bait"] = report["regression_bait"]
+            curve.append(ep)
+            print(
+                f"{ep['name']}: {report['correct']}/{report['total']} "
+                f"({report['accuracy']}) as_of={ep['as_of']} keys={ep['live_keys']}",
+                file=sys.stderr,
+            )
+        (REPO_ROOT / "eval" / "curve.json").write_text(json.dumps({"epochs": curve}, indent=2, default=str) + "\n")
+        print(json.dumps({"epochs": curve}, indent=2, default=str))
+        return 0
+
+    return _run_crdb(go)
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -77,6 +148,16 @@ def build_parser() -> argparse.ArgumentParser:
     r.add_argument("--as-of", dest="as_of", default=None, help="CRDB AS OF SYSTEM TIME literal")
     r.add_argument("--limit", type=int, default=20)
     r.set_defaults(func=cmd_recall)
+
+    sub.add_parser(
+        "baseline",
+        help="Grade memory-zero (naive SQL fixtures) against the frozen exam",
+    ).set_defaults(func=cmd_baseline)
+
+    sub.add_parser(
+        "educate",
+        help="Write corrections into CockroachDB and score each AOST epoch",
+    ).set_defaults(func=cmd_educate)
     return p
 
 

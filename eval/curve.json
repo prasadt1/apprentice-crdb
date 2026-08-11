@@ -1,0 +1,252 @@
+{
+  "epochs": [
+    {
+      "name": "memory_zero",
+      "as_of": "1786459251103416273.0000000000",
+      "taught": [],
+      "live_keys": [],
+      "answers_path": "eval/runs/answers_memory_zero.json",
+      "accuracy": 0.12,
+      "correct": 6,
+      "by_stratum": {
+        "composition": {
+          "n": 8,
+          "correct": 0,
+          "accuracy": 0.0
+        },
+        "fiscal_calendar": {
+          "n": 8,
+          "correct": 0,
+          "accuracy": 0.0
+        },
+        "join_path": {
+          "n": 6,
+          "correct": 0,
+          "accuracy": 0.0
+        },
+        "metric_revenue": {
+          "n": 10,
+          "correct": 0,
+          "accuracy": 0.0
+        },
+        "soft_delete": {
+          "n": 8,
+          "correct": 0,
+          "accuracy": 0.0
+        },
+        "trap": {
+          "n": 4,
+          "correct": 0,
+          "accuracy": 0.0
+        },
+        "unaffected": {
+          "n": 6,
+          "correct": 6,
+          "accuracy": 1.0
+        }
+      },
+      "regression_bait": {
+        "q03": "correct",
+        "q07": "correct",
+        "q31": "wrong",
+        "q36": "wrong",
+        "q47": "correct",
+        "q50": "wrong"
+      }
+    },
+    {
+      "name": "filters",
+      "as_of": "1786459271499784483.0000000000",
+      "taught": [
+        "filter:orders_soft_delete",
+        "filter:orders_not_cancelled",
+        "filter:orders_soft_delete",
+        "filter:orders_not_cancelled"
+      ],
+      "live_keys": [
+        "filter:orders_not_cancelled",
+        "filter:orders_soft_delete"
+      ],
+      "answers_path": "eval/runs/answers_filters.json",
+      "accuracy": 0.14,
+      "correct": 7,
+      "by_stratum": {
+        "composition": {
+          "n": 8,
+          "correct": 0,
+          "accuracy": 0.0
+        },
+        "fiscal_calendar": {
+          "n": 8,
+          "correct": 0,
+          "accuracy": 0.0
+        },
+        "join_path": {
+          "n": 6,
+          "correct": 0,
+          "accuracy": 0.0
+        },
+        "metric_revenue": {
+          "n": 10,
+          "correct": 0,
+          "accuracy": 0.0
+        },
+        "soft_delete": {
+          "n": 8,
+          "correct": 4,
+          "accuracy": 0.5
+        },
+        "trap": {
+          "n": 4,
+          "correct": 0,
+          "accuracy": 0.0
+        },
+        "unaffected": {
+          "n": 6,
+          "correct": 3,
+          "accuracy": 0.5
+        }
+      },
+      "regression_bait": {
+        "q03": "wrong",
+        "q07": "wrong",
+        "q31": "wrong",
+        "q36": "wrong",
+        "q47": "wrong",
+        "q50": "wrong"
+      }
+    },
+    {
+      "name": "revenue_and_fiscal",
+      "as_of": "1786459303318273257.0000000000",
+      "taught": [
+        "filter:orders_soft_delete",
+        "filter:orders_not_cancelled",
+        "calendar:fiscal",
+        "metric:revenue",
+        "filter:orders_soft_delete",
+        "filter:orders_not_cancelled",
+        "calendar:fiscal",
+        "metric:revenue"
+      ],
+      "live_keys": [
+        "calendar:fiscal",
+        "filter:orders_not_cancelled",
+        "filter:orders_soft_delete",
+        "metric:revenue"
+      ],
+      "answers_path": "eval/runs/answers_revenue_and_fiscal.json",
+      "accuracy": 0.62,
+      "correct": 31,
+      "by_stratum": {
+        "composition": {
+          "n": 8,
+          "correct": 5,
+          "accuracy": 0.625
+        },
+        "fiscal_calendar": {
+          "n": 8,
+          "correct": 7,
+          "accuracy": 0.875
+        },
+        "join_path": {
+          "n": 6,
+          "correct": 0,
+          "accuracy": 0.0
+        },
+        "metric_revenue": {
+          "n": 10,
+          "correct": 6,
+          "accuracy": 0.6
+        },
+        "soft_delete": {
+          "n": 8,
+          "correct": 6,
+          "accuracy": 0.75
+        },
+        "trap": {
+          "n": 4,
+          "correct": 4,
+          "accuracy": 1.0
+        },
+        "unaffected": {
+          "n": 6,
+          "correct": 3,
+          "accuracy": 0.5
+        }
+      },
+      "regression_bait": {
+        "q03": "wrong",
+        "q07": "wrong",
+        "q31": "wrong",
+        "q36": "wrong",
+        "q47": "wrong",
+        "q50": "wrong"
+      }
+    },
+    {
+      "name": "join_path",
+      "as_of": "1786459319281930469.0000000000",
+      "taught": [
+        "filter:orders_soft_delete",
+        "filter:orders_not_cancelled",
+        "join:orders_customers_regions"
+      ],
+      "live_keys": [
+        "calendar:fiscal",
+        "filter:orders_not_cancelled",
+        "filter:orders_soft_delete",
+        "join:orders_customers_regions",
+        "metric:revenue"
+      ],
+      "answers_path": "eval/runs/answers_join_path.json",
+      "accuracy": 0.88,
+      "correct": 44,
+      "by_stratum": {
+        "composition": {
+          "n": 8,
+          "correct": 8,
+          "accuracy": 1.0
+        },
+        "fiscal_calendar": {
+          "n": 8,
+          "correct": 7,
+          "accuracy": 0.875
+        },
+        "join_path": {
+          "n": 6,
+          "correct": 6,
+          "accuracy": 1.0
+        },
+        "metric_revenue": {
+          "n": 10,
+          "correct": 9,
+          "accuracy": 0.9
+        },
+        "soft_delete": {
+          "n": 8,
+          "correct": 7,
+          "accuracy": 0.875
+        },
+        "trap": {
+          "n": 4,
+          "correct": 4,
+          "accuracy": 1.0
+        },
+        "unaffected": {
+          "n": 6,
+          "correct": 3,
+          "accuracy": 0.5
+        }
+      },
+      "regression_bait": {
+        "q03": "wrong",
+        "q07": "wrong",
+        "q31": "wrong",
+        "q36": "wrong",
+        "q47": "wrong",
+        "q50": "wrong"
+      }
+    }
+  ]
+}
