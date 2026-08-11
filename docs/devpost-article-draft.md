@@ -347,6 +347,7 @@ Do **not** film: warehouse-copilot tour, “watch it learn to 88%,” a rising-o
 - [x] `unaffected` epoch attribution fixed (Lite 3/6 is `filters`, not full memory)
 - [x] `k=5` called out as frozen before the run
 - [x] Vector-index `EXPLAIN` receipt: index exists, planner full-scans five rows
+- [ ] **PNG mtime ≥ SVG mtime for all media** — `for f in docs/media/*.svg; do rsvg-convert -w 2400 "$f" -o "${f%.svg}.png"; done` before every push that touches a diagram. Judges see the PNG.
 - [ ] Video filmed + YouTube URL pasted in story + Video field
 - [ ] `ccloud cluster list` screenshot in gallery or proof doc
 - [ ] GitHub social preview (`docs/media/social-preview.png`) uploaded on the GitHub repo settings page
