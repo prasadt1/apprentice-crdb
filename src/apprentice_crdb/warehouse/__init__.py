@@ -1,0 +1,1 @@
+"""SQLite demo warehouse (prop)."""
