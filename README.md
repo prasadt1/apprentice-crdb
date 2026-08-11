@@ -22,7 +22,6 @@ Primary user: the analytics engineer whose house rules live in people’s heads.
 > | **Try it locally (no cluster)** | [Quick start below](#try-it-locally-cli--no-cluster) | ~2 min |
 > | **Reproduce the freeze** | `pytest -q` then `python eval/run_exam.py verify` | ~1 min |
 > | **Every generated string** | [`eval/runs-nova-micro/`](eval/runs-nova-micro) · [`eval/runs-nova-lite/`](eval/runs-nova-lite) | — |
-> | **Devpost paste draft** | [`docs/devpost-article-draft.md`](docs/devpost-article-draft.md) | skim |
 >
 > **TL;DR:** Freeze a 50-question exam → teach into CockroachDB → score each AOST epoch. Oracle rises to 88%. Two Bedrock agents peak before full memory and decline. Retrieval at that last epoch is **44/44**. Storage and recall look perfect. Utilization does not.
 
@@ -161,7 +160,6 @@ The cluster is CockroachDB Cloud on AWS (eu-central-1). That satisfies “deploy
 | [`eval/FREEZE.md`](eval/FREEZE.md) | Freeze commit, sha256s, what must not change |
 | [`eval/PROTOCOL.md`](eval/PROTOCOL.md) | Strata, invariants, how grading works |
 | [`eval/README.md`](eval/README.md) | Exam file map |
-| [`docs/devpost-article-draft.md`](docs/devpost-article-draft.md) | Devpost form map |
 | [`docs/CURSOR-AGENT-SEAM-SPEC.md`](docs/CURSOR-AGENT-SEAM-SPEC.md) | Bedrock answering-path spec |
 
 ## License
