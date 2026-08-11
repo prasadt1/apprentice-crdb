@@ -1,62 +1,163 @@
 # Results
 
-Frozen exam: `eval/FREEZE.md` (2026-08-11). Labels were not edited after freeze.
+Frozen exam: `eval/FREEZE.md` (2026-08-11), committed at `b043aea` **before** any agent
+existed. Labels were never edited. Everything below was graded by executing SQL against
+the seeded warehouse and comparing result signatures — no LLM judge anywhere.
 
-## Memory-zero baseline
+**Headline: memory made the agent better, then worse.** Both models peak with partial
+memory and decline at full memory, while the oracle ceiling rises monotonically to 88%.
+Retrieval was not the bottleneck — at full memory every rule an item needed was in the
+model's context on 44 of 44 rule-bearing items. The rules were present, sufficient, and
+unusable.
 
-Policy: competent SQL with **no house-rule memory** (`naive_sql` fixtures). This is the protocol floor, not a Bedrock run.
+---
 
-| | |
-|---|---|
-| Score | **6 / 50 = 12%** |
-| Correct | all 6 `unaffected` items |
-| Wrong | every item that needs a house rule |
+## The three curves
 
-Regression baits at memory-zero (no over-applied rules yet):
+| Epoch | Live rules | Oracle (ceiling) | Nova Micro | Nova Lite |
+|---|---|---:|---:|---:|
+| `memory_zero` | none | 6/50 · 12% | 8/50 · 16% | 14/50 · 28% |
+| `filters` | 2 | 7/50 · 14% | **21/50 · 42%** | 19/50 · 38% |
+| `revenue_and_fiscal` | 4 | 31/50 · 62% | 18/50 · 36% | **19/50 · 38%** |
+| `join_path` | 5 | **44/50 · 88%** | 13/50 · 26% | 16/50 · 32% |
 
-| id | outcome |
-|---|---|
-| q03 | correct |
-| q07 | correct |
-| q31 | wrong (also needs fiscal + live-order filters) |
-| q36 | wrong (needs net + live-order filters on a calendar window) |
-| q47 | correct |
-| q50 | wrong (needs soft-delete filter) |
+Bold = that column's peak. Both agents peak *before* full memory. The decline replicates
+across two model tiers, so it is not an artifact of one weak model.
 
-Re-run: `apprentice baseline`
+**The oracle is not an agent.** It is `student.choose_sql()`, a selector that picks among
+SQL bodies authored inside the frozen exam, gated on that exam's own `house_rules`
+metadata. Its 44/50 is a deterministic function of static data — it cannot fail, and it
+never wrote a line of SQL. It is retained *only* as the ceiling: what a perfect consumer
+of the retrieved rules would score. An earlier version of this file reported that 44/50
+as the project's learning curve. That was wrong, and the correction is why the agent
+curves above exist.
 
-## Education / AOST curve
+Epochs are AOST ticks minutes apart on a live CockroachDB cluster with a measured
+`gc.ttlseconds = 4500` (75 min), replayed with `BEGIN AS OF SYSTEM TIME <hlc>`.
 
-Measured `gc.ttlseconds = 4500` (75 minutes) on Basic. Epochs are minutes apart, not calendar days.
-Replay used `BEGIN AS OF SYSTEM TIME <cluster_logical_timestamp>` on the live cluster.
+## Where the decline comes from
 
-Published run 2026-08-11 (`eval/curve.json`):
+Two mechanisms, both visible in strata the exam was designed to separate.
 
-| Epoch | Correct | Accuracy | Live rule keys | What moved |
-|---|---:|---:|---|---|
-| `memory_zero` | 6 / 50 | 12% | *(none)* | Floor: the 6 `unaffected` items |
-| `filters` | 7 / 50 | 14% | `filter:orders_soft_delete`, `filter:orders_not_cancelled` | Soft-delete 0→4/8. All six baits red; `unaffected` 6→3 |
-| `revenue_and_fiscal` | 31 / 50 | 62% | + `metric:revenue`, `calendar:fiscal` | Fiscal 0→7/8, traps 4/4, composition 5/8. Join still 0/6 |
-| `join_path` | **44 / 50** | **88%** | + `join:orders_customers_regions` | Join 6/6, composition 8/8. The six misses are the six baits |
+**1. Over-application.** The `unaffected` stratum (6 items where house rules do *not*
+apply and the naive answer is correct) exists to catch memory being used where it should
+not be. Nova Micro: 4/6 cold → 5/6 at `filters` → **2/6** at `revenue_and_fiscal`.
+Nova Lite: 6/6 cold → **3/6** at `filters`. Teaching the join rule drove Nova Micro's
+`join_path` stratum from 2/6 to **0/6** — the rule meant to fix those questions broke them.
 
-The six items still wrong at the last epoch are exactly the published regression baits (q03, q07, q31, q36, q47, q50). Memory made the agent better *and* over-apply. AOST can replay the moment before that.
+**2. Harder SQL, attempted and botched.** Invalid-SQL counts per epoch:
 
-| id | memory_zero | filters | revenue_and_fiscal | join_path |
-|---|---|---|---|---|
-| q03 | correct | wrong | wrong | wrong |
-| q07 | correct | wrong | wrong | wrong |
-| q31 | wrong | wrong | wrong | wrong |
-| q36 | wrong | wrong | wrong | wrong |
-| q47 | correct | wrong | wrong | wrong |
-| q50 | wrong | wrong | wrong | wrong |
+| Epoch | Nova Micro | Nova Lite |
+|---|---:|---:|
+| `memory_zero` | 12 | 9 |
+| `filters` | 8 | 4 |
+| `revenue_and_fiscal` | 11 | 7 |
+| `join_path` | 13 | 11 |
 
-AOST ticks (HLC decimals):
+Dominant error: `misuse of aggregate function SUM()` — both models write
+`SUM(amount - SUM(refund))`, a nested aggregate, while chasing the refund-netting rule.
+The rule is correct; the model cannot express it. Invalid SQL is roughly flat across
+epochs, so it does not explain the decline on its own — it compounds it.
 
-- memory_zero `1786459251103416273.0000000000`
-- filters `1786459271499784483.0000000000`
-- revenue_and_fiscal `1786459303318273257.0000000000`
-- join_path `1786459319281930469.0000000000`
+## Retrieval was not the problem
 
-An earlier cluster run plateaued at 15/50 because AST-diff wrote `filter:generic` / `join:customers` instead of the exam keys. That run is superseded; I did not edit labels to chase the score.
+| Epoch | All needed rules retrieved (k=5) | Would-be at k=3 |
+|---|---:|---:|
+| `filters` | 5/44 | 5/44 |
+| `revenue_and_fiscal` | 31/44 | 11/44 |
+| `join_path` | **44/44** | 13/44 |
 
-Re-run: `apprentice educate` (needs `APPRENTICE_CRDB_DSN`). Writes `eval/curve.json` and `eval/runs/answers_*.json`.
+At full memory, retrieval was perfect. `k=5` was fixed before the run and never adjusted;
+the k=3 column is computed post-hoc from recorded rank order, not from a second run.
+
+This exposes a design limit worth stating plainly: **with five rules total and k=5,
+retrieval returns the entire corpus and ranks nothing.** Every prompt at full memory
+carried all five rules, including on `unaffected` items where none applied. So this run
+measures *undifferentiated memory injection*, not relevance-gated recall — and the
+`unaffected` degradation is the direct consequence.
+
+## Regression baits — my prediction was wrong
+
+I froze six items where a plausibly over-generalized rule produces a worse answer, and
+predicted all six would fire. Correct answers on those six:
+
+| Epoch | Oracle | Nova Micro | Nova Lite |
+|---|---:|---:|---:|
+| `memory_zero` | 3/6 | 1/6 | 3/6 |
+| `filters` | 0/6 | 4/6 | 3/6 |
+| `revenue_and_fiscal` | 0/6 | 2/6 | 3/6 |
+| `join_path` | 0/6 | 2/6 | **4/6** |
+
+The oracle fires all six by construction. The real models did not. Nova Lite resisted
+four of six at full memory. **The prediction this exam was built to test came out wrong,
+and the exam says so.**
+
+Two specific findings against my own bait design:
+
+- **q50 is wrong in every cell, for both models, at every epoch — including before the
+  rule existed.** Both models already net refunds when asked for gross billings. That is
+  a model prior, not a memory-induced regression, so q50 does not measure what I built it
+  to measure.
+- **q31 flips the other way.** Both models get it wrong cold and right after
+  `metric:revenue` lands. Memory *corrected* a bias I had predicted memory would cause.
+
+Baits assume the taught rule is the source of over-generalization. Where the model
+already holds the bias, the bait measures the prior instead. Stated, not fixed — the
+labels are frozen.
+
+## What the gap says
+
+At full memory the oracle scores 88% and the best agent scores 32%. The same rule set,
+verifiably in context on every item, supports both numbers. The 56-point gap is entirely
+*could the consumer use what it retrieved*.
+
+Agent-memory systems are usually evaluated on two legs — did we store it, did we recall
+it. This measures the third: **utilization**. On that leg, more memory made both models
+worse, and the effect is invisible to storage and retrieval metrics, which both look
+perfect at the exact epoch where accuracy is falling.
+
+The honest read of the mechanism is that undifferentiated injection is the culprit, not
+memory as such. Relevance gating — retrieving *fewer* rules, ranked by whether they bear
+on the question — is the obvious next experiment, and this exam is the instrument for
+running it.
+
+## Self-reported citations are not evidence
+
+At `memory_zero`, with zero rules retrieved, Nova Micro still emitted `-- used_rules:`
+citations on 34/50 items. The agent's own account of which memories it used cannot be
+taken at face value; only the retrieval log and the graded result can.
+
+## Superseded runs
+
+- An early cluster run plateaued at 15/50 because the AST-diff wrote `filter:generic` /
+  `join:customers` instead of the canonical rule keys. Superseded; labels were not edited
+  to chase the score.
+- The oracle 44/50 was briefly published as the learning curve. Corrected above.
+
+## Limitations
+
+- Prop warehouse: 6 orders, 3 customers, 3 products. Item difficulty comes from
+  semantics, not data volume.
+- Single run per model at `temperature=0`. No repeated-sampling variance estimate.
+- Two Bedrock models from one family (Nova Micro, Nova Lite). Claude on Bedrock required
+  an inference profile that was not available; the finding is not established beyond
+  this family.
+- Nova Micro was the pre-registered model. **Nova Lite was added after observing the
+  non-monotonic Micro curve** — as an additional arm, not a replacement. Both are
+  published in full. No prompt, `k`, or exam change was made after seeing any score.
+- The `unaffected` stratum is 6 items; per-stratum movements are small-n and directional.
+
+## Reproduce
+
+```bash
+export APPRENTICE_EMBEDDER=bedrock AWS_REGION=us-east-1 APPRENTICE_RECALL_K=5
+export APPRENTICE_GEN_MODEL=amazon.nova-micro-v1:0   # or amazon.nova-lite-v1:0
+apprentice migrate --try-vector-index
+apprentice educate --policy both                     # oracle + agent
+python eval/run_exam.py verify                       # exam integrity
+```
+
+Artifacts: `eval/runs-nova-micro/` and `eval/runs-nova-lite/` — every generated SQL
+string, retrieved rule ids in rank order, per-item outcome, and a manifest recording
+model id, embedder provider, region, `k`, temperature, epoch HLCs, and git HEAD.
+Filenames in `eval/runs/` do not carry the model id, so each arm is archived separately.

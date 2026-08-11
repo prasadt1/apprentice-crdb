@@ -86,9 +86,13 @@ def _texts_at_freeze() -> list[str] | None:
         return None
 
 
+def agent_facing_items() -> list[dict[str, str]]:
+    """The only exam view an answering agent may consume."""
+    return [{"id": q["id"], "question": q["question"]} for q in load_questions()]
+
+
 def cmd_questions() -> int:
-    agent_view = [{"id": q["id"], "question": q["question"]} for q in load_questions()]
-    print(json.dumps(agent_view, indent=2))
+    print(json.dumps(agent_facing_items(), indent=2))
     return 0
 
 

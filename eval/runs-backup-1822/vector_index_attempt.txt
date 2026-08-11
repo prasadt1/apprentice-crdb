@@ -1,0 +1,14 @@
+{
+  "ok": true,
+  "embedding_column": "VECTOR(1024)",
+  "expected_dim": 1024,
+  "notes": [
+    "applied sql/001_memory.sql",
+    "embedding column before: VECTOR(384)",
+    "dropped semantic_embedding_idx (rebuilt after widen)",
+    "cleared 15 stale embeddings of the old width",
+    "widened embedding to VECTOR(1024)",
+    "CREATE VECTOR INDEX ok",
+    "embedding column after: VECTOR(1024)"
+  ]
+}

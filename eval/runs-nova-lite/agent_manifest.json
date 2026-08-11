@@ -1,0 +1,29 @@
+{
+  "policy": "agent",
+  "embedder": "bedrock-titan",
+  "region": "us-east-1",
+  "gen_model": "amazon.nova-lite-v1:0",
+  "recall_k": 5,
+  "temperature": 0,
+  "git": "e4d4f1fa526938efc7e6337a3e60f7a78fc75edc",
+  "utc_end": "2026-08-11T16:46:17.206233+00:00",
+  "epochs": [
+    {
+      "name": "memory_zero",
+      "as_of": "1786465354301706939.0000000000"
+    },
+    {
+      "name": "filters",
+      "as_of": "1786465377696004361.0000000000"
+    },
+    {
+      "name": "revenue_and_fiscal",
+      "as_of": "1786465413926189107.0000000000"
+    },
+    {
+      "name": "join_path",
+      "as_of": "1786465431761315414.0000000000"
+    }
+  ],
+  "utc_start": "2026-08-11T16:22:32.772160+00:00"
+}

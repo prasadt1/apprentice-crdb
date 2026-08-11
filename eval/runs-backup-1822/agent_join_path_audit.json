@@ -1,0 +1,1319 @@
+[
+  {
+    "sql": "SELECT \n    r.name AS region,\n    SUM(ol.amount_cents - COALESCE(SUM(refunds.amount_cents), 0)) AS revenue_cents\nFROM \n    orders od\nJOIN \n    customers c ON od.customer_id = c.customer_id\nJOIN \n    regions r ON c.region_id = r.region_id\nLEFT JOIN \n    order_lines ol ON od.order_id = ol.order_id\nLEFT JOIN \n    refunds ON od.order_id = refunds.order_id AND od.ordered_at >= '2026-05-01' AND od.ordered_at <= '2026-08-01'\nWHERE \n    od.status <> 'cancelled' \n    AND od.deleted_at IS NULL\nGROUP BY \n    r.region_id\nHAVING \n    SUM(ol.amount_cents - COALESCE(SUM(refunds.amount_cents), 0)) > 0\nORDER BY \n    r.region_id",
+    "raw": "```sql\nSELECT \n    r.name AS region,\n    SUM(ol.amount_cents - COALESCE(SUM(refunds.amount_cents), 0)) AS revenue_cents\nFROM \n    orders od\nJOIN \n    customers c ON od.customer_id = c.customer_id\nJOIN \n    regions r ON c.region_id = r.region_id\nLEFT JOIN \n    order_lines ol ON od.order_id = ol.order_id\nLEFT JOIN \n    refunds ON od.order_id = refunds.order_id AND od.ordered_at >= '2026-05-01' AND od.ordered_at <= '2026-08-01'\nWHERE \n    od.status <> 'cancelled' \n    AND od.deleted_at IS NULL\nGROUP BY \n    r.region_id\nHAVING \n    SUM(ol.amount_cents - COALESCE(SUM(refunds.amount_cents), 0)) > 0\nORDER BY \n    r.region_id;\n-- used_rules: f7f72a4b-92ad-4072-a32d-6ee8b90d1c70, 9d9c4ba4-afd0-4257-b3d6-eb47b7b51e15, 61895854-f531-44cf-a224-b48370b010f3, f873cff6-d9bd-41e8-89b0-115542eccb50\n```",
+    "used_rules": [
+      "f7f72a4b-92ad-4072-a32d-6ee8b90d1c70",
+      "9d9c4ba4-afd0-4257-b3d6-eb47b7b51e15",
+      "61895854-f531-44cf-a224-b48370b010f3",
+      "f873cff6-d9bd-41e8-89b0-115542eccb50"
+    ],
+    "retrieved_rule_ids": [
+      "f7f72a4b-92ad-4072-a32d-6ee8b90d1c70",
+      "851ad770-34c0-448e-b799-df23e10d3c4c",
+      "9d9c4ba4-afd0-4257-b3d6-eb47b7b51e15",
+      "61895854-f531-44cf-a224-b48370b010f3",
+      "f873cff6-d9bd-41e8-89b0-115542eccb50"
+    ],
+    "retrieved_rule_keys": [
+      "metric:revenue",
+      "join:orders_customers_regions",
+      "calendar:fiscal",
+      "filter:orders_not_cancelled",
+      "filter:orders_soft_delete"
+    ],
+    "rejected": null,
+    "model_id": "amazon.nova-micro-v1:0",
+    "id": "q01"
+  },
+  {
+    "sql": "SELECT \n    SUM(od.amount_cents - COALESCE(SUM(refunds.amount_cents), 0)) AS revenue_cents\nFROM \n    orders od\nJOIN \n    customers ON od.customer_id = customers.customer_id\nJOIN \n    regions ON customers.region_id = regions.region_id\nLEFT JOIN \n    refunds ON od.order_id = refunds.order_id\nWHERE \n    od.status <> 'cancelled' \n    AND od.deleted_at IS NULL\n    AND od.ordered_at BETWEEN '2026-05-01' AND '2026-08-01'\nGROUP BY \n    regions.region_id",
+    "raw": "```sql\nSELECT \n    SUM(od.amount_cents - COALESCE(SUM(refunds.amount_cents), 0)) AS revenue_cents\nFROM \n    orders od\nJOIN \n    customers ON od.customer_id = customers.customer_id\nJOIN \n    regions ON customers.region_id = regions.region_id\nLEFT JOIN \n    refunds ON od.order_id = refunds.order_id\nWHERE \n    od.status <> 'cancelled' \n    AND od.deleted_at IS NULL\n    AND od.ordered_at BETWEEN '2026-05-01' AND '2026-08-01'\nGROUP BY \n    regions.region_id;\n-- used_rules: f7f72a4b-92ad-4072-a32d-6ee8b90d1c70,9d9c4ba4-afd0-4257-b3d6-eb47b7b51e15,61895854-f531-44cf-a224-b48370b010f3,f873cff6-d9bd-41e8-89b0-115542eccb50\n```",
+    "used_rules": [
+      "f7f72a4b-92ad-4072-a32d-6ee8b90d1c70",
+      "9d9c4ba4-afd0-4257-b3d6-eb47b7b51e15",
+      "61895854-f531-44cf-a224-b48370b010f3",
+      "f873cff6-d9bd-41e8-89b0-115542eccb50"
+    ],
+    "retrieved_rule_ids": [
+      "f7f72a4b-92ad-4072-a32d-6ee8b90d1c70",
+      "9d9c4ba4-afd0-4257-b3d6-eb47b7b51e15",
+      "851ad770-34c0-448e-b799-df23e10d3c4c",
+      "61895854-f531-44cf-a224-b48370b010f3",
+      "f873cff6-d9bd-41e8-89b0-115542eccb50"
+    ],
+    "retrieved_rule_keys": [
+      "metric:revenue",
+      "calendar:fiscal",
+      "join:orders_customers_regions",
+      "filter:orders_not_cancelled",
+      "filter:orders_soft_delete"
+    ],
+    "rejected": null,
+    "model_id": "amazon.nova-micro-v1:0",
+    "id": "q02"
+  },
+  {
+    "sql": "SELECT COUNT(*) AS cancelled_count\nFROM orders od\nWHERE od.status = 'cancelled' \nAND od.ordered_at BETWEEN '2026-05-01' AND '2026-08-01'\nAND od.deleted_at IS NULL",
+    "raw": "```sql\nSELECT COUNT(*) AS cancelled_count\nFROM orders od\nWHERE od.status = 'cancelled' \nAND od.ordered_at BETWEEN '2026-05-01' AND '2026-08-01'\nAND od.deleted_at IS NULL;\n-- used_rules: 61895854-f531-44cf-a224-b48370b010f3, f873cff6-d9bd-41e8-89b0-115542eccb50\n```",
+    "used_rules": [
+      "61895854-f531-44cf-a224-b48370b010f3",
+      "f873cff6-d9bd-41e8-89b0-115542eccb50"
+    ],
+    "retrieved_rule_ids": [
+      "61895854-f531-44cf-a224-b48370b010f3",
+      "9d9c4ba4-afd0-4257-b3d6-eb47b7b51e15",
+      "f873cff6-d9bd-41e8-89b0-115542eccb50",
+      "f7f72a4b-92ad-4072-a32d-6ee8b90d1c70",
+      "851ad770-34c0-448e-b799-df23e10d3c4c"
+    ],
+    "retrieved_rule_keys": [
+      "filter:orders_not_cancelled",
+      "calendar:fiscal",
+      "filter:orders_soft_delete",
+      "metric:revenue",
+      "join:orders_customers_regions"
+    ],
+    "rejected": null,
+    "model_id": "amazon.nova-micro-v1:0",
+    "id": "q03"
+  },
+  {
+    "sql": "SELECT COALESCE(SUM(ol.amount_cents - COALESCE(r.amount_cents, 0)), 0) AS revenue_cents\nFROM orders od\nJOIN customers c ON od.customer_id = c.customer_id\nJOIN regions r ON c.region_id = r.region_id\nJOIN order_lines ol ON od.order_id = ol.order_id\nLEFT JOIN refunds r ON od.order_id = r.order_id\nWHERE od.status <> 'cancelled'\n  AND od.deleted_at IS NULL\n  AND (od.ordered_at BETWEEN '2026-11-01' AND '2026-12-31' OR od.ordered_at BETWEEN '2027-01-01' AND '2027-01-31')",
+    "raw": "```sql\nSELECT COALESCE(SUM(ol.amount_cents - COALESCE(r.amount_cents, 0)), 0) AS revenue_cents\nFROM orders od\nJOIN customers c ON od.customer_id = c.customer_id\nJOIN regions r ON c.region_id = r.region_id\nJOIN order_lines ol ON od.order_id = ol.order_id\nLEFT JOIN refunds r ON od.order_id = r.order_id\nWHERE od.status <> 'cancelled'\n  AND od.deleted_at IS NULL\n  AND (od.ordered_at BETWEEN '2026-11-01' AND '2026-12-31' OR od.ordered_at BETWEEN '2027-01-01' AND '2027-01-31')\n-- used_rules: f7f72a4b-92ad-4072-a32d-6ee8b90d1c70, 9d9c4ba4-afd0-4257-b3d6-eb47b7b51e15, 61895854-f531-44cf-a224-b48370b010f3, f873cff6-d9bd-41e8-89b0-115542eccb50\n```",
+    "used_rules": [
+      "f7f72a4b-92ad-4072-a32d-6ee8b90d1c70",
+      "9d9c4ba4-afd0-4257-b3d6-eb47b7b51e15",
+      "61895854-f531-44cf-a224-b48370b010f3",
+      "f873cff6-d9bd-41e8-89b0-115542eccb50"
+    ],
+    "retrieved_rule_ids": [
+      "f7f72a4b-92ad-4072-a32d-6ee8b90d1c70",
+      "9d9c4ba4-afd0-4257-b3d6-eb47b7b51e15",
+      "851ad770-34c0-448e-b799-df23e10d3c4c",
+      "61895854-f531-44cf-a224-b48370b010f3",
+      "f873cff6-d9bd-41e8-89b0-115542eccb50"
+    ],
+    "retrieved_rule_keys": [
+      "metric:revenue",
+      "calendar:fiscal",
+      "join:orders_customers_regions",
+      "filter:orders_not_cancelled",
+      "filter:orders_soft_delete"
+    ],
+    "rejected": null,
+    "model_id": "amazon.nova-micro-v1:0",
+    "id": "q04"
+  },
+  {
+    "sql": "SELECT \n    p.category AS category,\n    SUM(ol.amount_cents - COALESCE(r.amount_cents, 0)) AS revenue_cents\nFROM \n    orders o\nJOIN \n    customers c ON o.customer_id = c.customer_id\nJOIN \n    regions r ON c.region_id = r.region_id\nJOIN \n    order_lines ol ON o.order_id = ol.order_id\nJOIN \n    products p ON ol.product_id = p.product_id\nLEFT JOIN \n    refunds r ON o.order_id = r.order_id\nWHERE \n    o.status <> 'cancelled' \n    AND o.deleted_at IS NULL\n    AND o.ordered_at BETWEEN '2026-05-01' AND '2026-08-01'\nGROUP BY \n    p.category\nORDER BY \n    revenue_cents DESC\nLIMIT 1",
+    "raw": "```sql\nSELECT \n    p.category AS category,\n    SUM(ol.amount_cents - COALESCE(r.amount_cents, 0)) AS revenue_cents\nFROM \n    orders o\nJOIN \n    customers c ON o.customer_id = c.customer_id\nJOIN \n    regions r ON c.region_id = r.region_id\nJOIN \n    order_lines ol ON o.order_id = ol.order_id\nJOIN \n    products p ON ol.product_id = p.product_id\nLEFT JOIN \n    refunds r ON o.order_id = r.order_id\nWHERE \n    o.status <> 'cancelled' \n    AND o.deleted_at IS NULL\n    AND o.ordered_at BETWEEN '2026-05-01' AND '2026-08-01'\nGROUP BY \n    p.category\nORDER BY \n    revenue_cents DESC\nLIMIT 1;\n-- used_rules: f7f72a4b-92ad-4072-a32d-6ee8b90d1c70,9d9c4ba4-afd0-4257-b3d6-eb47b7b51e15,61895854-f531-44cf-a224-b48370b010f3,f873cff6-d9bd-41e8-89b0-115542eccb50\n```",
+    "used_rules": [
+      "f7f72a4b-92ad-4072-a32d-6ee8b90d1c70",
+      "9d9c4ba4-afd0-4257-b3d6-eb47b7b51e15",
+      "61895854-f531-44cf-a224-b48370b010f3",
+      "f873cff6-d9bd-41e8-89b0-115542eccb50"
+    ],
+    "retrieved_rule_ids": [
+      "f7f72a4b-92ad-4072-a32d-6ee8b90d1c70",
+      "851ad770-34c0-448e-b799-df23e10d3c4c",
+      "9d9c4ba4-afd0-4257-b3d6-eb47b7b51e15",
+      "61895854-f531-44cf-a224-b48370b010f3",
+      "f873cff6-d9bd-41e8-89b0-115542eccb50"
+    ],
+    "retrieved_rule_keys": [
+      "metric:revenue",
+      "join:orders_customers_regions",
+      "calendar:fiscal",
+      "filter:orders_not_cancelled",
+      "filter:orders_soft_delete"
+    ],
+    "rejected": null,
+    "model_id": "amazon.nova-micro-v1:0",
+    "id": "q05"
+  },
+  {
+    "sql": "SELECT \n    r.name AS region, \n    SUM(CASE \n        WHEN p.category ='services' THEN ol.amount_cents \n        ELSE 0 \n    END) AS services_revenue_cents\nFROM \n    orders od\nJOIN \n    customers c ON od.customer_id = c.customer_id\nJOIN \n    regions r ON c.region_id = r.region_id\nJOIN \n    order_lines ol ON od.order_id = ol.order_id\nJOIN \n    products p ON ol.product_id = p.product_id\nLEFT JOIN \n    refunds rf ON od.order_id = rf.order_id\nWHERE \n    od.status <> 'cancelled' \n    AND od.deleted_at IS NULL\n    AND rf.refunded_at IS NULL\n    AND od.ordered_at BETWEEN '2026-05-01' AND '2026-08-01'\nGROUP BY \n    r.region_id\nHAVING \n    SUM(CASE \n        WHEN p.category ='services' THEN ol.amount_cents \n        ELSE 0 \n    END) > 0",
+    "raw": "```sql\nSELECT \n    r.name AS region, \n    SUM(CASE \n        WHEN p.category ='services' THEN ol.amount_cents \n        ELSE 0 \n    END) AS services_revenue_cents\nFROM \n    orders od\nJOIN \n    customers c ON od.customer_id = c.customer_id\nJOIN \n    regions r ON c.region_id = r.region_id\nJOIN \n    order_lines ol ON od.order_id = ol.order_id\nJOIN \n    products p ON ol.product_id = p.product_id\nLEFT JOIN \n    refunds rf ON od.order_id = rf.order_id\nWHERE \n    od.status <> 'cancelled' \n    AND od.deleted_at IS NULL\n    AND rf.refunded_at IS NULL\n    AND od.ordered_at BETWEEN '2026-05-01' AND '2026-08-01'\nGROUP BY \n    r.region_id\nHAVING \n    SUM(CASE \n        WHEN p.category ='services' THEN ol.amount_cents \n        ELSE 0 \n    END) > 0\n-- used_rules: f7f72a4b-92ad-4072-a32d-6ee8b90d1c70, 61895854-f531-44cf-a224-b48370b010f3, 9d9c4ba4-afd0-4257-b3d6-eb47b7b51e15\n```",
+    "used_rules": [
+      "f7f72a4b-92ad-4072-a32d-6ee8b90d1c70",
+      "61895854-f531-44cf-a224-b48370b010f3",
+      "9d9c4ba4-afd0-4257-b3d6-eb47b7b51e15"
+    ],
+    "retrieved_rule_ids": [
+      "851ad770-34c0-448e-b799-df23e10d3c4c",
+      "f7f72a4b-92ad-4072-a32d-6ee8b90d1c70",
+      "9d9c4ba4-afd0-4257-b3d6-eb47b7b51e15",
+      "61895854-f531-44cf-a224-b48370b010f3",
+      "f873cff6-d9bd-41e8-89b0-115542eccb50"
+    ],
+    "retrieved_rule_keys": [
+      "join:orders_customers_regions",
+      "metric:revenue",
+      "calendar:fiscal",
+      "filter:orders_not_cancelled",
+      "filter:orders_soft_delete"
+    ],
+    "rejected": null,
+    "model_id": "amazon.nova-micro-v1:0",
+    "id": "q06"
+  },
+  {
+    "sql": "SELECT COUNT(od.order_id) AS soft_deleted_count\nFROM orders od\nWHERE od.deleted_at IS NOT NULL AND od.status <> 'cancelled'",
+    "raw": "```sql\nSELECT COUNT(od.order_id) AS soft_deleted_count\nFROM orders od\nWHERE od.deleted_at IS NOT NULL AND od.status <> 'cancelled';\n-- used_rules: f873cff6-d9bd-41e8-89b0-115542eccb50, 61895854-f531-44cf-a224-b48370b010f3\n```",
+    "used_rules": [
+      "f873cff6-d9bd-41e8-89b0-115542eccb50",
+      "61895854-f531-44cf-a224-b48370b010f3"
+    ],
+    "retrieved_rule_ids": [
+      "f7f72a4b-92ad-4072-a32d-6ee8b90d1c70",
+      "f873cff6-d9bd-41e8-89b0-115542eccb50",
+      "851ad770-34c0-448e-b799-df23e10d3c4c",
+      "61895854-f531-44cf-a224-b48370b010f3",
+      "9d9c4ba4-afd0-4257-b3d6-eb47b7b51e15"
+    ],
+    "retrieved_rule_keys": [
+      "metric:revenue",
+      "filter:orders_soft_delete",
+      "join:orders_customers_regions",
+      "filter:orders_not_cancelled",
+      "calendar:fiscal"
+    ],
+    "rejected": null,
+    "model_id": "amazon.nova-micro-v1:0",
+    "id": "q07"
+  },
+  {
+    "sql": "SELECT \n    r.name AS region,\n    SUM(ol.amount_cents - COALESCE(SUM(refunds.amount_cents), 0)) AS net_revenue_cents\nFROM \n    orders o\nJOIN \n    customers c ON o.customer_id = c.customer_id\nJOIN \n    regions r ON c.region_id = r.region_id\nLEFT JOIN \n    order_lines ol ON o.order_id = ol.order_id\nLEFT JOIN \n    refunds ON o.order_id = refunds.order_id AND refunded_at BETWEEN '2026-05-01' AND '2026-08-01'\nWHERE \n    r.name = 'APAC' \n    AND o.status <> 'cancelled' \n    AND o.deleted_at IS NULL \n    AND o.ordered_at BETWEEN '2026-05-01' AND '2026-08-01'\nGROUP BY \n    r.name",
+    "raw": "```sql\nSELECT \n    r.name AS region,\n    SUM(ol.amount_cents - COALESCE(SUM(refunds.amount_cents), 0)) AS net_revenue_cents\nFROM \n    orders o\nJOIN \n    customers c ON o.customer_id = c.customer_id\nJOIN \n    regions r ON c.region_id = r.region_id\nLEFT JOIN \n    order_lines ol ON o.order_id = ol.order_id\nLEFT JOIN \n    refunds ON o.order_id = refunds.order_id AND refunded_at BETWEEN '2026-05-01' AND '2026-08-01'\nWHERE \n    r.name = 'APAC' \n    AND o.status <> 'cancelled' \n    AND o.deleted_at IS NULL \n    AND o.ordered_at BETWEEN '2026-05-01' AND '2026-08-01'\nGROUP BY \n    r.name;\n-- used_rules: f7f72a4b-92ad-4072-a32d-6ee8b90d1c70, 9d9c4ba4-afd0-4257-b3d6-eb47b7b51e15, f873cff6-d9bd-41e8-89b0-115542eccb50\n```",
+    "used_rules": [
+      "f7f72a4b-92ad-4072-a32d-6ee8b90d1c70",
+      "9d9c4ba4-afd0-4257-b3d6-eb47b7b51e15",
+      "f873cff6-d9bd-41e8-89b0-115542eccb50"
+    ],
+    "retrieved_rule_ids": [
+      "f7f72a4b-92ad-4072-a32d-6ee8b90d1c70",
+      "851ad770-34c0-448e-b799-df23e10d3c4c",
+      "9d9c4ba4-afd0-4257-b3d6-eb47b7b51e15",
+      "61895854-f531-44cf-a224-b48370b010f3",
+      "f873cff6-d9bd-41e8-89b0-115542eccb50"
+    ],
+    "retrieved_rule_keys": [
+      "metric:revenue",
+      "join:orders_customers_regions",
+      "calendar:fiscal",
+      "filter:orders_not_cancelled",
+      "filter:orders_soft_delete"
+    ],
+    "rejected": null,
+    "model_id": "amazon.nova-micro-v1:0",
+    "id": "q08"
+  },
+  {
+    "sql": "WITH filtered_orders AS (\n    SELECT\n        od.order_id,\n        SUM(ol.amount_cents * ol.qty) AS order_value_cents\n    FROM\n        orders od\n    JOIN\n        order_lines ol ON od.order_id = ol.order_id\n    WHERE\n        od.status <> 'cancelled'\n        AND od.deleted_at IS NULL\n        AND od.ordered_at BETWEEN '2026-08-01' AND '2026-08-31'\n    GROUP BY\n        od.order_id\n)\nSELECT\n    SUM(order_value_cents) AS total_order_value_cents\nFROM\n    filtered_orders",
+    "raw": "```sql\nWITH filtered_orders AS (\n    SELECT\n        od.order_id,\n        SUM(ol.amount_cents * ol.qty) AS order_value_cents\n    FROM\n        orders od\n    JOIN\n        order_lines ol ON od.order_id = ol.order_id\n    WHERE\n        od.status <> 'cancelled'\n        AND od.deleted_at IS NULL\n        AND od.ordered_at BETWEEN '2026-08-01' AND '2026-08-31'\n    GROUP BY\n        od.order_id\n)\nSELECT\n    SUM(order_value_cents) AS total_order_value_cents\nFROM\n    filtered_orders\n-- used_rules: f7f72a4b-92ad-4072-a32d-6ee8b90d1c70, f873cff6-d9bd-41e8-89b0-115542eccb50, 9d9c4ba4-afd0-4257-b3d6-eb47b7b51e15\n```",
+    "used_rules": [
+      "f7f72a4b-92ad-4072-a32d-6ee8b90d1c70",
+      "f873cff6-d9bd-41e8-89b0-115542eccb50",
+      "9d9c4ba4-afd0-4257-b3d6-eb47b7b51e15"
+    ],
+    "retrieved_rule_ids": [
+      "851ad770-34c0-448e-b799-df23e10d3c4c",
+      "f7f72a4b-92ad-4072-a32d-6ee8b90d1c70",
+      "61895854-f531-44cf-a224-b48370b010f3",
+      "9d9c4ba4-afd0-4257-b3d6-eb47b7b51e15",
+      "f873cff6-d9bd-41e8-89b0-115542eccb50"
+    ],
+    "retrieved_rule_keys": [
+      "join:orders_customers_regions",
+      "metric:revenue",
+      "filter:orders_not_cancelled",
+      "calendar:fiscal",
+      "filter:orders_soft_delete"
+    ],
+    "rejected": null,
+    "model_id": "amazon.nova-micro-v1:0",
+    "id": "q09"
+  },
+  {
+    "sql": "SELECT SUM(od.amount_cents - COALESCE(SUM(refunds.amount_cents), 0)) AS revenue_cents\nFROM orders od\nLEFT JOIN refunds ON od.order_id = refunds.order_id\nWHERE od.status <> 'cancelled' AND od.deleted_at IS NULL\nAND od.ordered_at BETWEEN '2026-05-01' AND '2026-08-01'\nGROUP BY od.order_id",
+    "raw": "```sql\nSELECT SUM(od.amount_cents - COALESCE(SUM(refunds.amount_cents), 0)) AS revenue_cents\nFROM orders od\nLEFT JOIN refunds ON od.order_id = refunds.order_id\nWHERE od.status <> 'cancelled' AND od.deleted_at IS NULL\nAND od.ordered_at BETWEEN '2026-05-01' AND '2026-08-01'\nGROUP BY od.order_id;\n-- used_rules: f7f72a4b-92ad-4072-a32d-6ee8b90d1c70, 9d9c4ba4-afd0-4257-b3d6-eb47b7b51e15, f873cff6-d9bd-41e8-89b0-115542eccb50, 61895854-f531-44cf-a224-b48370b010f3\n```",
+    "used_rules": [
+      "f7f72a4b-92ad-4072-a32d-6ee8b90d1c70",
+      "9d9c4ba4-afd0-4257-b3d6-eb47b7b51e15",
+      "f873cff6-d9bd-41e8-89b0-115542eccb50",
+      "61895854-f531-44cf-a224-b48370b010f3"
+    ],
+    "retrieved_rule_ids": [
+      "f7f72a4b-92ad-4072-a32d-6ee8b90d1c70",
+      "9d9c4ba4-afd0-4257-b3d6-eb47b7b51e15",
+      "851ad770-34c0-448e-b799-df23e10d3c4c",
+      "61895854-f531-44cf-a224-b48370b010f3",
+      "f873cff6-d9bd-41e8-89b0-115542eccb50"
+    ],
+    "retrieved_rule_keys": [
+      "metric:revenue",
+      "calendar:fiscal",
+      "join:orders_customers_regions",
+      "filter:orders_not_cancelled",
+      "filter:orders_soft_delete"
+    ],
+    "rejected": null,
+    "model_id": "amazon.nova-micro-v1:0",
+    "id": "q10"
+  },
+  {
+    "sql": "SELECT SUM(ol.amount_cents) AS gross_cents\nFROM orders o\nJOIN order_lines ol ON o.order_id = ol.order_id\nJOIN customers c ON o.customer_id = c.customer_id\nJOIN regions r ON c.region_id = r.region_id\nWHERE o.status <> 'cancelled'\n  AND o.deleted_at IS NULL\n  AND o.ordered_at BETWEEN '2026-05-01' AND '2026-08-01'\n  AND r.name = 'hardware'",
+    "raw": "```sql\nSELECT SUM(ol.amount_cents) AS gross_cents\nFROM orders o\nJOIN order_lines ol ON o.order_id = ol.order_id\nJOIN customers c ON o.customer_id = c.customer_id\nJOIN regions r ON c.region_id = r.region_id\nWHERE o.status <> 'cancelled'\n  AND o.deleted_at IS NULL\n  AND o.ordered_at BETWEEN '2026-05-01' AND '2026-08-01'\n  AND r.name = 'hardware'\n-- used_rules: f7f72a4b-92ad-4072-a32d-6ee8b90d1c70, 61895854-f531-44cf-a224-b48370b010f3, 851ad770-34c0-448e-b799-df23e10d3c4c, f873cff6-d9bd-41e8-89b0-115542eccb50\n```",
+    "used_rules": [
+      "f7f72a4b-92ad-4072-a32d-6ee8b90d1c70",
+      "61895854-f531-44cf-a224-b48370b010f3",
+      "851ad770-34c0-448e-b799-df23e10d3c4c",
+      "f873cff6-d9bd-41e8-89b0-115542eccb50"
+    ],
+    "retrieved_rule_ids": [
+      "f7f72a4b-92ad-4072-a32d-6ee8b90d1c70",
+      "61895854-f531-44cf-a224-b48370b010f3",
+      "9d9c4ba4-afd0-4257-b3d6-eb47b7b51e15",
+      "851ad770-34c0-448e-b799-df23e10d3c4c",
+      "f873cff6-d9bd-41e8-89b0-115542eccb50"
+    ],
+    "retrieved_rule_keys": [
+      "metric:revenue",
+      "filter:orders_not_cancelled",
+      "calendar:fiscal",
+      "join:orders_customers_regions",
+      "filter:orders_soft_delete"
+    ],
+    "rejected": null,
+    "model_id": "amazon.nova-micro-v1:0",
+    "id": "q11"
+  },
+  {
+    "sql": "WITH net_revenue AS (\n    SELECT\n        c.name AS customer,\n        SUM(ol.amount_cents - COALESCE(r.amount_cents, 0)) AS revenue_cents\n    FROM\n        orders o\n    JOIN\n        customers c ON o.customer_id = c.customer_id\n    JOIN\n        order_lines ol ON o.order_id = ol.order_id\n    LEFT JOIN\n        refunds r ON o.order_id = r.order_id\n    WHERE\n        o.ordered_at BETWEEN '2026-05-01' AND '2026-08-01'\n        AND o.status <> 'cancelled'\n        AND o.deleted_at IS NULL\n    GROUP BY\n        c.name\n)\nSELECT\n    customer,\n    revenue_cents\nFROM\n    net_revenue\nORDER BY\n    revenue_cents DESC\nLIMIT 1",
+    "raw": "```sql\nWITH net_revenue AS (\n    SELECT\n        c.name AS customer,\n        SUM(ol.amount_cents - COALESCE(r.amount_cents, 0)) AS revenue_cents\n    FROM\n        orders o\n    JOIN\n        customers c ON o.customer_id = c.customer_id\n    JOIN\n        order_lines ol ON o.order_id = ol.order_id\n    LEFT JOIN\n        refunds r ON o.order_id = r.order_id\n    WHERE\n        o.ordered_at BETWEEN '2026-05-01' AND '2026-08-01'\n        AND o.status <> 'cancelled'\n        AND o.deleted_at IS NULL\n    GROUP BY\n        c.name\n)\nSELECT\n    customer,\n    revenue_cents\nFROM\n    net_revenue\nORDER BY\n    revenue_cents DESC\nLIMIT 1;\n-- used_rules: f7f72a4b-92ad-4072-a32d-6ee8b90d1c70, 9d9c4ba4-afd0-4257-b3d6-eb47b7b51e15, f873cff6-d9bd-41e8-89b0-115542eccb50, f531-44cf-a224-b48370b010f3\n```",
+    "used_rules": [
+      "f7f72a4b-92ad-4072-a32d-6ee8b90d1c70",
+      "9d9c4ba4-afd0-4257-b3d6-eb47b7b51e15",
+      "f873cff6-d9bd-41e8-89b0-115542eccb50",
+      "f531-44cf-a224-b48370b010f3"
+    ],
+    "retrieved_rule_ids": [
+      "f7f72a4b-92ad-4072-a32d-6ee8b90d1c70",
+      "851ad770-34c0-448e-b799-df23e10d3c4c",
+      "9d9c4ba4-afd0-4257-b3d6-eb47b7b51e15",
+      "61895854-f531-44cf-a224-b48370b010f3",
+      "f873cff6-d9bd-41e8-89b0-115542eccb50"
+    ],
+    "retrieved_rule_keys": [
+      "metric:revenue",
+      "join:orders_customers_regions",
+      "calendar:fiscal",
+      "filter:orders_not_cancelled",
+      "filter:orders_soft_delete"
+    ],
+    "rejected": null,
+    "model_id": "amazon.nova-micro-v1:0",
+    "id": "q12"
+  },
+  {
+    "sql": "WITH fiscal_periods AS (\n    SELECT \n        CASE\n            WHEN ordered_at BETWEEN '2026-05-01' AND '2026-05-31' THEN 'FQ2'\n            WHEN ordered_at BETWEEN '2026-06-01' AND '2026-06-30' THEN 'FQ2'\n            WHEN ordered_at BETWEEN '2026-07-01' AND '2026-07-31' THEN 'FQ2'\n            WHEN ordered_at BETWEEN '2026-08-01' AND '2026-08-31' THEN 'FQ3'\n            WHEN ordered_at BETWEEN '2026-09-01' AND '2026-09-30' THEN 'FQ3'\n            WHEN ordered_at BETWEEN '2026-10-01' AND '2026-10-31' THEN 'FQ3'\n        END AS fiscal_quarter\n    FROM orders\n),\nnet_revenue AS (\n    SELECT \n        fp.fiscal_quarter,\n        SUM(ol.amount_cents - COALESCE(r.amount_cents, 0)) AS revenue_cents\n    FROM fiscal_periods fp\n    JOIN orders o ON fp.fiscal_quarter IS NOT NULL AND o.ordered_at = fp.fiscal_quarter\n    JOIN order_lines ol ON o.order_id = ol.order_id\n    LEFT JOIN refunds r ON o.order_id = r.order_id\n    WHERE o.status <> 'cancelled' AND o.deleted_at IS NULL\n    GROUP BY fp.fiscal_quarter\n)\nSELECT \n    fiscal_quarter,\n    revenue_cents\nFROM net_revenue\nORDER BY fiscal_quarter",
+    "raw": "```sql\nWITH fiscal_periods AS (\n    SELECT \n        CASE\n            WHEN ordered_at BETWEEN '2026-05-01' AND '2026-05-31' THEN 'FQ2'\n            WHEN ordered_at BETWEEN '2026-06-01' AND '2026-06-30' THEN 'FQ2'\n            WHEN ordered_at BETWEEN '2026-07-01' AND '2026-07-31' THEN 'FQ2'\n            WHEN ordered_at BETWEEN '2026-08-01' AND '2026-08-31' THEN 'FQ3'\n            WHEN ordered_at BETWEEN '2026-09-01' AND '2026-09-30' THEN 'FQ3'\n            WHEN ordered_at BETWEEN '2026-10-01' AND '2026-10-31' THEN 'FQ3'\n        END AS fiscal_quarter\n    FROM orders\n),\nnet_revenue AS (\n    SELECT \n        fp.fiscal_quarter,\n        SUM(ol.amount_cents - COALESCE(r.amount_cents, 0)) AS revenue_cents\n    FROM fiscal_periods fp\n    JOIN orders o ON fp.fiscal_quarter IS NOT NULL AND o.ordered_at = fp.fiscal_quarter\n    JOIN order_lines ol ON o.order_id = ol.order_id\n    LEFT JOIN refunds r ON o.order_id = r.order_id\n    WHERE o.status <> 'cancelled' AND o.deleted_at IS NULL\n    GROUP BY fp.fiscal_quarter\n)\nSELECT \n    fiscal_quarter,\n    revenue_cents\nFROM net_revenue\nORDER BY fiscal_quarter;\n-- used_rules: f7f72a4b-92ad-4072-a32d-6ee8b90d1c70, 9d9c4ba4-afd0-4257-b3d6-eb47b7b51e115, 61895854-f531-44cf-a224-b48370b010f3, f873cff6-d9bd-41e8-89b0-115542eccb50\n```",
+    "used_rules": [
+      "f7f72a4b-92ad-4072-a32d-6ee8b90d1c70",
+      "9d9c4ba4-afd0-4257-b3d6-eb47b7b51e115",
+      "61895854-f531-44cf-a224-b48370b010f3",
+      "f873cff6-d9bd-41e8-89b0-115542eccb50"
+    ],
+    "retrieved_rule_ids": [
+      "f7f72a4b-92ad-4072-a32d-6ee8b90d1c70",
+      "9d9c4ba4-afd0-4257-b3d6-eb47b7b51e15",
+      "851ad770-34c0-448e-b799-df23e10d3c4c",
+      "61895854-f531-44cf-a224-b48370b010f3",
+      "f873cff6-d9bd-41e8-89b0-115542eccb50"
+    ],
+    "retrieved_rule_keys": [
+      "metric:revenue",
+      "calendar:fiscal",
+      "join:orders_customers_regions",
+      "filter:orders_not_cancelled",
+      "filter:orders_soft_delete"
+    ],
+    "rejected": null,
+    "model_id": "amazon.nova-micro-v1:0",
+    "id": "q13"
+  },
+  {
+    "sql": "WITH order_totals AS (\n    SELECT\n        ol.order_id,\n        SUM(ol.qty * ol.amount_cents) AS total_amount_cents,\n        SUM(r.amount_cents) AS total_refund_amount_cents\n    FROM\n        order_lines ol\n    LEFT JOIN\n        refunds r ON ol.order_id = r.order_id\n    GROUP BY\n        ol.order_id\n),\nfiltered_orders AS (\n    SELECT\n        o.order_id,\n        o.customer_id,\n        o.ordered_at,\n        ot.total_amount_cents,\n        ot.total_refund_amount_cents\n    FROM\n        orders o\n    JOIN\n        order_totals ot ON o.order_id = ot.order_id\n    WHERE\n        o.status <> 'cancelled' AND\n        o.deleted_at IS NULL AND\n        o.ordered_at BETWEEN '2026-05-01' AND '2026-08-01'\n)\nSELECT\n    AVG(total_amount_cents - total_refund_amount_cents) AS avg_revenue_cents\nFROM\n    filtered_orders",
+    "raw": "```sql\nWITH order_totals AS (\n    SELECT\n        ol.order_id,\n        SUM(ol.qty * ol.amount_cents) AS total_amount_cents,\n        SUM(r.amount_cents) AS total_refund_amount_cents\n    FROM\n        order_lines ol\n    LEFT JOIN\n        refunds r ON ol.order_id = r.order_id\n    GROUP BY\n        ol.order_id\n),\nfiltered_orders AS (\n    SELECT\n        o.order_id,\n        o.customer_id,\n        o.ordered_at,\n        ot.total_amount_cents,\n        ot.total_refund_amount_cents\n    FROM\n        orders o\n    JOIN\n        order_totals ot ON o.order_id = ot.order_id\n    WHERE\n        o.status <> 'cancelled' AND\n        o.deleted_at IS NULL AND\n        o.ordered_at BETWEEN '2026-05-01' AND '2026-08-01'\n)\nSELECT\n    AVG(total_amount_cents - total_refund_amount_cents) AS avg_revenue_cents\nFROM\n    filtered_orders;\n-- used_rules: f7f72a4b-92ad-4072-a32d-6ee8b90d1c70, 61895854-f531-4072-a32d-6ee8b90d1c70, f873c0ff6-d9bd-41e8-89b0-115542eccb50, 9d9c4ba4-afd0-4257-b3d6-eb47b7b51e15\n```",
+    "used_rules": [
+      "f7f72a4b-92ad-4072-a32d-6ee8b90d1c70",
+      "61895854-f531-4072-a32d-6ee8b90d1c70",
+      "f873c0ff6-d9bd-41e8-89b0-115542eccb50",
+      "9d9c4ba4-afd0-4257-b3d6-eb47b7b51e15"
+    ],
+    "retrieved_rule_ids": [
+      "f7f72a4b-92ad-4072-a32d-6ee8b90d1c70",
+      "61895854-f531-44cf-a224-b48370b010f3",
+      "f873cff6-d9bd-41e8-89b0-115542eccb50",
+      "851ad770-34c0-448e-b799-df23e10d3c4c",
+      "9d9c4ba4-afd0-4257-b3d6-eb47b7b51e15"
+    ],
+    "retrieved_rule_keys": [
+      "metric:revenue",
+      "filter:orders_not_cancelled",
+      "filter:orders_soft_delete",
+      "join:orders_customers_regions",
+      "calendar:fiscal"
+    ],
+    "rejected": null,
+    "model_id": "amazon.nova-micro-v1:0",
+    "id": "q14"
+  },
+  {
+    "sql": "SELECT \n    c.name AS customer, \n    (SUM(ol.amount_cents) - COALESCE(SUM(r.amount_cents), 0)) AS revenue_cents\nFROM \n    orders o\nJOIN \n    customers c ON o.customer_id = c.customer_id\nJOIN \n    order_lines ol ON o.order_id = ol.order_id\nLEFT JOIN \n    refunds r ON o.order_id = r.order_id\nJOIN \n    regions reg ON c.region_id = reg.region_id\nWHERE \n    reg.name = 'Rhine Goods' \n    AND o.ordered_at BETWEEN '2026-05-01' AND '2026-08-01'\n    AND o.status <> 'cancelled'\n    AND o.deleted_at IS NULL\nGROUP BY \n    c.name",
+    "raw": "```sql\nSELECT \n    c.name AS customer, \n    (SUM(ol.amount_cents) - COALESCE(SUM(r.amount_cents), 0)) AS revenue_cents\nFROM \n    orders o\nJOIN \n    customers c ON o.customer_id = c.customer_id\nJOIN \n    order_lines ol ON o.order_id = ol.order_id\nLEFT JOIN \n    refunds r ON o.order_id = r.order_id\nJOIN \n    regions reg ON c.region_id = reg.region_id\nWHERE \n    reg.name = 'Rhine Goods' \n    AND o.ordered_at BETWEEN '2026-05-01' AND '2026-08-01'\n    AND o.status <> 'cancelled'\n    AND o.deleted_at IS NULL\nGROUP BY \n    c.name;\n-- used_rules: f7f72a4b-92ad-4072-a32d-6ee8b90d1c70, 9d9c4ba4-afd0-4257-b3d6-eb47b7b51e15, f873cff6-d9bd-41e8-89b0-115542eccb50\n```",
+    "used_rules": [
+      "f7f72a4b-92ad-4072-a32d-6ee8b90d1c70",
+      "9d9c4ba4-afd0-4257-b3d6-eb47b7b51e15",
+      "f873cff6-d9bd-41e8-89b0-115542eccb50"
+    ],
+    "retrieved_rule_ids": [
+      "f7f72a4b-92ad-4072-a32d-6ee8b90d1c70",
+      "851ad770-34c0-448e-b799-df23e10d3c4c",
+      "9d9c4ba4-afd0-4257-b3d6-eb47b7b51e15",
+      "61895854-f531-44cf-a224-b48370b010f3",
+      "f873cff6-d9bd-41e8-89b0-115542eccb50"
+    ],
+    "retrieved_rule_keys": [
+      "metric:revenue",
+      "join:orders_customers_regions",
+      "calendar:fiscal",
+      "filter:orders_not_cancelled",
+      "filter:orders_soft_delete"
+    ],
+    "rejected": null,
+    "model_id": "amazon.nova-micro-v1:0",
+    "id": "q15"
+  },
+  {
+    "sql": "SELECT COUNT(DISTINCT c.customer_id) AS customer_count\nFROM customers c\nJOIN orders od ON c.customer_id = od.customer_id\nJOIN regions r ON c.region_id = r.region_id\nWHERE od.status <> 'cancelled'\n  AND od.deleted_at IS NULL\n  AND od.ordered_at >= '2026-07-01' AND od.ordered_at < '2026-10-01'",
+    "raw": "```sql\nSELECT COUNT(DISTINCT c.customer_id) AS customer_count\nFROM customers c\nJOIN orders od ON c.customer_id = od.customer_id\nJOIN regions r ON c.region_id = r.region_id\nWHERE od.status <> 'cancelled'\n  AND od.deleted_at IS NULL\n  AND od.ordered_at >= '2026-07-01' AND od.ordered_at < '2026-10-01';\n-- used_rules: 61895854-f531-44cf-a224-b48370b010f3, f873cff6-d9bd-41e8-89b0-115542eccb50\n```",
+    "used_rules": [
+      "61895854-f531-44cf-a224-b48370b010f3",
+      "f873cff6-d9bd-41e8-89b0-115542eccb50"
+    ],
+    "retrieved_rule_ids": [
+      "851ad770-34c0-448e-b799-df23e10d3c4c",
+      "61895854-f531-44cf-a224-b48370b010f3",
+      "9d9c4ba4-afd0-4257-b3d6-eb47b7b51e15",
+      "f7f72a4b-92ad-4072-a32d-6ee8b90d1c70",
+      "f873cff6-d9bd-41e8-89b0-115542eccb50"
+    ],
+    "retrieved_rule_keys": [
+      "join:orders_customers_regions",
+      "filter:orders_not_cancelled",
+      "calendar:fiscal",
+      "metric:revenue",
+      "filter:orders_soft_delete"
+    ],
+    "rejected": null,
+    "model_id": "amazon.nova-micro-v1:0",
+    "id": "q16"
+  },
+  {
+    "sql": "SELECT \n    SUM(ol.amount_cents - COALESCE(r.amount_cents, 0)) AS q3_revenue_cents\nFROM \n    orders o\nJOIN \n    customers c ON o.customer_id = c.customer_id\nJOIN \n    regions r ON c.region_id = r.region_id\nJOIN \n    order_lines ol ON o.order_id = ol.order_id\nLEFT JOIN \n    refunds r ON o.order_id = r.order_id\nWHERE \n    o.status <> 'cancelled' \n    AND o.deleted_at IS NULL\n    AND o.ordered_at >= '2026-05-01' \n    AND o.ordered_at < '2026-08-01'",
+    "raw": "```sql\nSELECT \n    SUM(ol.amount_cents - COALESCE(r.amount_cents, 0)) AS q3_revenue_cents\nFROM \n    orders o\nJOIN \n    customers c ON o.customer_id = c.customer_id\nJOIN \n    regions r ON c.region_id = r.region_id\nJOIN \n    order_lines ol ON o.order_id = ol.order_id\nLEFT JOIN \n    refunds r ON o.order_id = r.order_id\nWHERE \n    o.status <> 'cancelled' \n    AND o.deleted_at IS NULL\n    AND o.ordered_at >= '2026-05-01' \n    AND o.ordered_at < '2026-08-01'\n-- used_rules: f7f72a4b-92ad-4072-a32d-6ee8b90d1c70,9d9c4ba4-afd0-4257-b3d6-eb47b7b51e15,61895854-f531-44cf-a224-b48370b010f3,f873cff6-d9bd-41e8-89b0-115542eccb50\n```",
+    "used_rules": [
+      "f7f72a4b-92ad-4072-a32d-6ee8b90d1c70",
+      "9d9c4ba4-afd0-4257-b3d6-eb47b7b51e15",
+      "61895854-f531-44cf-a224-b48370b010f3",
+      "f873cff6-d9bd-41e8-89b0-115542eccb50"
+    ],
+    "retrieved_rule_ids": [
+      "f7f72a4b-92ad-4072-a32d-6ee8b90d1c70",
+      "9d9c4ba4-afd0-4257-b3d6-eb47b7b51e15",
+      "851ad770-34c0-448e-b799-df23e10d3c4c",
+      "61895854-f531-44cf-a224-b48370b010f3",
+      "f873cff6-d9bd-41e8-89b0-115542eccb50"
+    ],
+    "retrieved_rule_keys": [
+      "metric:revenue",
+      "calendar:fiscal",
+      "join:orders_customers_regions",
+      "filter:orders_not_cancelled",
+      "filter:orders_soft_delete"
+    ],
+    "rejected": null,
+    "model_id": "amazon.nova-micro-v1:0",
+    "id": "q17"
+  },
+  {
+    "sql": "SELECT \n    SUM(ol.amount_cents - COALESCE(r.amount_cents, 0)) AS revenue_cents\nFROM \n    orders o\nJOIN \n    customers c ON o.customer_id = c.customer_id\nJOIN \n    regions r ON c.region_id = r.region_id\nLEFT JOIN \n    order_lines ol ON o.order_id = ol.order_id\nLEFT JOIN \n    refunds r ON o.order_id = r.order_id\nWHERE \n    r.name = 'EMEA'\n    AND o.status <> 'cancelled'\n    AND o.deleted_at IS NULL\n    AND o.ordered_at BETWEEN '2026-05-01' AND '2026-08-01'",
+    "raw": "```sql\nSELECT \n    SUM(ol.amount_cents - COALESCE(r.amount_cents, 0)) AS revenue_cents\nFROM \n    orders o\nJOIN \n    customers c ON o.customer_id = c.customer_id\nJOIN \n    regions r ON c.region_id = r.region_id\nLEFT JOIN \n    order_lines ol ON o.order_id = ol.order_id\nLEFT JOIN \n    refunds r ON o.order_id = r.order_id\nWHERE \n    r.name = 'EMEA'\n    AND o.status <> 'cancelled'\n    AND o.deleted_at IS NULL\n    AND o.ordered_at BETWEEN '2026-05-01' AND '2026-08-01'\n-- used_rules: f7f72a4b-92ad-4072-a32d-6ee8b90d1c70, 9d9c4ba4-afd0-4257-b3d6-eb47b7b51e15, f873cff6-d9bd-41e8-89b0-115542eccb50, f531-44cf-a224-b48370b010f3\n```",
+    "used_rules": [
+      "f7f72a4b-92ad-4072-a32d-6ee8b90d1c70",
+      "9d9c4ba4-afd0-4257-b3d6-eb47b7b51e15",
+      "f873cff6-d9bd-41e8-89b0-115542eccb50",
+      "f531-44cf-a224-b48370b010f3"
+    ],
+    "retrieved_rule_ids": [
+      "f7f72a4b-92ad-4072-a32d-6ee8b90d1c70",
+      "851ad770-34c0-448e-b799-df23e10d3c4c",
+      "9d9c4ba4-afd0-4257-b3d6-eb47b7b51e15",
+      "61895854-f531-44cf-a224-b48370b010f3",
+      "f873cff6-d9bd-41e8-89b0-115542eccb50"
+    ],
+    "retrieved_rule_keys": [
+      "metric:revenue",
+      "join:orders_customers_regions",
+      "calendar:fiscal",
+      "filter:orders_not_cancelled",
+      "filter:orders_soft_delete"
+    ],
+    "rejected": null,
+    "model_id": "amazon.nova-micro-v1:0",
+    "id": "q18"
+  },
+  {
+    "sql": "SELECT \n    c.region_id AS region,\n    SUM(ol.qty) AS units\nFROM \n    orders o\nJOIN \n    customers c ON o.customer_id = c.customer_id\nJOIN \n    order_lines ol ON o.order_id = ol.order_id\nLEFT JOIN \n    refunds r ON o.order_id = r.order_id\nWHERE \n    o.status <> 'cancelled' \n    AND o.deleted_at IS NULL\n    AND o.ordered_at BETWEEN '2026-05-01' AND '2026-08-01'\nGROUP BY \n    c.region_id\nHAVING \n    SUM(ol.qty) > 0\nORDER BY \n    region",
+    "raw": "```sql\nSELECT \n    c.region_id AS region,\n    SUM(ol.qty) AS units\nFROM \n    orders o\nJOIN \n    customers c ON o.customer_id = c.customer_id\nJOIN \n    order_lines ol ON o.order_id = ol.order_id\nLEFT JOIN \n    refunds r ON o.order_id = r.order_id\nWHERE \n    o.status <> 'cancelled' \n    AND o.deleted_at IS NULL\n    AND o.ordered_at BETWEEN '2026-05-01' AND '2026-08-01'\nGROUP BY \n    c.region_id\nHAVING \n    SUM(ol.qty) > 0\nORDER BY \n    region;\n-- used_rules: 851ad770-34c0-448e-b799-df23e10d3c4c, 61895854-f531-44cf-a224-b48370b010f3, f873c4ba-afd0-4257-b3d6-eb47b7b51e15, f7f72a4b-92ad-4072-a32d-6ee8b90d1c70\n```",
+    "used_rules": [
+      "851ad770-34c0-448e-b799-df23e10d3c4c",
+      "61895854-f531-44cf-a224-b48370b010f3",
+      "f873c4ba-afd0-4257-b3d6-eb47b7b51e15",
+      "f7f72a4b-92ad-4072-a32d-6ee8b90d1c70"
+    ],
+    "retrieved_rule_ids": [
+      "851ad770-34c0-448e-b799-df23e10d3c4c",
+      "61895854-f531-44cf-a224-b48370b010f3",
+      "9d9c4ba4-afd0-4257-b3d6-eb47b7b51e15",
+      "f873cff6-d9bd-41e8-89b0-115542eccb50",
+      "f7f72a4b-92ad-4072-a32d-6ee8b90d1c70"
+    ],
+    "retrieved_rule_keys": [
+      "join:orders_customers_regions",
+      "filter:orders_not_cancelled",
+      "calendar:fiscal",
+      "filter:orders_soft_delete",
+      "metric:revenue"
+    ],
+    "rejected": null,
+    "model_id": "amazon.nova-micro-v1:0",
+    "id": "q19"
+  },
+  {
+    "sql": null,
+    "raw": "```sql\nSELECT \n    SUM(od.amount_cents - COALESCE(refunds.refund_amount_cents, 0)) AS revenue_cents\nFROM \n    orders od\nJOIN \n    customers c ON od.customer_id = c.customer_id\nJOIN \n    regions r ON c.region_id = r.region_id\nLEFT JOIN \n    refunds ON od.order_id = refunds.order_id\nWHERE \n    od.status <> 'cancelled' \n    AND od.deleted_at IS NULL \n    AND od.ordered_at BETWEEN '2026-02-01' AND '2026-08-31'\n    AND r.name IN ('fiscal_region_name') -- Replace 'fiscal_region_name' with the actual fiscal region name\n    AND od.ordered_at BETWEEN '2026-05-01' AND '2026-08-01'; -- Fiscal period for 2026\n-- used_rules: f7f72a4b-92ad-4072-a32d-6ee8b90d1c70, 9d9c4ba4-afd0-4257-b3d6-eb47b7b51e15, 61895854-f531-44cf-a224-b48370b010f3, f873cff6-d9bd-41e8-89b0-115542eccb50\n```",
+    "used_rules": [
+      "f7f72a4b-92ad-4072-a32d-6ee8b90d1c70",
+      "9d9c4ba4-afd0-4257-b3d6-eb47b7b51e15",
+      "61895854-f531-44cf-a224-b48370b010f3",
+      "f873cff6-d9bd-41e8-89b0-115542eccb50"
+    ],
+    "retrieved_rule_ids": [
+      "f7f72a4b-92ad-4072-a32d-6ee8b90d1c70",
+      "9d9c4ba4-afd0-4257-b3d6-eb47b7b51e15",
+      "851ad770-34c0-448e-b799-df23e10d3c4c",
+      "61895854-f531-44cf-a224-b48370b010f3",
+      "f873cff6-d9bd-41e8-89b0-115542eccb50"
+    ],
+    "retrieved_rule_keys": [
+      "metric:revenue",
+      "calendar:fiscal",
+      "join:orders_customers_regions",
+      "filter:orders_not_cancelled",
+      "filter:orders_soft_delete"
+    ],
+    "rejected": "multiple statements",
+    "model_id": "amazon.nova-micro-v1:0",
+    "id": "q20"
+  },
+  {
+    "sql": "SELECT \n    c.name AS customer, \n    SUM(ol.amount_cents - COALESCE(r.amount_cents, 0)) AS revenue_cents\nFROM \n    customers c\nJOIN \n    orders od ON c.customer_id = od.customer_id\nJOIN \n    order_lines ol ON od.order_id = ol.order_id\nLEFT JOIN \n    refunds r ON od.order_id = r.order_id\nWHERE \n    c.name = 'Harbor Pacific' \n    AND od.status <> 'cancelled'\n    AND od.deleted_at IS NULL\n    AND od.ordered_at BETWEEN '2026-05-01' AND '2026-08-01'\nGROUP BY \n    c.customer_id",
+    "raw": "```sql\nSELECT \n    c.name AS customer, \n    SUM(ol.amount_cents - COALESCE(r.amount_cents, 0)) AS revenue_cents\nFROM \n    customers c\nJOIN \n    orders od ON c.customer_id = od.customer_id\nJOIN \n    order_lines ol ON od.order_id = ol.order_id\nLEFT JOIN \n    refunds r ON od.order_id = r.order_id\nWHERE \n    c.name = 'Harbor Pacific' \n    AND od.status <> 'cancelled'\n    AND od.deleted_at IS NULL\n    AND od.ordered_at BETWEEN '2026-05-01' AND '2026-08-01'\nGROUP BY \n    c.customer_id;\n-- used_rules: f7f72a4b-92ad-4072-a32d-6ee8b90d1c70, 9d9c4ba4-afd0-4257-b3d6-eb47b7b51e15, 61895854-f531-44cf-a224-b48370b010f3, f873cff6-d9bd-41e8-89b0-115542eccb50\n```",
+    "used_rules": [
+      "f7f72a4b-92ad-4072-a32d-6ee8b90d1c70",
+      "9d9c4ba4-afd0-4257-b3d6-eb47b7b51e15",
+      "61895854-f531-44cf-a224-b48370b010f3",
+      "f873cff6-d9bd-41e8-89b0-115542eccb50"
+    ],
+    "retrieved_rule_ids": [
+      "f7f72a4b-92ad-4072-a32d-6ee8b90d1c70",
+      "9d9c4ba4-afd0-4257-b3d6-eb47b7b51e15",
+      "851ad770-34c0-448e-b799-df23e10d3c4c",
+      "61895854-f531-44cf-a224-b48370b010f3",
+      "f873cff6-d9bd-41e8-89b0-115542eccb50"
+    ],
+    "retrieved_rule_keys": [
+      "metric:revenue",
+      "calendar:fiscal",
+      "join:orders_customers_regions",
+      "filter:orders_not_cancelled",
+      "filter:orders_soft_delete"
+    ],
+    "rejected": null,
+    "model_id": "amazon.nova-micro-v1:0",
+    "id": "q21"
+  },
+  {
+    "sql": "SELECT \n    SUM(ol.amount_cents - COALESCE(r.amount_cents, 0)) AS gadget_revenue_cents\nFROM \n    orders o\nJOIN \n    customers c ON o.customer_id = c.customer_id\nJOIN \n    regions r ON c.region_id = r.region_id\nJOIN \n    order_lines ol ON o.order_id = ol.order_id\nLEFT JOIN \n    refunds r ON o.order_id = r.order_id\nWHERE \n    o.ordered_at BETWEEN '2026-05-01' AND '2026-08-01'\n    AND o.status <> 'cancelled'\n    AND ol.product_id IN (\n        SELECT product_id \n        FROM products \n        WHERE sku = 'GAD-200'\n    )\n    AND r.refund_id IS NULL OR r.refund_id IS NOT NULL AND r.amount_cents IS NOT NULL\n    AND r.refunded_at IS NULL OR r.refunded_at BETWEEN '2026-05-01' AND '2026-08-01'",
+    "raw": "```sql\nSELECT \n    SUM(ol.amount_cents - COALESCE(r.amount_cents, 0)) AS gadget_revenue_cents\nFROM \n    orders o\nJOIN \n    customers c ON o.customer_id = c.customer_id\nJOIN \n    regions r ON c.region_id = r.region_id\nJOIN \n    order_lines ol ON o.order_id = ol.order_id\nLEFT JOIN \n    refunds r ON o.order_id = r.order_id\nWHERE \n    o.ordered_at BETWEEN '2026-05-01' AND '2026-08-01'\n    AND o.status <> 'cancelled'\n    AND ol.product_id IN (\n        SELECT product_id \n        FROM products \n        WHERE sku = 'GAD-200'\n    )\n    AND r.refund_id IS NULL OR r.refund_id IS NOT NULL AND r.amount_cents IS NOT NULL\n    AND r.refunded_at IS NULL OR r.refunded_at BETWEEN '2026-05-01' AND '2026-08-01'\n-- used_rules: f7f72a4b-92ad-4072-a32d-6ee8b90d1c70, 9d9c4ba4-afd0-4257-b3d6-eb47b7b51e15, f873cff6-d9bd-41e8-89b0-115542eccb50\n```",
+    "used_rules": [
+      "f7f72a4b-92ad-4072-a32d-6ee8b90d1c70",
+      "9d9c4ba4-afd0-4257-b3d6-eb47b7b51e15",
+      "f873cff6-d9bd-41e8-89b0-115542eccb50"
+    ],
+    "retrieved_rule_ids": [
+      "f7f72a4b-92ad-4072-a32d-6ee8b90d1c70",
+      "851ad770-34c0-448e-b799-df23e10d3c4c",
+      "9d9c4ba4-afd0-4257-b3d6-eb47b7b51e15",
+      "61895854-f531-44cf-a224-b48370b010f3",
+      "f873cff6-d9bd-41e8-89b0-115542eccb50"
+    ],
+    "retrieved_rule_keys": [
+      "metric:revenue",
+      "join:orders_customers_regions",
+      "calendar:fiscal",
+      "filter:orders_not_cancelled",
+      "filter:orders_soft_delete"
+    ],
+    "rejected": null,
+    "model_id": "amazon.nova-micro-v1:0",
+    "id": "q22"
+  },
+  {
+    "sql": "WITH filtered_orders AS (\n    SELECT \n        o.order_id,\n        SUM(ol.amount_cents * ol.qty) AS total_amount_cents\n    FROM \n        orders o\n    JOIN \n        order_lines ol ON o.order_id = ol.order_id\n    WHERE \n        o.status <> 'cancelled' AND o.deleted_at IS NULL\n        AND o.ordered_at BETWEEN '2026-05-01' AND '2026-08-01'\n    GROUP BY \n        o.order_id\n),\nrefunds_subtracted AS (\n    SELECT \n        r.order_id,\n        SUM(r.amount_cents) AS total_refund_cents\n    FROM \n        refunds r\n    WHERE \n        r.refunded_at BETWEEN '2026-05-01' AND '2026-08-01'\n    GROUP BY \n        r.order_id\n),\nnet_revenue AS (\n    SELECT \n        fo.order_id,\n        fo.total_amount_cents - COALESCE(rs.total_refund_cents, 0) AS net_total_amount_cents\n    FROM \n        filtered_orders fo\n    LEFT JOIN \n        refunds_subtracted rs ON fo.order_id = rs.order_id\n)\nSELECT \n    order_id, \n    net_total_amount_cents AS amount_cents\nFROM \n    net_revenue\nORDER BY \n    net_total_amount_cents DESC\nLIMIT 1",
+    "raw": "```sql\nWITH filtered_orders AS (\n    SELECT \n        o.order_id,\n        SUM(ol.amount_cents * ol.qty) AS total_amount_cents\n    FROM \n        orders o\n    JOIN \n        order_lines ol ON o.order_id = ol.order_id\n    WHERE \n        o.status <> 'cancelled' AND o.deleted_at IS NULL\n        AND o.ordered_at BETWEEN '2026-05-01' AND '2026-08-01'\n    GROUP BY \n        o.order_id\n),\nrefunds_subtracted AS (\n    SELECT \n        r.order_id,\n        SUM(r.amount_cents) AS total_refund_cents\n    FROM \n        refunds r\n    WHERE \n        r.refunded_at BETWEEN '2026-05-01' AND '2026-08-01'\n    GROUP BY \n        r.order_id\n),\nnet_revenue AS (\n    SELECT \n        fo.order_id,\n        fo.total_amount_cents - COALESCE(rs.total_refund_cents, 0) AS net_total_amount_cents\n    FROM \n        filtered_orders fo\n    LEFT JOIN \n        refunds_subtracted rs ON fo.order_id = rs.order_id\n)\nSELECT \n    order_id, \n    net_total_amount_cents AS amount_cents\nFROM \n    net_revenue\nORDER BY \n    net_total_amount_cents DESC\nLIMIT 1;\n-- used_rules: 61895854-f531-44cf-a224-b48370b010f3, f873cff6-d9bd-41e8-89b0-115542eccb50, 9d9c4ba4-afd0-4257-b3d6-eb47b7b51e15, f7f72a4b-92ad-4072-a32d-6ee8b90d1c70\n```",
+    "used_rules": [
+      "61895854-f531-44cf-a224-b48370b010f3",
+      "f873cff6-d9bd-41e8-89b0-115542eccb50",
+      "9d9c4ba4-afd0-4257-b3d6-eb47b7b51e15",
+      "f7f72a4b-92ad-4072-a32d-6ee8b90d1c70"
+    ],
+    "retrieved_rule_ids": [
+      "61895854-f531-44cf-a224-b48370b010f3",
+      "f873cff6-d9bd-41e8-89b0-115542eccb50",
+      "851ad770-34c0-448e-b799-df23e10d3c4c",
+      "9d9c4ba4-afd0-4257-b3d6-eb47b7b51e15",
+      "f7f72a4b-92ad-4072-a32d-6ee8b90d1c70"
+    ],
+    "retrieved_rule_keys": [
+      "filter:orders_not_cancelled",
+      "filter:orders_soft_delete",
+      "join:orders_customers_regions",
+      "calendar:fiscal",
+      "metric:revenue"
+    ],
+    "rejected": null,
+    "model_id": "amazon.nova-micro-v1:0",
+    "id": "q23"
+  },
+  {
+    "sql": "SELECT COALESCE(SUM(r.amount_cents), 0) AS refund_cents\nFROM refunds r\nJOIN orders o ON r.order_id = o.order_id\nWHERE o.ordered_at >= '2026-05-01' AND o.ordered_at < '2026-08-01'\nAND o.status <> 'cancelled'\nAND o.deleted_at IS NULL",
+    "raw": "```sql\nSELECT COALESCE(SUM(r.amount_cents), 0) AS refund_cents\nFROM refunds r\nJOIN orders o ON r.order_id = o.order_id\nWHERE o.ordered_at >= '2026-05-01' AND o.ordered_at < '2026-08-01'\nAND o.status <> 'cancelled'\nAND o.deleted_at IS NULL;\n-- used_rules: f7f72a4b-92ad-4072-a32d-6ee8b90d1c70, 9d9c4ba4-afd0-4257-b3d6-eb47b7b51e15, f873cff6-d9bd-41e8-89b0-115542eccb50\n```",
+    "used_rules": [
+      "f7f72a4b-92ad-4072-a32d-6ee8b90d1c70",
+      "9d9c4ba4-afd0-4257-b3d6-eb47b7b51e15",
+      "f873cff6-d9bd-41e8-89b0-115542eccb50"
+    ],
+    "retrieved_rule_ids": [
+      "f7f72a4b-92ad-4072-a32d-6ee8b90d1c70",
+      "851ad770-34c0-448e-b799-df23e10d3c4c",
+      "9d9c4ba4-afd0-4257-b3d6-eb47b7b51e15",
+      "61895854-f531-44cf-a224-b48370b010f3",
+      "f873cff6-d9bd-41e8-89b0-115542eccb50"
+    ],
+    "retrieved_rule_keys": [
+      "metric:revenue",
+      "join:orders_customers_regions",
+      "calendar:fiscal",
+      "filter:orders_not_cancelled",
+      "filter:orders_soft_delete"
+    ],
+    "rejected": null,
+    "model_id": "amazon.nova-micro-v1:0",
+    "id": "q24"
+  },
+  {
+    "sql": "WITH net_revenue AS (\n    SELECT\n        c.region_id,\n        SUM(ol.amount_cents - COALESCE(r.amount_cents, 0)) AS net_revenue_cents\n    FROM\n        orders o\n    JOIN\n        customers c ON o.customer_id = c.customer_id\n    JOIN\n        order_lines ol ON o.order_id = ol.order_id\n    LEFT JOIN\n        refunds r ON o.order_id = r.order_id\n    WHERE\n        o.status <> 'cancelled'\n        AND o.deleted_at IS NULL\n        AND o.ordered_at BETWEEN '2026-05-01' AND '2026-08-01'\n    GROUP BY\n        c.region_id\n)\nSELECT\n    r.name AS region,\n    RANK() OVER (ORDER BY nr.net_revenue_cents DESC) AS rank_no\nFROM\n    net_revenue nr\nJOIN\n    regions r ON nr.region_id = r.region_id\nWHERE\n    nr.net_revenue_cents > 0\nORDER BY\n    rank_no",
+    "raw": "```sql\nWITH net_revenue AS (\n    SELECT\n        c.region_id,\n        SUM(ol.amount_cents - COALESCE(r.amount_cents, 0)) AS net_revenue_cents\n    FROM\n        orders o\n    JOIN\n        customers c ON o.customer_id = c.customer_id\n    JOIN\n        order_lines ol ON o.order_id = ol.order_id\n    LEFT JOIN\n        refunds r ON o.order_id = r.order_id\n    WHERE\n        o.status <> 'cancelled'\n        AND o.deleted_at IS NULL\n        AND o.ordered_at BETWEEN '2026-05-01' AND '2026-08-01'\n    GROUP BY\n        c.region_id\n)\nSELECT\n    r.name AS region,\n    RANK() OVER (ORDER BY nr.net_revenue_cents DESC) AS rank_no\nFROM\n    net_revenue nr\nJOIN\n    regions r ON nr.region_id = r.region_id\nWHERE\n    nr.net_revenue_cents > 0\nORDER BY\n    rank_no;\n-- used_rules: f7f72a4b-92ad-4072-a32d-6ee8b90d1c70, 9d9c4ba4-afd0-4257-b3d6-eb47b7b51e15, f873cff6-d9bd-41e8-89b0-115542eccb50, f7f72a4b-92ad-4072-a32d-6ee8b90d1c70\n```",
+    "used_rules": [
+      "f7f72a4b-92ad-4072-a32d-6ee8b90d1c70",
+      "9d9c4ba4-afd0-4257-b3d6-eb47b7b51e15",
+      "f873cff6-d9bd-41e8-89b0-115542eccb50",
+      "f7f72a4b-92ad-4072-a32d-6ee8b90d1c70"
+    ],
+    "retrieved_rule_ids": [
+      "f7f72a4b-92ad-4072-a32d-6ee8b90d1c70",
+      "851ad770-34c0-448e-b799-df23e10d3c4c",
+      "9d9c4ba4-afd0-4257-b3d6-eb47b7b51e15",
+      "61895854-f531-44cf-a224-b48370b010f3",
+      "f873cff6-d9bd-41e8-89b0-115542eccb50"
+    ],
+    "retrieved_rule_keys": [
+      "metric:revenue",
+      "join:orders_customers_regions",
+      "calendar:fiscal",
+      "filter:orders_not_cancelled",
+      "filter:orders_soft_delete"
+    ],
+    "rejected": null,
+    "model_id": "amazon.nova-micro-v1:0",
+    "id": "q25"
+  },
+  {
+    "sql": "SELECT COALESCE(SUM(ol.amount_cents - COALESCE(r.amount_cents, 0)), 0) AS september_revenue_cents\nFROM orders od\nJOIN order_lines ol ON od.order_id = ol.order_id\nLEFT JOIN refunds r ON od.order_id = r.order_id\nWHERE od.ordered_at >= '2026-09-01' AND od.ordered_at < '2026-10-01'\n  AND od.deleted_at IS NULL\n  AND od.status <> 'cancelled'",
+    "raw": "```sql\nSELECT COALESCE(SUM(ol.amount_cents - COALESCE(r.amount_cents, 0)), 0) AS september_revenue_cents\nFROM orders od\nJOIN order_lines ol ON od.order_id = ol.order_id\nLEFT JOIN refunds r ON od.order_id = r.order_id\nWHERE od.ordered_at >= '2026-09-01' AND od.ordered_at < '2026-10-01'\n  AND od.deleted_at IS NULL\n  AND od.status <> 'cancelled'\n-- used_rules: f7f72a4b-92ad-4072-a32d-6ee8b90d1c70, f873cff6-d9bd-41e8-89b0-115542eccb50, 61895854-f531-44cf-a224-b48370b010f3\n```",
+    "used_rules": [
+      "f7f72a4b-92ad-4072-a32d-6ee8b90d1c70",
+      "f873cff6-d9bd-41e8-89b0-115542eccb50",
+      "61895854-f531-44cf-a224-b48370b010f3"
+    ],
+    "retrieved_rule_ids": [
+      "f7f72a4b-92ad-4072-a32d-6ee8b90d1c70",
+      "851ad770-34c0-448e-b799-df23e10d3c4c",
+      "f873cff6-d9bd-41e8-89b0-115542eccb50",
+      "61895854-f531-44cf-a224-b48370b010f3",
+      "9d9c4ba4-afd0-4257-b3d6-eb47b7b51e15"
+    ],
+    "retrieved_rule_keys": [
+      "metric:revenue",
+      "join:orders_customers_regions",
+      "filter:orders_soft_delete",
+      "filter:orders_not_cancelled",
+      "calendar:fiscal"
+    ],
+    "rejected": null,
+    "model_id": "amazon.nova-micro-v1:0",
+    "id": "q26"
+  },
+  {
+    "sql": "SELECT \n    SUM(ol.amount_cents - COALESCE(r.amount_cents, 0)) AS revenue_cents\nFROM \n    orders od\nJOIN \n    customers c ON od.customer_id = c.customer_id\nJOIN \n    regions r ON c.region_id = r.region_id\nLEFT JOIN \n    refunds r ON od.order_id = r.order_id\nWHERE \n    od.status <> 'cancelled' \n    AND od.deleted_at IS NULL\n    AND r.refunded_at BETWEEN '2026-05-01' AND '2026-08-01'\n    AND c.name = 'Harbor Pacific'",
+    "raw": "```sql\nSELECT \n    SUM(ol.amount_cents - COALESCE(r.amount_cents, 0)) AS revenue_cents\nFROM \n    orders od\nJOIN \n    customers c ON od.customer_id = c.customer_id\nJOIN \n    regions r ON c.region_id = r.region_id\nLEFT JOIN \n    refunds r ON od.order_id = r.order_id\nWHERE \n    od.status <> 'cancelled' \n    AND od.deleted_at IS NULL\n    AND r.refunded_at BETWEEN '2026-05-01' AND '2026-08-01'\n    AND c.name = 'Harbor Pacific'\n-- used_rules: f7f72a4b-92ad-4072-a32d-6ee8b90d1c70, 9d9c4ba4-afd0-4257-b3d6-eb47b7b51e15, 61895854-f531-44cf-a224-b48370b010f3, f873cff6-d9bd-41e8-89b0-115542eccb50\n```",
+    "used_rules": [
+      "f7f72a4b-92ad-4072-a32d-6ee8b90d1c70",
+      "9d9c4ba4-afd0-4257-b3d6-eb47b7b51e15",
+      "61895854-f531-44cf-a224-b48370b010f3",
+      "f873cff6-d9bd-41e8-89b0-115542eccb50"
+    ],
+    "retrieved_rule_ids": [
+      "f7f72a4b-92ad-4072-a32d-6ee8b90d1c70",
+      "851ad770-34c0-448e-b799-df23e10d3c4c",
+      "9d9c4ba4-afd0-4257-b3d6-eb47b7b51e15",
+      "61895854-f531-44cf-a224-b48370b010f3",
+      "f873cff6-d9bd-41e8-89b0-115542eccb50"
+    ],
+    "retrieved_rule_keys": [
+      "metric:revenue",
+      "join:orders_customers_regions",
+      "calendar:fiscal",
+      "filter:orders_not_cancelled",
+      "filter:orders_soft_delete"
+    ],
+    "rejected": null,
+    "model_id": "amazon.nova-micro-v1:0",
+    "id": "q27"
+  },
+  {
+    "sql": "SELECT \n    SUM(ol.amount_cents - COALESCE(r.amount_cents, 0)) AS revenue_cents\nFROM \n    orders o\nJOIN \n    customers c ON o.customer_id = c.customer_id\nJOIN \n    regions r ON c.region_id = r.region_id\nLEFT JOIN \n    refunds r ON o.order_id = r.order_id\nWHERE \n    r.name = 'Northwind Retail' \n    AND o.ordered_at BETWEEN '2026-05-01' AND '2026-08-01'\n    AND o.status <> 'cancelled'\n    AND o.deleted_at IS NULL",
+    "raw": "```sql\nSELECT \n    SUM(ol.amount_cents - COALESCE(r.amount_cents, 0)) AS revenue_cents\nFROM \n    orders o\nJOIN \n    customers c ON o.customer_id = c.customer_id\nJOIN \n    regions r ON c.region_id = r.region_id\nLEFT JOIN \n    refunds r ON o.order_id = r.order_id\nWHERE \n    r.name = 'Northwind Retail' \n    AND o.ordered_at BETWEEN '2026-05-01' AND '2026-08-01'\n    AND o.status <> 'cancelled'\n    AND o.deleted_at IS NULL;\n-- used_rules: f7f72a4b-92ad-4072-a32d-6ee8b90d1c70, 9d9c4ba4-afd0-4257-b3d6-eb47b7b51e15, f873cff6-d9bd-41e8-89b0-115542eccb50\n```",
+    "used_rules": [
+      "f7f72a4b-92ad-4072-a32d-6ee8b90d1c70",
+      "9d9c4ba4-afd0-4257-b3d6-eb47b7b51e15",
+      "f873cff6-d9bd-41e8-89b0-115542eccb50"
+    ],
+    "retrieved_rule_ids": [
+      "f7f72a4b-92ad-4072-a32d-6ee8b90d1c70",
+      "851ad770-34c0-448e-b799-df23e10d3c4c",
+      "9d9c4ba4-afd0-4257-b3d6-eb47b7b51e15",
+      "61895854-f531-44cf-a224-b48370b010f3",
+      "f873cff6-d9bd-41e8-89b0-115542eccb50"
+    ],
+    "retrieved_rule_keys": [
+      "metric:revenue",
+      "join:orders_customers_regions",
+      "calendar:fiscal",
+      "filter:orders_not_cancelled",
+      "filter:orders_soft_delete"
+    ],
+    "rejected": null,
+    "model_id": "amazon.nova-micro-v1:0",
+    "id": "q28"
+  },
+  {
+    "sql": "SELECT COUNT(DISTINCT p.product_id) AS product_count\nFROM products p",
+    "raw": "```sql\nSELECT COUNT(DISTINCT p.product_id) AS product_count\nFROM products p\n-- used_rules: 851ad770-34c0-448e-b799-df23e10d3c4c, 61895854-f531-44cf-a224-b48370b010f3\n```",
+    "used_rules": [
+      "851ad770-34c0-448e-b799-df23e10d3c4c",
+      "61895854-f531-44cf-a224-b48370b010f3"
+    ],
+    "retrieved_rule_ids": [
+      "851ad770-34c0-448e-b799-df23e10d3c4c",
+      "9d9c4ba4-afd0-4257-b3d6-eb47b7b51e15",
+      "f873cff6-d9bd-41e8-89b0-115542eccb50",
+      "61895854-f531-44cf-a224-b48370b010f3",
+      "f7f72a4b-92ad-4072-a32d-6ee8b90d1c70"
+    ],
+    "retrieved_rule_keys": [
+      "join:orders_customers_regions",
+      "calendar:fiscal",
+      "filter:orders_soft_delete",
+      "filter:orders_not_cancelled",
+      "metric:revenue"
+    ],
+    "rejected": null,
+    "model_id": "amazon.nova-micro-v1:0",
+    "id": "q29"
+  },
+  {
+    "sql": "SELECT \n    c.region_id AS region,\n    AVG(ol.amount_cents * ol.qty - COALESCE(r.amount_cents, 0)) AS avg_order_value_cents\nFROM \n    orders o\nJOIN \n    customers c ON o.customer_id = c.customer_id\nJOIN \n    regions r ON c.region_id = r.region_id\nLEFT JOIN \n    (SELECT \n         order_id, \n         SUM(amount_cents) AS amount_cents\n     FROM \n         refunds\n     GROUP BY \n         order_id) r ON o.order_id = r.order_id\nJOIN \n    (SELECT \n         order_id, \n         SUM(amount_cents * qty) AS amount_cents\n     FROM \n         order_lines ol\n     GROUP BY \n         order_id) ol ON o.order_id = ol.order_id\nWHERE \n    o.status <> 'cancelled' \n    AND o.deleted_at IS NULL \n    AND o.ordered_at BETWEEN '2026-05-01' AND '2026-08-01'\nGROUP BY \n    c.region_id\nHAVING \n    COUNT(o.order_id) > 0\nORDER BY \n    region",
+    "raw": "```sql\nSELECT \n    c.region_id AS region,\n    AVG(ol.amount_cents * ol.qty - COALESCE(r.amount_cents, 0)) AS avg_order_value_cents\nFROM \n    orders o\nJOIN \n    customers c ON o.customer_id = c.customer_id\nJOIN \n    regions r ON c.region_id = r.region_id\nLEFT JOIN \n    (SELECT \n         order_id, \n         SUM(amount_cents) AS amount_cents\n     FROM \n         refunds\n     GROUP BY \n         order_id) r ON o.order_id = r.order_id\nJOIN \n    (SELECT \n         order_id, \n         SUM(amount_cents * qty) AS amount_cents\n     FROM \n         order_lines ol\n     GROUP BY \n         order_id) ol ON o.order_id = ol.order_id\nWHERE \n    o.status <> 'cancelled' \n    AND o.deleted_at IS NULL \n    AND o.ordered_at BETWEEN '2026-05-01' AND '2026-08-01'\nGROUP BY \n    c.region_id\nHAVING \n    COUNT(o.order_id) > 0\nORDER BY \n    region;\n-- used_rules: f7f72a4b-92ad-4072-a32d-6ee8b90d1c70, 61895854-f531-44cf-a224-b48370b010f3, f873cff6-d9bd-41e8-89b0-115542eccb50, 9d9c4ba4-afd0-4257-b3d6-eb47b7b51e15\n```",
+    "used_rules": [
+      "f7f72a4b-92ad-4072-a32d-6ee8b90d1c70",
+      "61895854-f531-44cf-a224-b48370b010f3",
+      "f873cff6-d9bd-41e8-89b0-115542eccb50",
+      "9d9c4ba4-afd0-4257-b3d6-eb47b7b51e15"
+    ],
+    "retrieved_rule_ids": [
+      "f7f72a4b-92ad-4072-a32d-6ee8b90d1c70",
+      "61895854-f531-44cf-a224-b48370b010f3",
+      "851ad770-34c0-448e-b799-df23e10d3c4c",
+      "f873cff6-d9bd-41e8-89b0-115542eccb50",
+      "9d9c4ba4-afd0-4257-b3d6-eb47b7b51e15"
+    ],
+    "retrieved_rule_keys": [
+      "metric:revenue",
+      "filter:orders_not_cancelled",
+      "join:orders_customers_regions",
+      "filter:orders_soft_delete",
+      "calendar:fiscal"
+    ],
+    "rejected": null,
+    "model_id": "amazon.nova-micro-v1:0",
+    "id": "q30"
+  },
+  {
+    "sql": "SELECT \n    SUM(ol.amount_cents) AS gross_cents\nFROM \n    orders od\nJOIN \n    order_lines ol ON od.order_id = ol.order_id\nJOIN \n    customers c ON od.customer_id = c.customer_id\nJOIN \n    regions r ON c.region_id = r.region_id\nWHERE \n    od.status <> 'cancelled' \n    AND od.deleted_at IS NULL\n    AND od.ordered_at BETWEEN '2026-05-01' AND '2026-08-01'",
+    "raw": "```sql\nSELECT \n    SUM(ol.amount_cents) AS gross_cents\nFROM \n    orders od\nJOIN \n    order_lines ol ON od.order_id = ol.order_id\nJOIN \n    customers c ON od.customer_id = c.customer_id\nJOIN \n    regions r ON c.region_id = r.region_id\nWHERE \n    od.status <> 'cancelled' \n    AND od.deleted_at IS NULL\n    AND od.ordered_at BETWEEN '2026-05-01' AND '2026-08-01'\n-- used_rules: f7f72a4b-92ad-4072-a32d-6ee8b90d1c70, 61895854-f531-44cf-a224-b48370b010f3, 9d9c4ba4-afd0-4257-b3d6-eb47b7b51e15, f873cff6-d9bd-41e8-89b0-115542eccb50\n```",
+    "used_rules": [
+      "f7f72a4b-92ad-4072-a32d-6ee8b90d1c70",
+      "61895854-f531-44cf-a224-b48370b010f3",
+      "9d9c4ba4-afd0-4257-b3d6-eb47b7b51e15",
+      "f873cff6-d9bd-41e8-89b0-115542eccb50"
+    ],
+    "retrieved_rule_ids": [
+      "f7f72a4b-92ad-4072-a32d-6ee8b90d1c70",
+      "61895854-f531-44cf-a224-b48370b010f3",
+      "851ad770-34c0-448e-b799-df23e10d3c4c",
+      "9d9c4ba4-afd0-4257-b3d6-eb47b7b51e15",
+      "f873cff6-d9bd-41e8-89b0-115542eccb50"
+    ],
+    "retrieved_rule_keys": [
+      "metric:revenue",
+      "filter:orders_not_cancelled",
+      "join:orders_customers_regions",
+      "calendar:fiscal",
+      "filter:orders_soft_delete"
+    ],
+    "rejected": null,
+    "model_id": "amazon.nova-micro-v1:0",
+    "id": "q31"
+  },
+  {
+    "sql": "SELECT \n    r.name AS region,\n    SUM(ol.amount_cents - COALESCE(SUM(refunds.amount_cents), 0)) AS revenue_cents\nFROM \n    orders o\nJOIN \n    customers c ON o.customer_id = c.customer_id\nJOIN \n    regions r ON c.region_id = r.region_id\nLEFT JOIN \n    order_lines ol ON o.order_id = ol.order_id\nLEFT JOIN \n    refunds ON o.order_id = refunds.order_id AND o.ordered_at >= '2026-05-01' AND o.ordered_at < '2026-08-01'\nWHERE \n    o.status <> 'cancelled' \n    AND o.deleted_at IS NULL\nGROUP BY \n    r.region_id\nHAVING \n    SUM(ol.amount_cents - COALESCE(SUM(refunds.amount_cents), 0)) > 0\nORDER BY \n    revenue_cents DESC",
+    "raw": "```sql\nSELECT \n    r.name AS region,\n    SUM(ol.amount_cents - COALESCE(SUM(refunds.amount_cents), 0)) AS revenue_cents\nFROM \n    orders o\nJOIN \n    customers c ON o.customer_id = c.customer_id\nJOIN \n    regions r ON c.region_id = r.region_id\nLEFT JOIN \n    order_lines ol ON o.order_id = ol.order_id\nLEFT JOIN \n    refunds ON o.order_id = refunds.order_id AND o.ordered_at >= '2026-05-01' AND o.ordered_at < '2026-08-01'\nWHERE \n    o.status <> 'cancelled' \n    AND o.deleted_at IS NULL\nGROUP BY \n    r.region_id\nHAVING \n    SUM(ol.amount_cents - COALESCE(SUM(refunds.amount_cents), 0)) > 0\nORDER BY \n    revenue_cents DESC;\n-- used_rules: f7f72a4b-92ad-4072-a32d-6ee8b90d1c70, 9d9c4ba4-afd0-4257-b3d6-eb47b7b51e15, 61895854-f531-44cf-a224-b48370b010f3, f873cff6-d9bd-41e8-89b0-115542eccb50\n```",
+    "used_rules": [
+      "f7f72a4b-92ad-4072-a32d-6ee8b90d1c70",
+      "9d9c4ba4-afd0-4257-b3d6-eb47b7b51e15",
+      "61895854-f531-44cf-a224-b48370b010f3",
+      "f873cff6-d9bd-41e8-89b0-115542eccb50"
+    ],
+    "retrieved_rule_ids": [
+      "f7f72a4b-92ad-4072-a32d-6ee8b90d1c70",
+      "851ad770-34c0-448e-b799-df23e10d3c4c",
+      "9d9c4ba4-afd0-4257-b3d6-eb47b7b51e15",
+      "61895854-f531-44cf-a224-b48370b010f3",
+      "f873cff6-d9bd-41e8-89b0-115542eccb50"
+    ],
+    "retrieved_rule_keys": [
+      "metric:revenue",
+      "join:orders_customers_regions",
+      "calendar:fiscal",
+      "filter:orders_not_cancelled",
+      "filter:orders_soft_delete"
+    ],
+    "rejected": null,
+    "model_id": "amazon.nova-micro-v1:0",
+    "id": "q32"
+  },
+  {
+    "sql": "WITH order_revenue AS (\n    SELECT\n        strftime('%Y-%m', o.ordered_at) AS month,\n        SUM(ol.amount_cents) AS revenue_cents\n    FROM orders o\n    JOIN order_lines ol ON o.order_id = ol.order_id\n    WHERE o.status <> 'cancelled'\n      AND o.deleted_at IS NULL\n      AND o.ordered_at >= '2026-05-01'\n      AND o.ordered_at < '2026-09-01'\n    GROUP BY strftime('%Y-%m', o.ordered_at)\n), refund_adjustment AS (\n    SELECT\n        strftime('%Y-%m', r.refunded_at) AS month,\n        SUM(r.amount_cents) AS refund_cents\n    FROM refunds r\n    JOIN orders o ON r.order_id = o.order_id\n    WHERE o.status <> 'cancelled'\n      AND o.deleted_at IS NULL\n      AND r.refunded_at >= '2026-05-01'\n      AND r.refunded_at < '2026-09-01'\n    GROUP BY strftime('%Y-%m', r.refunded_at)\n)\nSELECT\n    OR.month,\n    COALESCE(OR.revenue_cents, 0) - COALESCE(RA.refund_cents, 0) AS net_revenue_cents\nFROM order_revenue OR\nLEFT JOIN refund_adjustment RA ON OR.month = RA.month\nWHERE COALESCE(OR.revenue_cents, 0) - COALESCE(RA.refund_cents, 0) > 0\nORDER BY OR.month",
+    "raw": "```sql\nWITH order_revenue AS (\n    SELECT\n        strftime('%Y-%m', o.ordered_at) AS month,\n        SUM(ol.amount_cents) AS revenue_cents\n    FROM orders o\n    JOIN order_lines ol ON o.order_id = ol.order_id\n    WHERE o.status <> 'cancelled'\n      AND o.deleted_at IS NULL\n      AND o.ordered_at >= '2026-05-01'\n      AND o.ordered_at < '2026-09-01'\n    GROUP BY strftime('%Y-%m', o.ordered_at)\n), refund_adjustment AS (\n    SELECT\n        strftime('%Y-%m', r.refunded_at) AS month,\n        SUM(r.amount_cents) AS refund_cents\n    FROM refunds r\n    JOIN orders o ON r.order_id = o.order_id\n    WHERE o.status <> 'cancelled'\n      AND o.deleted_at IS NULL\n      AND r.refunded_at >= '2026-05-01'\n      AND r.refunded_at < '2026-09-01'\n    GROUP BY strftime('%Y-%m', r.refunded_at)\n)\nSELECT\n    OR.month,\n    COALESCE(OR.revenue_cents, 0) - COALESCE(RA.refund_cents, 0) AS net_revenue_cents\nFROM order_revenue OR\nLEFT JOIN refund_adjustment RA ON OR.month = RA.month\nWHERE COALESCE(OR.revenue_cents, 0) - COALESCE(RA.refund_cents, 0) > 0\nORDER BY OR.month;\n-- used_rules: f7f72a4b-92ad-4072-a32d-6ee8b90d1c70, 9d9c4ba4-afd0-4257-b3d6-eb47b7b51e15, f873cff6-d9bd-41e8-89b0-115542eccb50, f873cff6-d9bd-41e8-89b0-115542eccb50\n```",
+    "used_rules": [
+      "f7f72a4b-92ad-4072-a32d-6ee8b90d1c70",
+      "9d9c4ba4-afd0-4257-b3d6-eb47b7b51e15",
+      "f873cff6-d9bd-41e8-89b0-115542eccb50",
+      "f873cff6-d9bd-41e8-89b0-115542eccb50"
+    ],
+    "retrieved_rule_ids": [
+      "f7f72a4b-92ad-4072-a32d-6ee8b90d1c70",
+      "9d9c4ba4-afd0-4257-b3d6-eb47b7b51e15",
+      "851ad770-34c0-448e-b799-df23e10d3c4c",
+      "61895854-f531-44cf-a224-b48370b010f3",
+      "f873cff6-d9bd-41e8-89b0-115542eccb50"
+    ],
+    "retrieved_rule_keys": [
+      "metric:revenue",
+      "calendar:fiscal",
+      "join:orders_customers_regions",
+      "filter:orders_not_cancelled",
+      "filter:orders_soft_delete"
+    ],
+    "rejected": null,
+    "model_id": "amazon.nova-micro-v1:0",
+    "id": "q33"
+  },
+  {
+    "sql": "SELECT p.sku, p.category\nFROM products p",
+    "raw": "```sql\nSELECT p.sku, p.category\nFROM products p\n-- used_rules: none\n```",
+    "used_rules": [],
+    "retrieved_rule_ids": [
+      "851ad770-34c0-448e-b799-df23e10d3c4c",
+      "9d9c4ba4-afd0-4257-b3d6-eb47b7b51e15",
+      "f873cff6-d9bd-41e8-89b0-115542eccb50",
+      "61895854-f531-44cf-a224-b48370b010f3",
+      "f7f72a4b-92ad-4072-a32d-6ee8b90d1c70"
+    ],
+    "retrieved_rule_keys": [
+      "join:orders_customers_regions",
+      "calendar:fiscal",
+      "filter:orders_soft_delete",
+      "filter:orders_not_cancelled",
+      "metric:revenue"
+    ],
+    "rejected": null,
+    "model_id": "amazon.nova-micro-v1:0",
+    "id": "q34"
+  },
+  {
+    "sql": "SELECT \n    c.region_id AS region, \n    COUNT(c.customer_id) AS customer_count\nFROM \n    customers c\nJOIN \n    regions r ON c.region_id = r.region_id\nWHERE \n    c.customer_id IS NOT NULL\nGROUP BY \n    c.region_id\nORDER BY \n    c.region_id",
+    "raw": "```sql\nSELECT \n    c.region_id AS region, \n    COUNT(c.customer_id) AS customer_count\nFROM \n    customers c\nJOIN \n    regions r ON c.region_id = r.region_id\nWHERE \n    c.customer_id IS NOT NULL\nGROUP BY \n    c.region_id\nORDER BY \n    c.region_id;\n-- used_rules: f7f72a4b-92ad-4072-a32d-6ee8b90d1c70, 61895854-f531-44cf-a224-b48370b010f3\n```",
+    "used_rules": [
+      "f7f72a4b-92ad-4072-a32d-6ee8b90d1c70",
+      "61895854-f531-44cf-a224-b48370b010f3"
+    ],
+    "retrieved_rule_ids": [
+      "851ad770-34c0-448e-b799-df23e10d3c4c",
+      "f7f72a4b-92ad-4072-a32d-6ee8b90d1c70",
+      "f873cff6-d9bd-41e8-89b0-115542eccb50",
+      "61895854-f531-44cf-a224-b48370b010f3",
+      "9d9c4ba4-afd0-4257-b3d6-eb47b7b51e15"
+    ],
+    "retrieved_rule_keys": [
+      "join:orders_customers_regions",
+      "metric:revenue",
+      "filter:orders_soft_delete",
+      "filter:orders_not_cancelled",
+      "calendar:fiscal"
+    ],
+    "rejected": null,
+    "model_id": "amazon.nova-micro-v1:0",
+    "id": "q35"
+  },
+  {
+    "sql": "SELECT \n    SUM(od.amount_cents - COALESCE(rf.amount_cents, 0)) AS revenue_cents\nFROM \n    orders od\nLEFT JOIN \n    refunds rf ON od.order_id = rf.order_id\nJOIN \n    customers c ON od.customer_id = c.customer_id\nJOIN \n    regions r ON c.region_id = r.region_id\nWHERE \n    od.status <> 'cancelled' \n    AND od.deleted_at IS NULL \n    AND od.ordered_at BETWEEN '2026-07-01' AND '2026-09-30'",
+    "raw": "```sql\nSELECT \n    SUM(od.amount_cents - COALESCE(rf.amount_cents, 0)) AS revenue_cents\nFROM \n    orders od\nLEFT JOIN \n    refunds rf ON od.order_id = rf.order_id\nJOIN \n    customers c ON od.customer_id = c.customer_id\nJOIN \n    regions r ON c.region_id = r.region_id\nWHERE \n    od.status <> 'cancelled' \n    AND od.deleted_at IS NULL \n    AND od.ordered_at BETWEEN '2026-07-01' AND '2026-09-30'\n-- used_rules: f7f72a4b-92ad-4072-a32d-6ee8b90d1c70, f873cff6-d9bd-41e8-89b0-115542eccb50, f531-44cf-a224-b48370b010f3\n```",
+    "used_rules": [
+      "f7f72a4b-92ad-4072-a32d-6ee8b90d1c70",
+      "f873cff6-d9bd-41e8-89b0-115542eccb50",
+      "f531-44cf-a224-b48370b010f3"
+    ],
+    "retrieved_rule_ids": [
+      "f7f72a4b-92ad-4072-a32d-6ee8b90d1c70",
+      "9d9c4ba4-afd0-4257-b3d6-eb47b7b51e15",
+      "851ad770-34c0-448e-b799-df23e10d3c4c",
+      "61895854-f531-44cf-a224-b48370b010f3",
+      "f873cff6-d9bd-41e8-89b0-115542eccb50"
+    ],
+    "retrieved_rule_keys": [
+      "metric:revenue",
+      "calendar:fiscal",
+      "join:orders_customers_regions",
+      "filter:orders_not_cancelled",
+      "filter:orders_soft_delete"
+    ],
+    "rejected": null,
+    "model_id": "amazon.nova-micro-v1:0",
+    "id": "q36"
+  },
+  {
+    "sql": "SELECT COUNT(od.order_id) AS order_count\nFROM orders od\nJOIN customers c ON od.customer_id = c.customer_id\nJOIN regions r ON c.region_id = r.region_id\nWHERE od.status <> 'cancelled'\n  AND od.deleted_at IS NULL\n  AND od.ordered_at BETWEEN '2026-05-01' AND '2026-08-01'",
+    "raw": "```sql\nSELECT COUNT(od.order_id) AS order_count\nFROM orders od\nJOIN customers c ON od.customer_id = c.customer_id\nJOIN regions r ON c.region_id = r.region_id\nWHERE od.status <> 'cancelled'\n  AND od.deleted_at IS NULL\n  AND od.ordered_at BETWEEN '2026-05-01' AND '2026-08-01';\n-- used_rules: 61895854-f531-44cf-a224-b48370b010f3,f873cff6-d9bd-41e8-89b0-115542eccb50,9d9c4ba4-afd0-4257-b3d6-eb47b7b51e15\n```",
+    "used_rules": [
+      "61895854-f531-44cf-a224-b48370b010f3",
+      "f873cff6-d9bd-41e8-89b0-115542eccb50",
+      "9d9c4ba4-afd0-4257-b3d6-eb47b7b51e15"
+    ],
+    "retrieved_rule_ids": [
+      "61895854-f531-44cf-a224-b48370b010f3",
+      "9d9c4ba4-afd0-4257-b3d6-eb47b7b51e15",
+      "f873cff6-d9bd-41e8-89b0-115542eccb50",
+      "f7f72a4b-92ad-4072-a32d-6ee8b90d1c70",
+      "851ad770-34c0-448e-b799-df23e10d3c4c"
+    ],
+    "retrieved_rule_keys": [
+      "filter:orders_not_cancelled",
+      "calendar:fiscal",
+      "filter:orders_soft_delete",
+      "metric:revenue",
+      "join:orders_customers_regions"
+    ],
+    "rejected": null,
+    "model_id": "amazon.nova-micro-v1:0",
+    "id": "q37"
+  },
+  {
+    "sql": "SELECT \n    SUM(ol.amount_cents - COALESCE(r.amount_cents, 0)) AS fytd_revenue_cents\nFROM \n    orders od\nJOIN \n    order_lines ol ON od.order_id = ol.order_id\nLEFT JOIN \n    refunds r ON od.order_id = r.order_id\nWHERE \n    od.status <> 'cancelled'\n    AND od.deleted_at IS NULL\n    AND od.ordered_at >= '2026-05-01'\n    AND od.ordered_at < '2026-08-01'\n    AND ol.amount_cents > 0",
+    "raw": "```sql\nSELECT \n    SUM(ol.amount_cents - COALESCE(r.amount_cents, 0)) AS fytd_revenue_cents\nFROM \n    orders od\nJOIN \n    order_lines ol ON od.order_id = ol.order_id\nLEFT JOIN \n    refunds r ON od.order_id = r.order_id\nWHERE \n    od.status <> 'cancelled'\n    AND od.deleted_at IS NULL\n    AND od.ordered_at >= '2026-05-01'\n    AND od.ordered_at < '2026-08-01'\n    AND ol.amount_cents > 0;\n-- used_rules: f7f72a4b-92ad-4072-a32d-6ee8b90d1c70, 61895854-f531-44cf-a224-b48370b010f3, f873cff6-d9bd-41e8-89b0-115542eccb50\n```",
+    "used_rules": [
+      "f7f72a4b-92ad-4072-a32d-6ee8b90d1c70",
+      "61895854-f531-44cf-a224-b48370b010f3",
+      "f873cff6-d9bd-41e8-89b0-115542eccb50"
+    ],
+    "retrieved_rule_ids": [
+      "f7f72a4b-92ad-4072-a32d-6ee8b90d1c70",
+      "9d9c4ba4-afd0-4257-b3d6-eb47b7b51e15",
+      "61895854-f531-44cf-a224-b48370b010f3",
+      "851ad770-34c0-448e-b799-df23e10d3c4c",
+      "f873cff6-d9bd-41e8-89b0-115542eccb50"
+    ],
+    "retrieved_rule_keys": [
+      "metric:revenue",
+      "calendar:fiscal",
+      "filter:orders_not_cancelled",
+      "join:orders_customers_regions",
+      "filter:orders_soft_delete"
+    ],
+    "rejected": null,
+    "model_id": "amazon.nova-micro-v1:0",
+    "id": "q38"
+  },
+  {
+    "sql": "SELECT SUM(ol.amount_cents - COALESCE(r.amount_cents, 0)) AS amount_cents\nFROM orders o\nJOIN customers c ON o.customer_id = c.customer_id\nJOIN regions r ON c.region_id = r.region_id\nJOIN order_lines ol ON o.order_id = ol.order_id\nLEFT JOIN refunds r ON o.order_id = r.order_id\nWHERE r.name = 'Rhine Goods'\n  AND o.status <> 'cancelled'\n  AND o.deleted_at IS NULL\n  AND o.ordered_at >= '2026-07-01' AND o.ordered_at < '2026-10-01'",
+    "raw": "```sql\nSELECT SUM(ol.amount_cents - COALESCE(r.amount_cents, 0)) AS amount_cents\nFROM orders o\nJOIN customers c ON o.customer_id = c.customer_id\nJOIN regions r ON c.region_id = r.region_id\nJOIN order_lines ol ON o.order_id = ol.order_id\nLEFT JOIN refunds r ON o.order_id = r.order_id\nWHERE r.name = 'Rhine Goods'\n  AND o.status <> 'cancelled'\n  AND o.deleted_at IS NULL\n  AND o.ordered_at >= '2026-07-01' AND o.ordered_at < '2026-10-01'\n-- used_rules: f7f72a4b-92ad-4072-a32d-6ee8b90d1c70, 61895854-f531-44cf-a224-b48370b010f3, 9d9c4ba4-afd0-4257-b3d6-eb47b7b51e15, f873cff6-d9bd-41e8-89b0-115542eccb50\n```",
+    "used_rules": [
+      "f7f72a4b-92ad-4072-a32d-6ee8b90d1c70",
+      "61895854-f531-44cf-a224-b48370b010f3",
+      "9d9c4ba4-afd0-4257-b3d6-eb47b7b51e15",
+      "f873cff6-d9bd-41e8-89b0-115542eccb50"
+    ],
+    "retrieved_rule_ids": [
+      "f7f72a4b-92ad-4072-a32d-6ee8b90d1c70",
+      "851ad770-34c0-448e-b799-df23e10d3c4c",
+      "9d9c4ba4-afd0-4257-b3d6-eb47b7b51e15",
+      "61895854-f531-44cf-a224-b48370b010f3",
+      "f873cff6-d9bd-41e8-89b0-115542eccb50"
+    ],
+    "retrieved_rule_keys": [
+      "metric:revenue",
+      "join:orders_customers_regions",
+      "calendar:fiscal",
+      "filter:orders_not_cancelled",
+      "filter:orders_soft_delete"
+    ],
+    "rejected": null,
+    "model_id": "amazon.nova-micro-v1:0",
+    "id": "q39"
+  },
+  {
+    "sql": "SELECT \n    r.name AS region,\n    SUM(ol.amount_cents - COALESCE(SUM(refunds.amount_cents), 0)) AS revenue_cents\nFROM \n    orders o\nJOIN \n    customers c ON o.customer_id = c.customer_id\nJOIN \n    regions r ON c.region_id = r.region_id\nLEFT JOIN \n    order_lines ol ON o.order_id = ol.order_id\nLEFT JOIN \n    refunds ON o.order_id = refunds.order_id AND o.ordered_at >= '2026-05-01' AND o.ordered_at < '2026-08-01'\nWHERE \n    o.status <> 'cancelled' \n    AND o.deleted_at IS NULL\nGROUP BY \n    r.region_id\nHAVING \n    SUM(ol.amount_cents - COALESCE(SUM(refunds.amount_cents), 0)) > 0\nORDER BY \n    revenue_cents DESC",
+    "raw": "```sql\nSELECT \n    r.name AS region,\n    SUM(ol.amount_cents - COALESCE(SUM(refunds.amount_cents), 0)) AS revenue_cents\nFROM \n    orders o\nJOIN \n    customers c ON o.customer_id = c.customer_id\nJOIN \n    regions r ON c.region_id = r.region_id\nLEFT JOIN \n    order_lines ol ON o.order_id = ol.order_id\nLEFT JOIN \n    refunds ON o.order_id = refunds.order_id AND o.ordered_at >= '2026-05-01' AND o.ordered_at < '2026-08-01'\nWHERE \n    o.status <> 'cancelled' \n    AND o.deleted_at IS NULL\nGROUP BY \n    r.region_id\nHAVING \n    SUM(ol.amount_cents - COALESCE(SUM(refunds.amount_cents), 0)) > 0\nORDER BY \n    revenue_cents DESC;\n-- used_rules: f7f72a4b-92ad-4072-a32d-6ee8b90d1c70, 9d9c4ba4-afd0-4257-b3d6-eb47b7b51e15, 61895854-f531-44cf-a224-b48370b010f3, f873cff6-d9bd-41e8-89b0-115542eccb50\n```",
+    "used_rules": [
+      "f7f72a4b-92ad-4072-a32d-6ee8b90d1c70",
+      "9d9c4ba4-afd0-4257-b3d6-eb47b7b51e15",
+      "61895854-f531-44cf-a224-b48370b010f3",
+      "f873cff6-d9bd-41e8-89b0-115542eccb50"
+    ],
+    "retrieved_rule_ids": [
+      "f7f72a4b-92ad-4072-a32d-6ee8b90d1c70",
+      "851ad770-34c0-448e-b799-df23e10d3c4c",
+      "9d9c4ba4-afd0-4257-b3d6-eb47b7b51e15",
+      "61895854-f531-44cf-a224-b48370b010f3",
+      "f873cff6-d9bd-41e8-89b0-115542eccb50"
+    ],
+    "retrieved_rule_keys": [
+      "metric:revenue",
+      "join:orders_customers_regions",
+      "calendar:fiscal",
+      "filter:orders_not_cancelled",
+      "filter:orders_soft_delete"
+    ],
+    "rejected": null,
+    "model_id": "amazon.nova-micro-v1:0",
+    "id": "q40"
+  },
+  {
+    "sql": "SELECT \n    1.0 * SUM(ol.amount_cents - COALESCE(r.amount_cents, 0)) / SUM(ol.amount_cents) AS refund_share\nFROM \n    orders od\nJOIN \n    order_lines ol ON od.order_id = ol.order_id\nLEFT JOIN \n    refunds r ON od.order_id = r.order_id\nJOIN \n    customers c ON od.customer_id = c.customer_id\nJOIN \n    regions rg ON c.region_id = rg.region_id\nWHERE \n    od.status <> 'cancelled'\n    AND od.deleted_at IS NULL\n    AND strftime('%Y-%m', od.ordered_at) BETWEEN '2026-05' AND '2026-07'",
+    "raw": "```sql\nSELECT \n    1.0 * SUM(ol.amount_cents - COALESCE(r.amount_cents, 0)) / SUM(ol.amount_cents) AS refund_share\nFROM \n    orders od\nJOIN \n    order_lines ol ON od.order_id = ol.order_id\nLEFT JOIN \n    refunds r ON od.order_id = r.order_id\nJOIN \n    customers c ON od.customer_id = c.customer_id\nJOIN \n    regions rg ON c.region_id = rg.region_id\nWHERE \n    od.status <> 'cancelled'\n    AND od.deleted_at IS NULL\n    AND strftime('%Y-%m', od.ordered_at) BETWEEN '2026-05' AND '2026-07'\n-- used_rules: f7f72a4b-92ad-4072-a32d-6ee8b90d1c70, 61895854-f531-44cf-a224-b48370b010f3, f873cff6-d9bd-41e8-89b0-115542eccb50\n```",
+    "used_rules": [
+      "f7f72a4b-92ad-4072-a32d-6ee8b90d1c70",
+      "61895854-f531-44cf-a224-b48370b010f3",
+      "f873cff6-d9bd-41e8-89b0-115542eccb50"
+    ],
+    "retrieved_rule_ids": [
+      "f7f72a4b-92ad-4072-a32d-6ee8b90d1c70",
+      "61895854-f531-44cf-a224-b48370b010f3",
+      "851ad770-34c0-448e-b799-df23e10d3c4c",
+      "9d9c4ba4-afd0-4257-b3d6-eb47b7b51e15",
+      "f873cff6-d9bd-41e8-89b0-115542eccb50"
+    ],
+    "retrieved_rule_keys": [
+      "metric:revenue",
+      "filter:orders_not_cancelled",
+      "join:orders_customers_regions",
+      "calendar:fiscal",
+      "filter:orders_soft_delete"
+    ],
+    "rejected": null,
+    "model_id": "amazon.nova-micro-v1:0",
+    "id": "q41"
+  },
+  {
+    "sql": "WITH net_revenue AS (\n    SELECT\n        c.region_id,\n        SUM(ol.amount_cents - COALESCE(r.amount_cents, 0)) AS revenue_cents\n    FROM\n        orders o\n    JOIN customers c ON o.customer_id = c.customer_id\n    JOIN order_lines ol ON o.order_id = ol.order_id\n    LEFT JOIN refunds r ON o.order_id = r.order_id\n    WHERE\n        c.region_id = (SELECT region_id FROM regions WHERE name = 'AMER')\n        AND o.ordered_at BETWEEN '2026-05-01' AND '2026-07-31'\n        AND o.status <> 'cancelled'\n        AND o.deleted_at IS NULL\n    GROUP BY c.region_id\n)\nSELECT\n    COALESCE(revenue_cents, 0) AS revenue_cents\nFROM\n    net_revenue",
+    "raw": "```sql\nWITH net_revenue AS (\n    SELECT\n        c.region_id,\n        SUM(ol.amount_cents - COALESCE(r.amount_cents, 0)) AS revenue_cents\n    FROM\n        orders o\n    JOIN customers c ON o.customer_id = c.customer_id\n    JOIN order_lines ol ON o.order_id = ol.order_id\n    LEFT JOIN refunds r ON o.order_id = r.order_id\n    WHERE\n        c.region_id = (SELECT region_id FROM regions WHERE name = 'AMER')\n        AND o.ordered_at BETWEEN '2026-05-01' AND '2026-07-31'\n        AND o.status <> 'cancelled'\n        AND o.deleted_at IS NULL\n    GROUP BY c.region_id\n)\nSELECT\n    COALESCE(revenue_cents, 0) AS revenue_cents\nFROM\n    net_revenue\n-- used_rules: f7f72a4b-92ad-4072-a32d-6ee8b90d1c70, 9d9c4ba4-afd0-4257-b3d6-eb47b7b51e15, f873cff6-d9bd-41e8-89b0-115542eccb50, f531-44cf-a224-b48370b010f3\n```",
+    "used_rules": [
+      "f7f72a4b-92ad-4072-a32d-6ee8b90d1c70",
+      "9d9c4ba4-afd0-4257-b3d6-eb47b7b51e15",
+      "f873cff6-d9bd-41e8-89b0-115542eccb50",
+      "f531-44cf-a224-b48370b010f3"
+    ],
+    "retrieved_rule_ids": [
+      "f7f72a4b-92ad-4072-a32d-6ee8b90d1c70",
+      "851ad770-34c0-448e-b799-df23e10d3c4c",
+      "9d9c4ba4-afd0-4257-b3d6-eb47b7b51e15",
+      "61895854-f531-44cf-a224-b48370b010f3",
+      "f873cff6-d9bd-41e8-89b0-115542eccb50"
+    ],
+    "retrieved_rule_keys": [
+      "metric:revenue",
+      "join:orders_customers_regions",
+      "calendar:fiscal",
+      "filter:orders_not_cancelled",
+      "filter:orders_soft_delete"
+    ],
+    "rejected": null,
+    "model_id": "amazon.nova-micro-v1:0",
+    "id": "q42"
+  },
+  {
+    "sql": "SELECT SUM(ol.qty) AS widget_units\nFROM orders od\nJOIN order_lines ol ON od.order_id = ol.order_id\nJOIN products p ON ol.product_id = p.product_id\nWHERE od.status <> 'cancelled'\n  AND od.deleted_at IS NULL\n  AND p.sku = 'WID-100'\n  AND od.ordered_at BETWEEN '2026-05-01' AND '2026-08-01'",
+    "raw": "```sql\nSELECT SUM(ol.qty) AS widget_units\nFROM orders od\nJOIN order_lines ol ON od.order_id = ol.order_id\nJOIN products p ON ol.product_id = p.product_id\nWHERE od.status <> 'cancelled'\n  AND od.deleted_at IS NULL\n  AND p.sku = 'WID-100'\n  AND od.ordered_at BETWEEN '2026-05-01' AND '2026-08-01';\n-- used_rules: 61895854-f531-44cf-a224-b48370b010f3, f873cff6-d9bd-41e8-89b0-115542eccb50, 9d9c4ba4-afd0-4257-b3d6-eb47b7b51e15\n```",
+    "used_rules": [
+      "61895854-f531-44cf-a224-b48370b010f3",
+      "f873cff6-d9bd-41e8-89b0-115542eccb50",
+      "9d9c4ba4-afd0-4257-b3d6-eb47b7b51e15"
+    ],
+    "retrieved_rule_ids": [
+      "61895854-f531-44cf-a224-b48370b010f3",
+      "9d9c4ba4-afd0-4257-b3d6-eb47b7b51e15",
+      "f873cff6-d9bd-41e8-89b0-115542eccb50",
+      "851ad770-34c0-448e-b799-df23e10d3c4c",
+      "f7f72a4b-92ad-4072-a32d-6ee8b90d1c70"
+    ],
+    "retrieved_rule_keys": [
+      "filter:orders_not_cancelled",
+      "calendar:fiscal",
+      "filter:orders_soft_delete",
+      "join:orders_customers_regions",
+      "metric:revenue"
+    ],
+    "rejected": null,
+    "model_id": "amazon.nova-micro-v1:0",
+    "id": "q43"
+  },
+  {
+    "sql": "SELECT \n    r.name AS region,\n    SUM(ol.amount_cents - COALESCE(SUM(refunds.amount_cents), 0)) AS revenue_cents\nFROM \n    orders o\nJOIN \n    customers c ON o.customer_id = c.customer_id\nJOIN \n    regions r ON c.region_id = r.region_id\nLEFT JOIN \n    order_lines ol ON o.order_id = ol.order_id\nLEFT JOIN \n    refunds ON o.order_id = refunds.order_id AND o.ordered_at >= '2026-05-01' AND o.ordered_at < '2026-08-01'\nWHERE \n    o.status <> 'cancelled' \n    AND o.deleted_at IS NULL\nGROUP BY \n    r.region_id\nORDER BY \n    revenue_cents DESC\nLIMIT 1",
+    "raw": "```sql\nSELECT \n    r.name AS region,\n    SUM(ol.amount_cents - COALESCE(SUM(refunds.amount_cents), 0)) AS revenue_cents\nFROM \n    orders o\nJOIN \n    customers c ON o.customer_id = c.customer_id\nJOIN \n    regions r ON c.region_id = r.region_id\nLEFT JOIN \n    order_lines ol ON o.order_id = ol.order_id\nLEFT JOIN \n    refunds ON o.order_id = refunds.order_id AND o.ordered_at >= '2026-05-01' AND o.ordered_at < '2026-08-01'\nWHERE \n    o.status <> 'cancelled' \n    AND o.deleted_at IS NULL\nGROUP BY \n    r.region_id\nORDER BY \n    revenue_cents DESC\nLIMIT 1;\n-- used_rules: f7f72a4b-92ad-4072-a32d-6ee8b90d1c70, 9d9c4ba4-afd0-4257-b3d6-eb47b7b51e15, 61895854-f531-44cf-a224-b48370b010f3, f873cff6-d9bd-41e8-89b0-115542eccb50\n```",
+    "used_rules": [
+      "f7f72a4b-92ad-4072-a32d-6ee8b90d1c70",
+      "9d9c4ba4-afd0-4257-b3d6-eb47b7b51e15",
+      "61895854-f531-44cf-a224-b48370b010f3",
+      "f873cff6-d9bd-41e8-89b0-115542eccb50"
+    ],
+    "retrieved_rule_ids": [
+      "f7f72a4b-92ad-4072-a32d-6ee8b90d1c70",
+      "851ad770-34c0-448e-b799-df23e10d3c4c",
+      "9d9c4ba4-afd0-4257-b3d6-eb47b7b51e15",
+      "61895854-f531-44cf-a224-b48370b010f3",
+      "f873cff6-d9bd-41e8-89b0-115542eccb50"
+    ],
+    "retrieved_rule_keys": [
+      "metric:revenue",
+      "join:orders_customers_regions",
+      "calendar:fiscal",
+      "filter:orders_not_cancelled",
+      "filter:orders_soft_delete"
+    ],
+    "rejected": null,
+    "model_id": "amazon.nova-micro-v1:0",
+    "id": "q44"
+  },
+  {
+    "sql": "SELECT \n    SUM(ol.amount_cents - COALESCE(r.amount_cents, 0)) AS widget_revenue_cents\nFROM \n    orders o\nJOIN \n    customers c ON o.customer_id = c.customer_id\nJOIN \n    regions r ON c.region_id = r.region_id\nJOIN \n    order_lines ol ON o.order_id = ol.order_id\nLEFT JOIN \n    refunds r ON o.order_id = r.order_id\nJOIN \n    products p ON ol.product_id = p.product_id\nWHERE \n    o.status <> 'cancelled' \n    AND o.deleted_at IS NULL\n    AND p.sku = 'WID-100'\n    AND o.ordered_at BETWEEN '2026-05-01' AND '2026-08-01'",
+    "raw": "```sql\nSELECT \n    SUM(ol.amount_cents - COALESCE(r.amount_cents, 0)) AS widget_revenue_cents\nFROM \n    orders o\nJOIN \n    customers c ON o.customer_id = c.customer_id\nJOIN \n    regions r ON c.region_id = r.region_id\nJOIN \n    order_lines ol ON o.order_id = ol.order_id\nLEFT JOIN \n    refunds r ON o.order_id = r.order_id\nJOIN \n    products p ON ol.product_id = p.product_id\nWHERE \n    o.status <> 'cancelled' \n    AND o.deleted_at IS NULL\n    AND p.sku = 'WID-100'\n    AND o.ordered_at BETWEEN '2026-05-01' AND '2026-08-01';\n-- used_rules: f7f72a4b-92ad-4072-a32d-6ee8b90d1c70, 9d9c4ba4-afd0-4257-b3d6-eb47b7b51e15, 61895854-f531-44cf-a224-b48370b010f3, f873cff6-d9bd-41e8-89b0-115542eccb50\n```",
+    "used_rules": [
+      "f7f72a4b-92ad-4072-a32d-6ee8b90d1c70",
+      "9d9c4ba4-afd0-4257-b3d6-eb47b7b51e15",
+      "61895854-f531-44cf-a224-b48370b010f3",
+      "f873cff6-d9bd-41e8-89b0-115542eccb50"
+    ],
+    "retrieved_rule_ids": [
+      "f7f72a4b-92ad-4072-a32d-6ee8b90d1c70",
+      "9d9c4ba4-afd0-4257-b3d6-eb47b7b51e15",
+      "851ad770-34c0-448e-b799-df23e10d3c4c",
+      "61895854-f531-44cf-a224-b48370b010f3",
+      "f873cff6-d9bd-41e8-89b0-115542eccb50"
+    ],
+    "retrieved_rule_keys": [
+      "metric:revenue",
+      "calendar:fiscal",
+      "join:orders_customers_regions",
+      "filter:orders_not_cancelled",
+      "filter:orders_soft_delete"
+    ],
+    "rejected": null,
+    "model_id": "amazon.nova-micro-v1:0",
+    "id": "q45"
+  },
+  {
+    "sql": "SELECT \n    r.name AS region,\n    SUM(ol.amount_cents - COALESCE(SUM(refunds.amount_cents), 0)) AS october_revenue_cents\nFROM \n    orders o\nJOIN \n    customers c ON o.customer_id = c.customer_id\nJOIN \n    regions r ON c.region_id = r.region_id\nLEFT JOIN \n    order_lines ol ON o.order_id = ol.order_id\nLEFT JOIN \n    refunds ON o.order_id = refunds.order_id AND refunds.refunded_at BETWEEN '2026-10-01' AND '2026-10-31'\nWHERE \n    o.ordered_at BETWEEN '2026-10-01' AND '2026-10-31'\n    AND o.status <> 'cancelled'\n    AND o.deleted_at IS NULL\nGROUP BY \n    r.region_id\nHAVING \n    october_revenue_cents > 0",
+    "raw": "```sql\nSELECT \n    r.name AS region,\n    SUM(ol.amount_cents - COALESCE(SUM(refunds.amount_cents), 0)) AS october_revenue_cents\nFROM \n    orders o\nJOIN \n    customers c ON o.customer_id = c.customer_id\nJOIN \n    regions r ON c.region_id = r.region_id\nLEFT JOIN \n    order_lines ol ON o.order_id = ol.order_id\nLEFT JOIN \n    refunds ON o.order_id = refunds.order_id AND refunds.refunded_at BETWEEN '2026-10-01' AND '2026-10-31'\nWHERE \n    o.ordered_at BETWEEN '2026-10-01' AND '2026-10-31'\n    AND o.status <> 'cancelled'\n    AND o.deleted_at IS NULL\nGROUP BY \n    r.region_id\nHAVING \n    october_revenue_cents > 0\n-- used_rules: f7f72a4b-92ad-4072-a32d-6ee8b90d1c70, 9d9c4ba4-afd0-4257-b3d6-eb47b7b51e15, f873cff6-d9bd-41e8-89b0-115542eccb50\n```",
+    "used_rules": [
+      "f7f72a4b-92ad-4072-a32d-6ee8b90d1c70",
+      "9d9c4ba4-afd0-4257-b3d6-eb47b7b51e15",
+      "f873cff6-d9bd-41e8-89b0-115542eccb50"
+    ],
+    "retrieved_rule_ids": [
+      "f7f72a4b-92ad-4072-a32d-6ee8b90d1c70",
+      "851ad770-34c0-448e-b799-df23e10d3c4c",
+      "9d9c4ba4-afd0-4257-b3d6-eb47b7b51e15",
+      "61895854-f531-44cf-a224-b48370b010f3",
+      "f873cff6-d9bd-41e8-89b0-115542eccb50"
+    ],
+    "retrieved_rule_keys": [
+      "metric:revenue",
+      "join:orders_customers_regions",
+      "calendar:fiscal",
+      "filter:orders_not_cancelled",
+      "filter:orders_soft_delete"
+    ],
+    "rejected": null,
+    "model_id": "amazon.nova-micro-v1:0",
+    "id": "q46"
+  },
+  {
+    "sql": "SELECT COALESCE(SUM(ol.amount_cents), 0) AS billed_cents\nFROM orders od\nJOIN order_lines ol ON od.order_id = ol.order_id\nWHERE od.status = 'placed'\n  AND od.deleted_at IS NOT NULL",
+    "raw": "```sql\nSELECT COALESCE(SUM(ol.amount_cents), 0) AS billed_cents\nFROM orders od\nJOIN order_lines ol ON od.order_id = ol.order_id\nWHERE od.status = 'placed'\n  AND od.deleted_at IS NOT NULL;\n-- used_rules: f873cff6-d9bd-41e8-89b0-115542eccb50, f7f72a4b-92ad-4072-a32d-6ee8b90d1c70\n```",
+    "used_rules": [
+      "f873cff6-d9bd-41e8-89b0-115542eccb50",
+      "f7f72a4b-92ad-4072-a32d-6ee8b90d1c70"
+    ],
+    "retrieved_rule_ids": [
+      "f7f72a4b-92ad-4072-a32d-6ee8b90d1c70",
+      "851ad770-34c0-448e-b799-df23e10d3c4c",
+      "61895854-f531-44cf-a224-b48370b010f3",
+      "f873cff6-d9bd-41e8-89b0-115542eccb50",
+      "9d9c4ba4-afd0-4257-b3d6-eb47b7b51e15"
+    ],
+    "retrieved_rule_keys": [
+      "metric:revenue",
+      "join:orders_customers_regions",
+      "filter:orders_not_cancelled",
+      "filter:orders_soft_delete",
+      "calendar:fiscal"
+    ],
+    "rejected": null,
+    "model_id": "amazon.nova-micro-v1:0",
+    "id": "q47"
+  },
+  {
+    "sql": "SELECT SUM(ol.qty) AS units\nFROM orders od\nJOIN order_lines ol ON od.order_id = ol.order_id\nJOIN customers c ON od.customer_id = c.customer_id\nJOIN regions r ON c.region_id = r.region_id\nWHERE od.status <> 'cancelled'\n  AND od.deleted_at IS NULL\n  AND od.ordered_at BETWEEN '2026-05-01' AND '2026-08-01'",
+    "raw": "```sql\nSELECT SUM(ol.qty) AS units\nFROM orders od\nJOIN order_lines ol ON od.order_id = ol.order_id\nJOIN customers c ON od.customer_id = c.customer_id\nJOIN regions r ON c.region_id = r.region_id\nWHERE od.status <> 'cancelled'\n  AND od.deleted_at IS NULL\n  AND od.ordered_at BETWEEN '2026-05-01' AND '2026-08-01'\n-- used_rules: 61895854-f531-44cf-a224-b48370b010f3, f873cff6-d9bd-41e8-89b0-115542eccb50, 9d9c4ba4-afd0-4257-b3d6-eb47b7b51e15\n```",
+    "used_rules": [
+      "61895854-f531-44cf-a224-b48370b010f3",
+      "f873cff6-d9bd-41e8-89b0-115542eccb50",
+      "9d9c4ba4-afd0-4257-b3d6-eb47b7b51e15"
+    ],
+    "retrieved_rule_ids": [
+      "61895854-f531-44cf-a224-b48370b010f3",
+      "9d9c4ba4-afd0-4257-b3d6-eb47b7b51e15",
+      "f873cff6-d9bd-41e8-89b0-115542eccb50",
+      "851ad770-34c0-448e-b799-df23e10d3c4c",
+      "f7f72a4b-92ad-4072-a32d-6ee8b90d1c70"
+    ],
+    "retrieved_rule_keys": [
+      "filter:orders_not_cancelled",
+      "calendar:fiscal",
+      "filter:orders_soft_delete",
+      "join:orders_customers_regions",
+      "metric:revenue"
+    ],
+    "rejected": null,
+    "model_id": "amazon.nova-micro-v1:0",
+    "id": "q48"
+  },
+  {
+    "sql": "SELECT SUM(ol.amount_cents - COALESCE(r.amount_cents, 0)) AS revenue_cents\nFROM orders od\nJOIN order_lines ol ON od.order_id = ol.order_id\nLEFT JOIN refunds r ON od.order_id = r.order_id\nWHERE od.status <> 'cancelled'\n  AND od.deleted_at IS NULL\n  AND od.ordered_at BETWEEN '2026-05-01' AND '2026-08-01'",
+    "raw": "```sql\nSELECT SUM(ol.amount_cents - COALESCE(r.amount_cents, 0)) AS revenue_cents\nFROM orders od\nJOIN order_lines ol ON od.order_id = ol.order_id\nLEFT JOIN refunds r ON od.order_id = r.order_id\nWHERE od.status <> 'cancelled'\n  AND od.deleted_at IS NULL\n  AND od.ordered_at BETWEEN '2026-05-01' AND '2026-08-01'\n-- used_rules: f7f72a4b-92ad-4072-a32d-6ee8b90d1c70, 9d9c4ba4-afd0-4257-b3d6-eb47b7b51e15, 61895854-f531-44cf-a224-b48370b010f3, f873cff6-d9bd-41e8-89b0-115542eccb50\n```",
+    "used_rules": [
+      "f7f72a4b-92ad-4072-a32d-6ee8b90d1c70",
+      "9d9c4ba4-afd0-4257-b3d6-eb47b7b51e15",
+      "61895854-f531-44cf-a224-b48370b010f3",
+      "f873cff6-d9bd-41e8-89b0-115542eccb50"
+    ],
+    "retrieved_rule_ids": [
+      "f7f72a4b-92ad-4072-a32d-6ee8b90d1c70",
+      "9d9c4ba4-afd0-4257-b3d6-eb47b7b51e15",
+      "851ad770-34c0-448e-b799-df23e10d3c4c",
+      "61895854-f531-44cf-a224-b48370b010f3",
+      "f873cff6-d9bd-41e8-89b0-115542eccb50"
+    ],
+    "retrieved_rule_keys": [
+      "metric:revenue",
+      "calendar:fiscal",
+      "join:orders_customers_regions",
+      "filter:orders_not_cancelled",
+      "filter:orders_soft_delete"
+    ],
+    "rejected": null,
+    "model_id": "amazon.nova-micro-v1:0",
+    "id": "q49"
+  },
+  {
+    "sql": "SELECT COUNT(od.order_id) AS placed_order_count\nFROM orders od\nJOIN customers c ON od.customer_id = c.customer_id\nJOIN regions r ON c.region_id = r.region_id\nLEFT JOIN refunds rf ON od.order_id = rf.order_id\nWHERE od.status <> 'cancelled'\n  AND od.deleted_at IS NULL\n  AND rf.refunded_at IS NULL\n  AND od.ordered_at BETWEEN '2026-05-01' AND '2026-08-01'",
+    "raw": "```sql\nSELECT COUNT(od.order_id) AS placed_order_count\nFROM orders od\nJOIN customers c ON od.customer_id = c.customer_id\nJOIN regions r ON c.region_id = r.region_id\nLEFT JOIN refunds rf ON od.order_id = rf.order_id\nWHERE od.status <> 'cancelled'\n  AND od.deleted_at IS NULL\n  AND rf.refunded_at IS NULL\n  AND od.ordered_at BETWEEN '2026-05-01' AND '2026-08-01'\n-- used_rules: 61895854-f531-44cf-a224-b48370b010f3,f873cff6-d9bd-41e8-89b0-115542eccb50,f7f72a4b-92ad-4072-a32d-6ee8b90d1c70\n```",
+    "used_rules": [
+      "61895854-f531-44cf-a224-b48370b010f3",
+      "f873cff6-d9bd-41e8-89b0-115542eccb50",
+      "f7f72a4b-92ad-4072-a32d-6ee8b90d1c70"
+    ],
+    "retrieved_rule_ids": [
+      "9d9c4ba4-afd0-4257-b3d6-eb47b7b51e15",
+      "61895854-f531-44cf-a224-b48370b010f3",
+      "f873cff6-d9bd-41e8-89b0-115542eccb50",
+      "851ad770-34c0-448e-b799-df23e10d3c4c",
+      "f7f72a4b-92ad-4072-a32d-6ee8b90d1c70"
+    ],
+    "retrieved_rule_keys": [
+      "calendar:fiscal",
+      "filter:orders_not_cancelled",
+      "filter:orders_soft_delete",
+      "join:orders_customers_regions",
+      "metric:revenue"
+    ],
+    "rejected": null,
+    "model_id": "amazon.nova-micro-v1:0",
+    "id": "q50"
+  }
+]
