@@ -45,8 +45,9 @@ def cmd_migrate(args: argparse.Namespace) -> int:
     def go() -> int:
         from apprentice_crdb import memory
 
-        print(json.dumps(memory.migrate(try_vector_index=args.try_vector_index), indent=2))
-        return 0
+        report = memory.migrate(try_vector_index=args.try_vector_index)
+        print(json.dumps(report, indent=2))
+        return 0 if report.get("ok") else 1
 
     return _run_crdb(go)
 
@@ -88,38 +89,50 @@ def cmd_baseline(_: argparse.Namespace) -> int:
     return run_exam.cmd_grade(str(out))
 
 
-def cmd_educate(_: argparse.Namespace) -> int:
-    from pathlib import Path
-
+def cmd_educate(args: argparse.Namespace) -> int:
     from apprentice_crdb.educate import run_education
     from apprentice_crdb.paths import REPO_ROOT
 
     def go() -> int:
-        plan = run_education()
+        plan = run_education(policy=args.policy)
         sys.path.insert(0, str(REPO_ROOT / "eval"))
         import run_exam  # type: ignore
 
-        curve = []
         import io
         from contextlib import redirect_stdout
 
-        for ep in plan["epochs"]:
-            buf = io.StringIO()
-            with redirect_stdout(buf):
-                run_exam.cmd_grade(str(REPO_ROOT / ep["answers_path"]))
-            report = json.loads(buf.getvalue())
-            ep["accuracy"] = report["accuracy"]
-            ep["correct"] = report["correct"]
-            ep["by_stratum"] = report["by_stratum"]
-            ep["regression_bait"] = report["regression_bait"]
-            curve.append(ep)
-            print(
-                f"{ep['name']}: {report['correct']}/{report['total']} "
-                f"({report['accuracy']}) as_of={ep['as_of']} keys={ep['live_keys']}",
-                file=sys.stderr,
-            )
-        (REPO_ROOT / "eval" / "curve.json").write_text(json.dumps({"epochs": curve}, indent=2, default=str) + "\n")
-        print(json.dumps({"epochs": curve}, indent=2, default=str))
+        policies = ["oracle", "agent"] if args.policy == "both" else [args.policy]
+        out: dict = {"policy": args.policy, "curves": {}}
+        for pol in policies:
+            curve = []
+            for ep in plan["epochs"]:
+                ans = ep.get(f"{pol}_answers_path")
+                if not ans:
+                    continue
+                row = {
+                    "name": ep["name"],
+                    "as_of": ep["as_of"],
+                    "taught": ep["taught"],
+                    "live_keys": ep["live_keys"],
+                    "answers_path": ans,
+                }
+                buf = io.StringIO()
+                with redirect_stdout(buf):
+                    run_exam.cmd_grade(str(REPO_ROOT / ans))
+                report = json.loads(buf.getvalue())
+                row["accuracy"] = report["accuracy"]
+                row["correct"] = report["correct"]
+                row["by_stratum"] = report["by_stratum"]
+                row["regression_bait"] = report["regression_bait"]
+                curve.append(row)
+                print(
+                    f"{pol}/{ep['name']}: {report['correct']}/{report['total']} "
+                    f"({report['accuracy']}) as_of={ep['as_of']}",
+                    file=sys.stderr,
+                )
+            out["curves"][pol] = curve
+        (REPO_ROOT / "eval" / "curve.json").write_text(json.dumps(out, indent=2, default=str) + "\n")
+        print(json.dumps(out, indent=2, default=str))
         return 0
 
     return _run_crdb(go)
@@ -154,10 +167,17 @@ def build_parser() -> argparse.ArgumentParser:
         help="Grade memory-zero (naive SQL fixtures) against the frozen exam",
     ).set_defaults(func=cmd_baseline)
 
-    sub.add_parser(
+    edu = sub.add_parser(
         "educate",
         help="Write corrections into CockroachDB and score each AOST epoch",
-    ).set_defaults(func=cmd_educate)
+    )
+    edu.add_argument(
+        "--policy",
+        choices=("oracle", "agent", "both"),
+        default="oracle",
+        help="oracle = selector ceiling; agent = Bedrock generation; both = publish the gap",
+    )
+    edu.set_defaults(func=cmd_educate)
     return p
 
 

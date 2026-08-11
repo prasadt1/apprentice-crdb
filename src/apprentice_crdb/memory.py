@@ -10,7 +10,7 @@ from uuid import UUID
 import psycopg
 from psycopg.rows import dict_row
 
-from apprentice_crdb.embeddings import get_embedder
+from apprentice_crdb.embeddings import DIM, get_embedder
 from apprentice_crdb.paths import MEMORY_SCHEMA
 
 
@@ -101,12 +101,69 @@ def reset_memory() -> None:
         conn.commit()
 
 
+def vector_literal(vector: list[float]) -> str:
+    return "[" + ",".join(f"{x:.8f}" for x in vector) + "]"
+
+
+def embedding_column_type(conn) -> str | None:
+    """Actual declared type of semantic_rules.embedding, e.g. 'VECTOR(1024)'."""
+    try:
+        for row in conn.execute("SHOW COLUMNS FROM semantic_rules").fetchall():
+            d = dict(row)
+            if d.get("column_name") == "embedding":
+                return str(d.get("data_type") or "")
+    except Exception:  # noqa: BLE001 — probe only; absence is reported, never faked
+        return None
+    return None
+
+
 def migrate(try_vector_index: bool = False) -> dict[str, Any]:
+    """Bring the memory schema to VECTOR(DIM).
+
+    `CREATE TABLE IF NOT EXISTS` will not widen a table that already exists, and the
+    ALTER cannot backfill while rows still hold vectors of the old width. Those rows
+    are stale mock-hasher vectors — they must not survive into a Titan run anyway, or
+    the table would silently mix embedding providers — so their embeddings are cleared
+    before widening. `ok` reflects the column's real width afterwards, never a constant.
+    """
     notes: list[str] = []
     with connect() as conn:
         conn.execute(MEMORY_SCHEMA.read_text())
         conn.commit()
         notes.append("applied sql/001_memory.sql")
+
+        before = embedding_column_type(conn)
+        notes.append(f"embedding column before: {before or 'unknown'}")
+
+        if before and str(DIM) not in before:
+            try:
+                conn.execute("DROP INDEX IF EXISTS semantic_embedding_idx")
+                conn.commit()
+                notes.append("dropped semantic_embedding_idx (rebuilt after widen)")
+            except Exception as exc:  # noqa: BLE001
+                conn.rollback()
+                notes.append(f"index drop skipped: {exc}")
+            try:
+                cleared = conn.execute(
+                    "UPDATE semantic_rules SET embedding = NULL "
+                    "WHERE embedding IS NOT NULL"
+                ).rowcount
+                conn.commit()
+                notes.append(f"cleared {cleared} stale embeddings of the old width")
+            except Exception as exc:  # noqa: BLE001
+                conn.rollback()
+                notes.append(f"clearing stale embeddings failed: {exc}")
+            try:
+                conn.execute(
+                    f"ALTER TABLE semantic_rules ALTER COLUMN embedding "
+                    f"SET DATA TYPE VECTOR({DIM})"
+                )
+                conn.commit()
+                notes.append(f"widened embedding to VECTOR({DIM})")
+            except Exception as exc:  # noqa: BLE001
+                conn.rollback()
+                notes.append(f"embedding widen FAILED: {exc}")
+
         if try_vector_index:
             try:
                 conn.execute(
@@ -118,7 +175,17 @@ def migrate(try_vector_index: bool = False) -> dict[str, Any]:
             except Exception as exc:  # noqa: BLE001 — we must surface the real error
                 conn.rollback()
                 notes.append(f"CREATE VECTOR INDEX failed (documented, not faked): {exc}")
-    return {"ok": True, "notes": notes}
+
+        after = embedding_column_type(conn)
+        notes.append(f"embedding column after: {after or 'unknown'}")
+
+    ok = bool(after and str(DIM) in after)
+    if not ok:
+        notes.append(
+            f"BLOCKING: embedding column is {after or 'unknown'}, expected VECTOR({DIM}). "
+            "Writing Titan vectors will fail. Do not start an education run."
+        )
+    return {"ok": ok, "embedding_column": after, "expected_dim": DIM, "notes": notes}
 
 
 def record_episode(
@@ -157,7 +224,6 @@ def upsert_rule(
     """One live rule per key. Concurrent writers serialize; old row is superseded."""
     embedder = get_embedder()
     vector = embedder.embed(statement)
-    vector_literal = "[" + ",".join(f"{x:.8f}" for x in vector) + "]"
     with connect() as conn:
         conn.execute("SET TRANSACTION ISOLATION LEVEL SERIALIZABLE")
         live = conn.execute(
@@ -165,13 +231,13 @@ def upsert_rule(
             (rule_key,),
         ).fetchone()
         new_id = conn.execute(
-            """
+            f"""
             INSERT INTO semantic_rules
                 (rule_key, rule_type, statement, evidence_episode_id, embedding, created_at)
-            VALUES (%s, %s, %s, %s, %s::VECTOR(384), COALESCE(%s::timestamptz, now()))
+            VALUES (%s, %s, %s, %s, %s::VECTOR({DIM}), COALESCE(%s::timestamptz, now()))
             RETURNING id
             """,
-            (rule_key, rule_type, statement, evidence_episode_id, vector_literal, created_at),
+            (rule_key, rule_type, statement, evidence_episode_id, vector_literal(vector), created_at),
         ).fetchone()
         assert new_id is not None
         if live and live["id"] != new_id["id"]:
@@ -207,6 +273,29 @@ def recall_live(limit: int = 20, as_of: str | None = None) -> list[dict[str, Any
         conn.execute(f"BEGIN AS OF SYSTEM TIME {ts}")
         try:
             rows = conn.execute(select, (limit,)).fetchall()
+        finally:
+            conn.execute("ROLLBACK")
+        return [dict(r) for r in rows]
+
+
+def recall_similar(query_text: str, *, as_of: str, k: int = 5) -> list[dict[str, Any]]:
+    """Top-k live rules by embedding distance, pinned to an HLC. Empty at memory_zero."""
+    embedder = get_embedder()
+    lit = vector_literal(embedder.embed(query_text))
+    select = f"""
+        SELECT id, rule_key, rule_type, statement
+        FROM semantic_rules
+        WHERE superseded_by IS NULL AND embedding IS NOT NULL
+        ORDER BY embedding <-> %s::VECTOR({DIM})
+        LIMIT %s
+    """
+    _wait_until_closed(as_of)
+    ts = aost_literal(as_of)
+    with connect(autocommit=True) as conn:
+        conn.execute("SET statement_timeout = '20s'")
+        conn.execute(f"BEGIN AS OF SYSTEM TIME {ts}")
+        try:
+            rows = conn.execute(select, (lit, k)).fetchall()
         finally:
             conn.execute("ROLLBACK")
         return [dict(r) for r in rows]
