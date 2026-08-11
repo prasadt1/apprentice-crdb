@@ -1,0 +1,202 @@
+[
+  {
+    "id": "q01",
+    "sql": "SELECT rg.name AS region, SUM(li.amount_cents) AS revenue_cents\nFROM order_lines li\nJOIN orders od ON od.order_id = li.order_id\nJOIN customers cu ON cu.customer_id = od.customer_id\nJOIN regions rg ON rg.region_id = cu.region_id\nWHERE od.ordered_at >= '2026-07-01' AND od.ordered_at < '2026-10-01'\nGROUP BY rg.name"
+  },
+  {
+    "id": "q02",
+    "sql": "SELECT COALESCE(SUM(li.amount_cents), 0) AS revenue_cents\nFROM order_lines li\nJOIN orders od ON od.order_id = li.order_id\nWHERE od.ordered_at >= '2026-04-01' AND od.ordered_at < '2026-07-01'"
+  },
+  {
+    "id": "q03",
+    "sql": "SELECT COUNT(*) AS cancelled_count\nFROM orders od\nWHERE od.status = 'cancelled' AND od.ordered_at >= '2026-01-01' AND od.ordered_at < '2027-01-01'"
+  },
+  {
+    "id": "q04",
+    "sql": "SELECT COALESCE(SUM(li.amount_cents), 0) AS revenue_cents\nFROM order_lines li\nJOIN orders od ON od.order_id = li.order_id\nWHERE od.ordered_at >= '2026-10-01' AND od.ordered_at < '2027-01-01'"
+  },
+  {
+    "id": "q05",
+    "sql": "SELECT pr.category AS category, SUM(li.amount_cents) AS revenue_cents\nFROM order_lines li\nJOIN products pr ON pr.product_id = li.product_id\nJOIN orders od ON od.order_id = li.order_id\nWHERE od.ordered_at >= '2026-07-01' AND od.ordered_at < '2026-10-01'\nGROUP BY pr.category\nORDER BY revenue_cents DESC\nLIMIT 1"
+  },
+  {
+    "id": "q06",
+    "sql": "SELECT rg.name AS region,\n       COALESCE(SUM(li.amount_cents), 0) AS services_revenue_cents\nFROM order_lines li\nJOIN products pr ON pr.product_id = li.product_id\nJOIN orders od ON od.order_id = li.order_id\nJOIN regions rg ON rg.region_id = li.product_id\nWHERE pr.category = 'services' AND od.ordered_at >= '2026-02-01' AND od.ordered_at < '2027-02-01'\nGROUP BY rg.name"
+  },
+  {
+    "id": "q07",
+    "sql": "SELECT COUNT(*) AS soft_deleted_count\nFROM orders od\nWHERE od.deleted_at IS NOT NULL"
+  },
+  {
+    "id": "q08",
+    "sql": "SELECT rg.name AS region, COALESCE(SUM(li.amount_cents), 0) AS net_revenue_cents\nFROM regions rg\nJOIN customers cu ON cu.region_id = rg.region_id\nJOIN orders od ON od.customer_id = cu.customer_id AND od.ordered_at >= '2026-01-01' AND od.ordered_at < '2027-01-01'\nJOIN order_lines li ON li.order_id = od.order_id\nWHERE rg.name = 'APAC'\nGROUP BY rg.name"
+  },
+  {
+    "id": "q09",
+    "sql": "SELECT COALESCE(SUM(li.amount_cents), 0) AS order_value_cents\nFROM order_lines li\nJOIN orders od ON od.order_id = li.order_id\nWHERE od.ordered_at >= '2026-08-01' AND od.ordered_at < '2026-09-01'"
+  },
+  {
+    "id": "q10",
+    "sql": "SELECT COALESCE(SUM(li.amount_cents), 0) AS revenue_cents\nFROM order_lines li\nJOIN orders od ON od.order_id = li.order_id\nWHERE od.ordered_at >= '2026-01-01' AND od.ordered_at < '2027-01-01'"
+  },
+  {
+    "id": "q11",
+    "sql": "SELECT COALESCE(SUM(li.amount_cents), 0) AS gross_cents\nFROM order_lines li\nJOIN orders od ON od.order_id = li.order_id\nWHERE od.ordered_at >= '2026-01-01' AND od.ordered_at < '2027-01-01'\n  AND li.product_id IN (SELECT pr.product_id FROM products pr WHERE pr.category = 'hardware')"
+  },
+  {
+    "id": "q12",
+    "sql": "SELECT cu.name AS customer, SUM(li.amount_cents) AS revenue_cents\nFROM customers cu\nJOIN orders od ON od.customer_id = cu.customer_id AND od.ordered_at >= '2026-01-01' AND od.ordered_at < '2027-01-01'\nJOIN order_lines li ON li.order_id = od.order_id\nGROUP BY cu.customer_id, cu.name\nORDER BY revenue_cents DESC\nLIMIT 1"
+  },
+  {
+    "id": "q13",
+    "sql": "SELECT 'FQ2' AS fiscal_quarter,\n       (SELECT COALESCE(SUM(li.amount_cents), 0) AS x\n        FROM order_lines li\n        JOIN orders od ON od.order_id = li.order_id\n        WHERE od.ordered_at >= '2026-04-01' AND od.ordered_at < '2026-07-01') AS revenue_cents\nUNION ALL\nSELECT 'FQ3',\n       (SELECT COALESCE(SUM(li.amount_cents), 0) AS x\n        FROM order_lines li\n        JOIN orders od ON od.order_id = li.order_id\n        WHERE od.ordered_at >= '2026-07-01' AND od.ordered_at < '2026-10-01')"
+  },
+  {
+    "id": "q14",
+    "sql": "WITH per_order AS (\n  SELECT od.order_id,\n         (SELECT COALESCE(SUM(li.amount_cents), 0) FROM order_lines li WHERE li.order_id = od.order_id) AS total_cents\n  FROM orders od\n  WHERE od.ordered_at >= '2026-01-01' AND od.ordered_at < '2027-01-01'\n)\nSELECT AVG(total_cents) AS avg_revenue_cents FROM per_order"
+  },
+  {
+    "id": "q15",
+    "sql": "SELECT cu.name AS customer, COALESCE(SUM(li.amount_cents), 0) AS revenue_cents\nFROM customers cu\nJOIN orders od ON od.customer_id = cu.customer_id AND od.ordered_at >= '2026-01-01' AND od.ordered_at < '2027-01-01'\nJOIN order_lines li ON li.order_id = od.order_id\nWHERE cu.name = 'Rhine Goods'\nGROUP BY cu.name"
+  },
+  {
+    "id": "q16",
+    "sql": "SELECT COUNT(DISTINCT od.customer_id) AS customer_count\nFROM orders od\nWHERE od.ordered_at >= '2026-07-01' AND od.ordered_at < '2026-10-01'"
+  },
+  {
+    "id": "q17",
+    "sql": "SELECT COALESCE(SUM(li.amount_cents), 0) AS q3_revenue_cents\nFROM order_lines li\nJOIN orders od ON od.order_id = li.order_id\nWHERE od.ordered_at >= '2026-07-01' AND od.ordered_at < '2026-10-01'"
+  },
+  {
+    "id": "q18",
+    "sql": "SELECT COALESCE(SUM(li.amount_cents), 0) AS revenue_cents\nFROM order_lines li\nJOIN orders od ON od.order_id = li.order_id\nJOIN customers cu ON cu.customer_id = od.customer_id\nJOIN regions rg ON rg.region_id = cu.region_id\nWHERE rg.name = 'EMEA' AND od.ordered_at >= '2026-07-01' AND od.ordered_at < '2026-10-01'"
+  },
+  {
+    "id": "q19",
+    "sql": "SELECT rg.name AS region, SUM(li.qty) AS units\nFROM order_lines li\nJOIN orders od ON od.order_id = li.order_id\nJOIN regions rg ON rg.region_id = li.product_id\nWHERE od.ordered_at >= '2026-01-01' AND od.ordered_at < '2027-01-01'\nGROUP BY rg.name"
+  },
+  {
+    "id": "q20",
+    "sql": "SELECT COALESCE(SUM(li.amount_cents), 0) AS revenue_cents\nFROM order_lines li\nJOIN orders od ON od.order_id = li.order_id\nWHERE od.ordered_at >= '2026-01-01' AND od.ordered_at < '2026-09-01'"
+  },
+  {
+    "id": "q21",
+    "sql": "SELECT cu.name AS customer, COALESCE(SUM(li.amount_cents), 0) AS revenue_cents\nFROM customers cu\nJOIN orders od ON od.customer_id = cu.customer_id AND od.ordered_at >= '2026-01-01' AND od.ordered_at < '2027-01-01'\nJOIN order_lines li ON li.order_id = od.order_id\nWHERE cu.name = 'Harbor Pacific'\nGROUP BY cu.name"
+  },
+  {
+    "id": "q22",
+    "sql": "SELECT COALESCE(SUM(li.amount_cents), 0) AS gadget_revenue_cents\nFROM order_lines li\nJOIN products pr ON pr.product_id = li.product_id\nJOIN orders od ON od.order_id = li.order_id\nWHERE pr.sku = 'GAD-200' AND od.ordered_at >= '2026-01-01' AND od.ordered_at < '2027-01-01'"
+  },
+  {
+    "id": "q23",
+    "sql": "SELECT od.order_id AS order_id, SUM(li.amount_cents) AS amount_cents\nFROM orders od\nJOIN order_lines li ON li.order_id = od.order_id\nWHERE od.ordered_at >= '2026-02-01' AND od.ordered_at < '2027-02-01'\nGROUP BY od.order_id\nORDER BY amount_cents DESC\nLIMIT 1"
+  },
+  {
+    "id": "q24",
+    "sql": "SELECT COALESCE(SUM(re.amount_cents), 0) AS refund_cents\nFROM refunds re\nWHERE re.refunded_at >= '2026-04-01' AND re.refunded_at < '2026-07-01'"
+  },
+  {
+    "id": "q25",
+    "sql": "WITH regrev AS (\n  SELECT rg.name AS region, SUM(li.amount_cents) AS revenue_cents\n  FROM order_lines li\n  JOIN orders od ON od.order_id = li.order_id\n  JOIN customers cu ON cu.customer_id = od.customer_id\n  JOIN regions rg ON rg.region_id = cu.region_id\n  WHERE od.ordered_at >= '2026-07-01' AND od.ordered_at < '2026-10-01'\n  GROUP BY rg.name\n)\nSELECT region, ROW_NUMBER() OVER (ORDER BY revenue_cents DESC) AS rank_no\nFROM regrev"
+  },
+  {
+    "id": "q26",
+    "sql": "SELECT COALESCE(SUM(li.amount_cents), 0) AS september_revenue_cents\nFROM order_lines li\nJOIN orders od ON od.order_id = li.order_id\nWHERE od.ordered_at >= '2026-09-01' AND od.ordered_at < '2026-10-01'"
+  },
+  {
+    "id": "q27",
+    "sql": "SELECT COALESCE(SUM(li.amount_cents), 0) AS revenue_cents\nFROM order_lines li\nJOIN orders od ON od.order_id = li.order_id\nJOIN customers cu ON cu.customer_id = od.customer_id\nWHERE od.ordered_at >= '2026-01-01' AND od.ordered_at < '2027-01-01'\n  AND cu.region_id = (SELECT c2.region_id FROM customers c2 WHERE c2.name = 'Harbor Pacific')"
+  },
+  {
+    "id": "q28",
+    "sql": "SELECT COALESCE(SUM(li.amount_cents), 0) AS revenue_cents\nFROM order_lines li\nJOIN orders od ON od.order_id = li.order_id\nJOIN customers cu ON cu.customer_id = od.customer_id\nWHERE cu.name = 'Northwind Retail' AND od.ordered_at >= '2026-01-01' AND od.ordered_at < '2027-01-01'"
+  },
+  {
+    "id": "q29",
+    "sql": "SELECT COUNT(*) AS product_count\nFROM products pr"
+  },
+  {
+    "id": "q30",
+    "sql": "WITH per_order AS (\n  SELECT od.order_id, cu.region_id,\n         (SELECT COALESCE(SUM(li.amount_cents), 0) FROM order_lines li WHERE li.order_id = od.order_id) AS total_cents\n  FROM orders od\n  JOIN customers cu ON cu.customer_id = od.customer_id\n  WHERE od.ordered_at >= '2026-07-01' AND od.ordered_at < '2026-10-01'\n)\nSELECT rg.name AS region, AVG(po.total_cents) AS avg_order_value_cents\nFROM per_order po\nJOIN regions rg ON rg.region_id = po.region_id\nGROUP BY rg.name"
+  },
+  {
+    "id": "q31",
+    "sql": "SELECT COALESCE(SUM(li.amount_cents), 0) AS gross_cents\nFROM order_lines li\nJOIN orders od ON od.order_id = li.order_id\nWHERE od.ordered_at >= '2026-04-01' AND od.ordered_at < '2026-07-01'"
+  },
+  {
+    "id": "q32",
+    "sql": "SELECT rg.name AS region, SUM(li.amount_cents) AS revenue_cents\nFROM order_lines li\nJOIN orders od ON od.order_id = li.order_id\nJOIN regions rg ON rg.region_id = li.product_id\nWHERE od.ordered_at >= '2026-01-01' AND od.ordered_at < '2027-01-01'\nGROUP BY rg.name"
+  },
+  {
+    "id": "q33",
+    "sql": "SELECT strftime('%Y-%m', od.ordered_at) AS month, SUM(li.amount_cents) AS revenue_cents\nFROM order_lines li\nJOIN orders od ON od.order_id = li.order_id\nWHERE od.ordered_at >= '2026-07-01' AND od.ordered_at < '2026-10-01'\nGROUP BY strftime('%Y-%m', od.ordered_at)"
+  },
+  {
+    "id": "q34",
+    "sql": "SELECT pr.sku AS sku, pr.category AS category\nFROM products pr"
+  },
+  {
+    "id": "q35",
+    "sql": "SELECT rg.name AS region, COUNT(cu.customer_id) AS customer_count\nFROM regions rg\nJOIN customers cu ON cu.region_id = rg.region_id\nGROUP BY rg.region_id, rg.name"
+  },
+  {
+    "id": "q36",
+    "sql": "SELECT COALESCE(SUM(li.amount_cents), 0) AS revenue_cents\nFROM order_lines li\nJOIN orders od ON od.order_id = li.order_id\nWHERE od.ordered_at >= '2026-07-01' AND od.ordered_at < '2026-10-01'"
+  },
+  {
+    "id": "q37",
+    "sql": "SELECT COUNT(*) AS order_count\nFROM orders od\nWHERE od.ordered_at >= '2026-07-01' AND od.ordered_at < '2026-10-01'"
+  },
+  {
+    "id": "q38",
+    "sql": "SELECT COALESCE(SUM(li.amount_cents), 0) AS fytd_revenue_cents\nFROM order_lines li\nJOIN orders od ON od.order_id = li.order_id\nWHERE od.ordered_at >= '2026-01-01' AND od.ordered_at < '2026-11-05'"
+  },
+  {
+    "id": "q39",
+    "sql": "SELECT COALESCE(SUM(li.amount_cents), 0) AS amount_cents\nFROM order_lines li\nJOIN orders od ON od.order_id = li.order_id\nJOIN customers cu ON cu.customer_id = od.customer_id\nWHERE cu.name = 'Rhine Goods' AND od.ordered_at >= '2026-07-01' AND od.ordered_at < '2026-10-01'"
+  },
+  {
+    "id": "q40",
+    "sql": "SELECT rg.name AS region, SUM(li.amount_cents) AS revenue_cents\nFROM order_lines li\nJOIN orders od ON od.order_id = li.order_id\nJOIN regions rg ON rg.region_id = li.product_id\nWHERE od.ordered_at >= '2026-05-01' AND od.ordered_at < '2026-06-01'\nGROUP BY rg.name"
+  },
+  {
+    "id": "q41",
+    "sql": "SELECT CAST((SELECT COALESCE(SUM(re.amount_cents), 0) FROM refunds re\n             WHERE re.refunded_at >= '2026-04-01' AND re.refunded_at < '2026-07-01') AS REAL)\n     / (SELECT SUM(li.amount_cents)\n        FROM order_lines li\n        JOIN orders od ON od.order_id = li.order_id\n        WHERE od.ordered_at >= '2026-04-01' AND od.ordered_at < '2026-07-01') AS refund_share"
+  },
+  {
+    "id": "q42",
+    "sql": "SELECT COALESCE(SUM(li.amount_cents), 0) AS revenue_cents\nFROM order_lines li\nJOIN orders od ON od.order_id = li.order_id\nJOIN customers cu ON cu.customer_id = od.customer_id\nJOIN regions rg ON rg.region_id = cu.region_id\nWHERE rg.name = 'AMER' AND od.ordered_at >= '2026-04-01' AND od.ordered_at < '2026-07-01'"
+  },
+  {
+    "id": "q43",
+    "sql": "SELECT COALESCE(SUM(li.qty), 0) AS widget_units\nFROM order_lines li\nJOIN products pr ON pr.product_id = li.product_id\nJOIN orders od ON od.order_id = li.order_id\nWHERE pr.sku = 'WID-100' AND od.ordered_at >= '2026-01-01' AND od.ordered_at < '2027-01-01'"
+  },
+  {
+    "id": "q44",
+    "sql": "SELECT rg.name AS region, SUM(li.amount_cents) AS revenue_cents\nFROM order_lines li\nJOIN orders od ON od.order_id = li.order_id\nJOIN customers cu ON cu.customer_id = od.customer_id\nJOIN regions rg ON rg.region_id = cu.region_id\nWHERE od.ordered_at >= '2026-01-01' AND od.ordered_at < '2027-01-01'\nGROUP BY rg.name\nORDER BY 2 DESC LIMIT 1"
+  },
+  {
+    "id": "q45",
+    "sql": "SELECT COALESCE(SUM(li.amount_cents), 0) AS widget_revenue_cents\nFROM order_lines li\nJOIN products pr ON pr.product_id = li.product_id\nJOIN orders od ON od.order_id = li.order_id\nWHERE pr.sku = 'WID-100' AND od.ordered_at >= '2026-01-01' AND od.ordered_at < '2027-01-01'"
+  },
+  {
+    "id": "q46",
+    "sql": "SELECT rg.name AS region,\n       COALESCE(SUM(li.amount_cents), 0) AS october_revenue_cents\nFROM order_lines li\nJOIN orders od ON od.order_id = li.order_id\nJOIN regions rg ON rg.region_id = li.product_id\nWHERE od.ordered_at >= '2026-10-01' AND od.ordered_at < '2026-11-01'\nGROUP BY rg.name"
+  },
+  {
+    "id": "q47",
+    "sql": "SELECT COALESCE(SUM(li.amount_cents), 0) AS billed_cents\nFROM order_lines li\nJOIN orders od ON od.order_id = li.order_id\nWHERE od.deleted_at IS NOT NULL"
+  },
+  {
+    "id": "q48",
+    "sql": "SELECT COALESCE(SUM(li.qty), 0) AS units\nFROM order_lines li\nJOIN orders od ON od.order_id = li.order_id\nWHERE od.ordered_at >= '2026-07-01' AND od.ordered_at < '2026-10-01'"
+  },
+  {
+    "id": "q49",
+    "sql": "SELECT COALESCE(SUM(li.amount_cents), 0) AS revenue_cents\nFROM order_lines li\nJOIN orders od ON od.order_id = li.order_id\nWHERE od.ordered_at >= '2026-07-01' AND od.ordered_at < '2026-10-01'"
+  },
+  {
+    "id": "q50",
+    "sql": "SELECT COUNT(*) AS placed_order_count\nFROM orders od\nWHERE od.ordered_at >= '2026-01-01' AND od.ordered_at < '2027-01-01'"
+  }
+]
