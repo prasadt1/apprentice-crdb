@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Apprentice — memory that helps, then hurts</title>
+  <meta name="description" content="Frozen 50-question exam on CockroachDB AS OF SYSTEM TIME. Two Bedrock agents peak before full memory and decline. Retrieval at that epoch is 44/44." />
+  <style>
+    :root {
+      --bg: #fcfcfb;
+      --ink: #0b0b0b;
+      --muted: #52514e;
+      --line: #e1e0d9;
+      --accent: #eb6834;
+      --blue: #2a78d6;
+      --green: #0ca30c;
+      --sans: system-ui, -apple-system, "Segoe UI", sans-serif;
+      --mono: ui-monospace, Menlo, Consolas, monospace;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--ink);
+      font-family: var(--sans);
+      line-height: 1.5;
+    }
+    .bar { width: 12px; background: var(--accent); position: fixed; inset: 0 auto 0 0; }
+    main { max-width: 52rem; margin: 0 auto; padding: 2.25rem 1.25rem 4rem 1.75rem; }
+    h1 { font-size: clamp(1.8rem, 4vw, 2.4rem); margin: 0 0 0.35rem; letter-spacing: -0.03em; }
+    .tag { color: var(--muted); font-size: 1.1rem; margin: 0 0 1.25rem; }
+    p { margin: 0.7rem 0; }
+    .muted { color: var(--muted); }
+    a { color: var(--ink); }
+    .stats { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0.7rem; margin: 1.25rem 0; }
+    .stat { border: 1px solid var(--line); background: #fff; padding: 0.85rem 0.8rem; }
+    .stat .n { font-size: 1.55rem; font-variant-numeric: tabular-nums; line-height: 1; }
+    .stat .l { display: block; margin-top: 0.35rem; font-size: 0.78rem; color: var(--muted); }
+    table { width: 100%; border-collapse: collapse; font-size: 0.92rem; background: #fff; }
+    th, td { border: 1px solid var(--line); padding: 0.45rem 0.55rem; text-align: left; }
+    td.n, th.n { text-align: right; font-variant-numeric: tabular-nums; }
+    th { font-size: 0.78rem; color: var(--muted); font-weight: 600; }
+    .peak { font-weight: 700; }
+    figure { margin: 1.25rem 0 0.25rem; }
+    figure img { display: block; width: 100%; height: auto; border: 1px solid var(--line); background: #fff; }
+    figcaption { margin-top: 0.5rem; font-size: 0.88rem; color: var(--muted); }
+    nav { display: flex; flex-wrap: wrap; gap: 0.65rem 1.1rem; margin: 1rem 0 1.5rem; font-size: 0.92rem; }
+    pre {
+      margin: 0.75rem 0;
+      padding: 0.85rem 0.95rem;
+      overflow-x: auto;
+      background: #fff;
+      border: 1px solid var(--line);
+      font-family: var(--mono);
+      font-size: 0.82rem;
+      line-height: 1.45;
+    }
+    footer { margin-top: 2.5rem; font-size: 0.85rem; color: var(--muted); }
+    @media (max-width: 640px) { .stats { grid-template-columns: 1fr; } }
+  </style>
+</head>
+<body>
+  <div class="bar" aria-hidden="true"></div>
+  <main>
+    <h1>Apprentice</h1>
+    <p class="tag">memory that helps, then hurts</p>
+    <p>
+      A frozen 50-question exam, replayed on CockroachDB
+      <code>AS OF SYSTEM TIME</code>. Two Bedrock agents peak on partial memory
+      and decline at full memory. Retrieval at that last epoch is <strong>44/44</strong>.
+      Storage worked. Recall worked. Utilization did not.
+    </p>
+
+    <nav>
+      <a href="https://github.com/prasadt1/apprentice-crdb">Source</a>
+      <a href="https://github.com/prasadt1/apprentice-crdb/blob/main/eval/RESULTS.md">Published results</a>
+      <a href="https://github.com/prasadt1/apprentice-crdb/tree/main/eval/runs-nova-lite">Every Lite SQL string</a>
+      <a href="#reproduce">Reproduce the freeze</a>
+    </nav>
+
+    <div class="stats">
+      <div class="stat">
+        <div class="n">14 / 19 / 19 / 16</div>
+        <span class="l">Nova Lite / 50 — peaks, then falls</span>
+      </div>
+      <div class="stat">
+        <div class="n">44 / 44</div>
+        <span class="l">needed rules retrieved at full memory</span>
+      </div>
+      <div class="stat">
+        <div class="n">56 pt</div>
+        <span class="l">gap: oracle 88% vs best agent 32%</span>
+      </div>
+    </div>
+
+    <figure>
+      <img src="media/learning-curve.png" width="1200" height="800" alt="Three curves: oracle rises to 44/50; Nova Micro 8-21-18-13; Nova Lite 14-19-19-16" />
+      <figcaption>
+        Oracle is a selector over frozen SQL — a ceiling, not an agent.
+        Both agents peak <em>before</em> full memory. Source: eval/RESULTS.md, labels frozen at b043aea.
+      </figcaption>
+    </figure>
+
+    <h2>The three curves</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>Epoch</th>
+          <th class="n">Rules</th>
+          <th class="n">Oracle</th>
+          <th class="n">Nova Micro</th>
+          <th class="n">Nova Lite</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><code>memory_zero</code></td>
+          <td class="n">0</td>
+          <td class="n">6/50</td>
+          <td class="n">8/50</td>
+          <td class="n">14/50</td>
+        </tr>
+        <tr>
+          <td><code>filters</code></td>
+          <td class="n">2</td>
+          <td class="n">7/50</td>
+          <td class="n peak">21/50</td>
+          <td class="n">19/50</td>
+        </tr>
+        <tr>
+          <td><code>revenue_and_fiscal</code></td>
+          <td class="n">4</td>
+          <td class="n">31/50</td>
+          <td class="n">18/50</td>
+          <td class="n peak">19/50</td>
+        </tr>
+        <tr>
+          <td><code>join_path</code></td>
+          <td class="n">5</td>
+          <td class="n peak">44/50</td>
+          <td class="n">13/50</td>
+          <td class="n">16/50</td>
+        </tr>
+      </tbody>
+    </table>
+    <p class="muted">Bold in RESULTS.md = that column’s peak. Both agents peak before full memory.</p>
+
+    <h2>Why it fell</h2>
+    <p>
+      Over-application is real and replicated; it is not monotonic with rule count.
+      Both models end below their own <code>unaffected</code> peak — Micro 5/6 → 3/6,
+      Lite 6/6 → 4/6. Lite’s worst cell (3/6) is at <code>filters</code> (two rules), not
+      at full memory. Micro bottoms at 2/6 mid-curriculum.
+    </p>
+    <p>
+      <code>k=5</code> was fixed before the run. With five live rules, retrieval returns
+      the whole corpus and ranks nothing. That describes the prompt. It does not fully
+      explain the <code>unaffected</code> column.
+    </p>
+
+    <figure>
+      <img src="media/aost-replay.png" width="1200" height="800" alt="AOST rewind: same cluster, earlier brain, zero rules at memory_zero" />
+      <figcaption>
+        Replay is a timestamp, not a backup restore. <code>memory_zero</code> is empty
+        because no rules existed yet.
+      </figcaption>
+    </figure>
+
+    <h2 id="reproduce">Reproduce the freeze (no cluster)</h2>
+    <pre>git clone https://github.com/prasadt1/apprentice-crdb.git
+cd apprentice-crdb
+python3.11 -m venv .venv &amp;&amp; source .venv/bin/activate
+pip install -e ".[dev]"
+pytest -q
+python eval/run_exam.py verify</pre>
+    <p class="muted">
+      This page is the functional demo URL: the published curve and the receipt.
+      The CLI is the product. Live memory needs <code>APPRENTICE_CRDB_DSN</code>.
+    </p>
+
+    <footer>
+      Apache-2.0 · CockroachDB × AWS Agentic Memory · I will not call the cluster an AWS service I built. Bedrock is the AWS service.
+    </footer>
+  </main>
+</body>
+</html>

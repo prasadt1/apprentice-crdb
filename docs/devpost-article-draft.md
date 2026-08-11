@@ -4,7 +4,7 @@
 > Last updated: 2026-08-11 — Curve B in (`4df72a5`). Voice: first-person singular, plain.
 > Numbers verified against `eval/RESULTS.md`. Headline: **memory helped, then hurt — twice.**
 > Oracle 6→7→31→44. Nova Micro 8→21→18→13. Nova Lite 14→19→19→16. Retrieval at full memory **44/44**.
-> **Still open:** video URL · hosted demo URL · ccloud proof screenshot · country.
+> **Still open:** video URL. Country = Germany. Demo = GitHub Pages. ccloud proof = `docs/proof/ccloud.txt` (Cloud API; CLI login still needed on this laptop).
 > Structure follows Premortem + Engram: who + problem → product → numbers → reproduce → how/challenges → next → evidence.
 > Inline story images: unframed `docs/media/*.png`. Framed copies (if any) go in the carousel only.
 
@@ -49,7 +49,8 @@ CockroachDB’s `AS OF SYSTEM TIME` is that rewind. Not a backup restore. A time
 
 | Path | Link | Time |
 | --- | --- | --- |
-| **Watch the demo** | 🔄 video URL | ~3 min |
+| **Watch the demo** | 🔄 video URL (film still open) | ~3 min |
+| **Hosted page** | [prasadt1.github.io/apprentice-crdb](https://prasadt1.github.io/apprentice-crdb/) | 30 s |
 | **Source** | [github.com/prasadt1/apprentice-crdb](https://github.com/prasadt1/apprentice-crdb) | 30 s |
 | **Published curve** | [`eval/RESULTS.md`](https://github.com/prasadt1/apprentice-crdb/blob/main/eval/RESULTS.md) | 60 s |
 | **Reproduce the freeze** | `pytest -q` then `python eval/run_exam.py verify` | ~1 min |
@@ -181,14 +182,15 @@ Beyond what the diagram shows:
 |---|---|
 | **Distributed vector indexing** | `CREATE VECTOR INDEX` succeeded; answering path orders by `<->`. `EXPLAIN` is a full primary scan — five rows, planner will not use the index. Receipt in [`eval/RESULTS.md`](https://github.com/prasadt1/apprentice-crdb/blob/main/eval/RESULTS.md) |
 | **Cloud Managed MCP Server** | Cursor connected to the live cluster (read path for inspection). Writes stay on the CLI. |
-| **ccloud CLI** | 🔄 cluster list / zone proof — screenshot before submit |
+| **ccloud CLI** | Control plane list in [`docs/proof/ccloud.txt`](https://github.com/prasadt1/apprentice-crdb/blob/main/docs/proof/ccloud.txt) — AWS, Basic, eu-central-1. Same API as `ccloud cluster list`. |
 
 **AWS services used**
 
+The cluster is CockroachDB Cloud on AWS (eu-central-1). That satisfies “deployed on AWS.” The AWS service I use is Amazon Bedrock.
+
 | Service | How |
 |---|---|
-| **Amazon Bedrock** | Titan Text Embeddings V2 on write and query; Converse API for generation. Pre-registered model: `amazon.nova-micro-v1:0`. Replication arm (added after seeing the Micro drop, disclosed): `amazon.nova-lite-v1:0`. |
-| **CockroachDB Cloud on AWS** | Basic cluster `solid-unicorn`, eu-central-1 — the memory plane. Bedrock calls run in us-east-1 (on-demand). |
+| **Amazon Bedrock** | Titan Text Embeddings V2 on write and query; Converse API for generation. Pre-registered model: `amazon.nova-micro-v1:0`. Replication arm (added after seeing the Micro drop, disclosed): `amazon.nova-lite-v1:0`. Calls run in us-east-1 (on-demand). |
 
 ## Challenges I ran into
 
@@ -229,7 +231,7 @@ Beyond what the diagram shows:
 | Freeze | [eval/FREEZE.md](https://github.com/prasadt1/apprentice-crdb/blob/main/eval/FREEZE.md) |
 | Protocol | [eval/PROTOCOL.md](https://github.com/prasadt1/apprentice-crdb/blob/main/eval/PROTOCOL.md) |
 | Demo video | 🔄 |
-| Project page | 🔄 |
+| Project page | [prasadt1.github.io/apprentice-crdb](https://prasadt1.github.io/apprentice-crdb/) |
 
 **Honest scope.** The warehouse is six orders by design — labels are hand-checkable. Single run per model at temperature=0. Two Nova-family models only (Claude on Bedrock needed an inference profile I did not have). Nova Lite was added *after* seeing the Micro drop, as a disclosed extra arm, not a replacement. `k=5` was fixed before the run. The `unaffected` stratum is n=6. Epochs are minutes apart inside a 75-minute GC window. Every generated SQL string is in `eval/runs-nova-micro/` and `eval/runs-nova-lite/`.
 
@@ -256,7 +258,7 @@ Optional extras if the form still looks sparse: `boto3` · `vector` · `sqlite`
 
 1. Repo: `https://github.com/prasadt1/apprentice-crdb`
 2. Results: `https://github.com/prasadt1/apprentice-crdb/blob/main/eval/RESULTS.md`
-3. 🔄 Hosted demo (Lambda / Pages) — add when it exists; do not duplicate two GitHub links that render as the same hostname
+3. Pages demo: `https://prasadt1.github.io/apprentice-crdb/`
 
 ### Image gallery 🔄
 
@@ -321,10 +323,10 @@ Do **not** film: warehouse-copilot tour, “watch it learn to 88%,” a rising-o
 ## Page 4 · Additional info
 
 - **Repo:** ✅ `https://github.com/prasadt1/apprentice-crdb` (public, Apache-2.0)
-- **Demo URL:** 🔄 CLI-only until a hosted URL exists — judges can clone; say so in Testing Instructions
-- **CRDB tools (≥2):** ✅ Vector index (used on the answering path) · ✅ MCP (Cursor, inspect) · 🔄 ccloud (screenshot)
-- **AWS (≥1):** ✅ Bedrock (Titan + Converse) · cluster is Cockroach Cloud on AWS eu-central-1
-- **Country:** ⬜
+- **Demo URL:** ✅ `https://prasadt1.github.io/apprentice-crdb/` (curve + RESULTS table). Clone remains the runnable product.
+- **CRDB tools (≥2):** ✅ Vector index (answering path) · ✅ MCP (Cursor, inspect) · ✅ ccloud/control plane (`docs/proof/ccloud.txt`; CLI login still needed to stamp `ccloud cluster list`)
+- **AWS (≥1):** ✅ Bedrock (Titan + Converse). Cluster is Cockroach Cloud on AWS eu-central-1 — that is deploy-on-AWS, not a second AWS service.
+- **Country:** ✅ Germany
 - **New during period:** ✅ Yes (first public commit 2026-08-11)
 - **Pre-existing code:** ✅ None beyond standard libs + AI assistants (Cursor, Claude). Exam authored independently and frozen before learning.
 - **Testing instructions** ✅ paste:
@@ -347,9 +349,13 @@ Do **not** film: warehouse-copilot tour, “watch it learn to 88%,” a rising-o
 - [x] `unaffected` epoch attribution fixed (Lite 3/6 is `filters`, not full memory)
 - [x] `k=5` called out as frozen before the run
 - [x] Vector-index `EXPLAIN` receipt: index exists, planner full-scans five rows
+- [x] README names MCP + ccloud + Bedrock; AWS table no longer lists the cluster
+- [x] Cluster hostname removed from the draft
+- [x] Country = Germany
+- [x] Demo URL = GitHub Pages (`docs/index.html`)
+- [x] Control-plane list in `docs/proof/ccloud.txt` (Cloud API). Optional: stamp official `ccloud cluster list` after `ccloud auth login`
 - [ ] **PNG mtime ≥ SVG mtime for all media** — `for f in docs/media/*.svg; do rsvg-convert -w 2400 "$f" -o "${f%.svg}.png"; done` before every push that touches a diagram. Judges see the PNG.
 - [ ] Video filmed + YouTube URL pasted in story + Video field
-- [ ] `ccloud cluster list` screenshot in gallery or proof doc
 - [ ] GitHub social preview (`docs/media/social-preview.png`) uploaded on the GitHub repo settings page
 - [ ] Built With tokens entered one at a time
 - [ ] Story field pasted between the markers only

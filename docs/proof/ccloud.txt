@@ -1,0 +1,26 @@
+# CockroachDB Cloud control-plane list
+# Captured 2026-08-11T22:02Z
+# Source: Cockroach Cloud API via the official Cloud MCP (same control plane as `ccloud cluster list`).
+# CLI re-capture (after `ccloud auth login`):
+#   ccloud cluster list -o json
+#
+# This is not a SQL DSN and contains no passwords.
+
+id                   d1b137d8-dcd2-41ff-9d93-c1db6cc884b5
+name                 solid-unicorn
+cockroach_version    v26.2.5
+cloud_provider       AWS
+state                CREATED
+plan                 BASIC
+region               eu-central-1
+created_at           2026-08-11T14:01:34Z
+
+{
+  "id": "d1b137d8-dcd2-41ff-9d93-c1db6cc884b5",
+  "cockroach_version": "v26.2.5",
+  "cloud_provider": "AWS",
+  "state": "CREATED",
+  "plan": "BASIC",
+  "regions": [{"name": "eu-central-1", "node_count": 0}],
+  "created_at": "2026-08-11T14:01:34Z"
+}

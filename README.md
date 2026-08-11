@@ -16,6 +16,7 @@ Primary user: the analytics engineer whose house rules live in people’s heads.
 >
 > | Path | Link | Time |
 > | --- | --- | --- |
+> | **Hosted page** | [prasadt1.github.io/apprentice-crdb](https://prasadt1.github.io/apprentice-crdb/) | 30 s |
 > | **The finding** | [`eval/RESULTS.md`](eval/RESULTS.md) | 2 min |
 > | **Three-curve chart** | [`docs/media/learning-curve.png`](docs/media/learning-curve.png) | 20 s |
 > | **Try it locally (no cluster)** | [Quick start below](#try-it-locally-cli--no-cluster) | ~2 min |
@@ -114,16 +115,30 @@ One loop. Four compressed epochs (live GC TTL on Basic is **75 minutes**, so the
 
 ## Architecture
 
-CockroachDB is the memory plane — rules, episodes, vectors, AOST. Bedrock generates. The warehouse is a prop. One teaching path; one answering path that cannot see the labels.
+CockroachDB is the memory plane — rules, episodes, vectors, AOST. The warehouse is a prop. One teaching path; one answering path that cannot see the labels.
+
+The cluster is CockroachDB Cloud on AWS (eu-central-1). That satisfies “deployed on AWS.” The AWS service I use is **Amazon Bedrock** — Titan embeddings on write and query, Converse for generation. I will not call the cluster an AWS service I built.
 
 ![Layered architecture: CLI and exam in, CockroachDB memory in the middle, Bedrock + SQLite on the edges](docs/media/architecture.png)
 
-| Piece | Role |
+| CockroachDB tool | How it is used — not just that it is configured |
 | --- | --- |
-| **Distributed vector index** | `CREATE VECTOR INDEX semantic_embedding_idx` exists (`vector_l2_ops`). Live `EXPLAIN` of recall is still `semantic_rules@semantic_rules_pkey` / `FULL SCAN` — five live rows, planner will not use it |
-| **Amazon Bedrock** | Titan Text Embeddings V2 on write and query; Converse API for generation |
-| **CockroachDB Cloud on AWS** | Basic cluster, eu-central-1 — the memory plane. Bedrock calls run in us-east-1 |
-| **Leakage rule** | Generator never reads `gold_sql`, `naive_sql`, `bait_sql`, `house_rules.py`, or `seed.sql` |
+| **Distributed vector indexing** | `CREATE VECTOR INDEX semantic_embedding_idx` exists (`vector_l2_ops`). The answering path still runs `ORDER BY embedding <-> $1` inside `BEGIN AS OF SYSTEM TIME`. Live `EXPLAIN` is `semantic_rules@semantic_rules_pkey` / `FULL SCAN` — five live rows, planner will not pick the index. Receipt in [`eval/RESULTS.md`](eval/RESULTS.md) |
+| **Cloud Managed MCP Server** | Cursor, read-only, to inspect the live schema and row counts while I built. The agent does **not** call MCP at answer time. Writes stay on the CLI |
+| **ccloud CLI** | Same control plane as `ccloud cluster list`. Live listing: [`docs/proof/ccloud.txt`](docs/proof/ccloud.txt) (Cloud API, AWS / Basic / eu-central-1). Stamp the official CLI after `ccloud auth login` if a judge wants the binary’s own JSON |
+
+| AWS service | How |
+| --- | --- |
+| **Amazon Bedrock** | Titan Text Embeddings V2 (`amazon.titan-embed-text-v2:0`, 1024-d) on write and query. Converse API for generation. Pre-registered: `amazon.nova-micro-v1:0`. Replication arm, added after seeing the Micro drop and disclosed: `amazon.nova-lite-v1:0` |
+
+### What happens when things go wrong
+
+- **Concurrent teachers** — rule upserts are `SERIALIZABLE`; one live row per key; the old row is superseded, not deleted.
+- **Time-travel races** — I do not `BEGIN` at now and then `AS OF`. I wait for the closed timestamp and `BEGIN AS OF SYSTEM TIME <hlc>`.
+- **Bad SQL** — `sql_guard` rejects anything that is not a single `SELECT` / `WITH`. A reject grades **wrong**, not skipped.
+- **Label leakage** — the generator never reads `gold_sql`, `naive_sql`, `bait_sql`, `house_rules.py`, or `seed.sql`.
+- **MCP** — editor is read-only. A mistaken write grant is not the product path.
+- **Self-report** — `-- used_rules:` citations are not evidence. At `memory_zero`, Nova Micro still cited memory on 34/50 items.
 
 ## Limits (honest)
 
