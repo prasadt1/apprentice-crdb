@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1280 640" width="1280" height="640" font-family="system-ui, -apple-system, 'Segoe UI', sans-serif">
+  <rect width="1280" height="640" fill="#fcfcfb"/>
+  <rect x="0" y="0" width="14" height="640" fill="#eb6834"/>
+  <text x="72" y="100" font-size="16" font-weight="600" fill="#898781" letter-spacing="1.6">prasadt1 / apprentice-crdb</text>
+  <text x="72" y="190" font-size="56" font-weight="700" fill="#0b0b0b">Apprentice</text>
+  <text x="72" y="256" font-size="28" fill="#52514e">memory that helps, then hurts</text>
+  <text x="72" y="360" font-size="36" font-weight="700" fill="#0b0b0b">14 / 19 / 19 / 16</text>
+  <text x="72" y="416" font-size="20" fill="#52514e">Nova Lite. Retrieval 44/44 at the epoch accuracy falls.</text>
+  <text x="72" y="560" font-size="18" fill="#898781">Apache-2.0   /   CockroachDB  /  AWS Agentic Memory</text>
+</svg>

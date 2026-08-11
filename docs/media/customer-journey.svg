@@ -1,0 +1,69 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 800" width="1200" height="800" font-family="system-ui, -apple-system, 'Segoe UI', sans-serif">
+  <rect width="1200" height="800" fill="#fcfcfb"/>
+  <defs>
+    <marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0 0 L10 5 L0 10 z" fill="#898781"/>
+    </marker>
+  </defs>
+
+  <text x="60" y="56" font-size="30" font-weight="700" fill="#0b0b0b">Who it is for  and what happens</text>
+  <text x="60" y="90" font-size="18" fill="#52514e">An analytics engineer whose house rules live in peoples heads. Apprentice is the receipt.</text>
+
+  <rect x="60" y="118" width="1080" height="88" rx="12" fill="#ffffff" stroke="#e1e0d9" stroke-width="1.5"/>
+  <rect x="60" y="118" width="6" height="88" rx="3" fill="#eb6834"/>
+  <text x="88" y="152" font-size="13" font-weight="600" fill="#898781" letter-spacing="0.6">PRIMARY USER</text>
+  <text x="88" y="182" font-size="20" font-weight="700" fill="#0b0b0b">Analytics engineer who owns the house definitions</text>
+  <text x="720" y="182" font-size="16" fill="#52514e">Job: what did it know on Tuesday?</text>
+
+  <rect x="60" y="240" width="200" height="210" rx="12" fill="#ffffff" stroke="#e1e0d9" stroke-width="1.5"/>
+  <text x="80" y="274" font-size="13" font-weight="600" fill="#898781" letter-spacing="0.6">1  ASK</text>
+  <text x="80" y="310" font-size="18" font-weight="700" fill="#0b0b0b">A real question</text>
+  <text x="80" y="340" font-size="15" fill="#52514e">Fiscal Q3 revenue</text>
+  <text x="80" y="362" font-size="15" fill="#52514e">by region. Output</text>
+  <text x="80" y="384" font-size="15" fill="#52514e">contract in the ask.</text>
+  <text x="80" y="424" font-size="13" font-family="ui-monospace, Menlo, monospace" fill="#0b0b0b">q01  /  frozen exam</text>
+
+  <path d="M268 345 L312 345" stroke="#898781" stroke-width="2" marker-end="url(#ar)"/>
+
+  <rect x="320" y="240" width="200" height="210" rx="12" fill="#ffffff" stroke="#e1e0d9" stroke-width="1.5"/>
+  <text x="340" y="274" font-size="13" font-weight="600" fill="#898781" letter-spacing="0.6">2  TODAY</text>
+  <text x="340" y="310" font-size="18" font-weight="700" fill="#0b0b0b">Fluent SQL</text>
+  <text x="340" y="340" font-size="15" fill="#52514e">Calendar year. Gross.</text>
+  <text x="340" y="362" font-size="15" fill="#52514e">Soft-deleted order</text>
+  <text x="340" y="384" font-size="15" fill="#52514e">counted. Region via</text>
+  <text x="340" y="406" font-size="15" fill="#52514e">the product.</text>
+  <text x="340" y="432" font-size="15" font-weight="600" fill="#d03b3b">No rewind. No proof.</text>
+
+  <path d="M528 345 L572 345" stroke="#898781" stroke-width="2" marker-end="url(#ar)"/>
+
+  <rect x="580" y="240" width="200" height="210" rx="12" fill="#ffffff" stroke="#2a78d6" stroke-width="2"/>
+  <text x="600" y="274" font-size="13" font-weight="600" fill="#2a78d6" letter-spacing="0.6">3  TEACH</text>
+  <text x="600" y="310" font-size="18" font-weight="700" fill="#0b0b0b">Corrections in</text>
+  <text x="600" y="340" font-size="15" fill="#52514e">CockroachDB. AST-diff</text>
+  <text x="600" y="362" font-size="15" fill="#52514e">writes semantic rules.</text>
+  <text x="600" y="384" font-size="15" fill="#52514e">Old row superseded,</text>
+  <text x="600" y="406" font-size="15" fill="#52514e">not deleted.</text>
+  <text x="600" y="432" font-size="13" font-family="ui-monospace, Menlo, monospace" fill="#0b0b0b">apprentice educate</text>
+
+  <path d="M788 345 L832 345" stroke="#898781" stroke-width="2" marker-end="url(#ar)"/>
+
+  <rect x="840" y="240" width="300" height="210" rx="12" fill="#ffffff" stroke="#eb6834" stroke-width="2"/>
+  <text x="860" y="274" font-size="13" font-weight="600" fill="#eb6834" letter-spacing="0.6">4  THE CURVE</text>
+  <text x="860" y="310" font-size="18" font-weight="700" fill="#0b0b0b">Four epochs, scored</text>
+  <text x="860" y="342" font-size="15" fill="#52514e">Same frozen exam.</text>
+  <text x="860" y="368" font-size="15" font-weight="700" fill="#0ca30c">14 / 19 / 19 / 16</text>
+  <text x="860" y="394" font-size="14" fill="#52514e">Lite peaks, then falls.</text>
+  <text x="860" y="418" font-size="14" fill="#52514e">Retrieval 44/44 while</text>
+  <text x="860" y="440" font-size="14" fill="#d03b3b">accuracy is falling.</text>
+
+  <path d="M990 458 L990 508" stroke="#898781" stroke-width="2" marker-end="url(#ar)"/>
+
+  <rect x="60" y="516" width="1080" height="168" rx="12" fill="#ffffff" stroke="#0ca30c" stroke-width="2"/>
+  <text x="88" y="552" font-size="13" font-weight="600" fill="#0ca30c" letter-spacing="0.6">5  REPLAY  SAME CLUSTER, EARLIER BRAIN</text>
+  <text x="88" y="588" font-size="19" font-weight="700" fill="#0b0b0b">BEGIN AS OF SYSTEM TIME &lt;hlc&gt;  not a backup restore</text>
+  <text x="88" y="622" font-size="16" fill="#52514e">memory_zero returns zero rules because none existed at that timestamp. The reviewer inherits the curve, not a Slack thread.</text>
+  <text x="88" y="654" font-size="16" fill="#52514e">Secondary user: the person who has to trust the agent next week, and needs to see what it knew.</text>
+
+  <text x="60" y="736" font-size="16" fill="#52514e">Judges verify the freeze without a cluster. Live memory needs CockroachDB Cloud:</text>
+  <text x="60" y="768" font-size="18" font-weight="700" fill="#0b0b0b">github.com/prasadt1/apprentice-crdb  -  memory helped, then hurt (x2)</text>
+</svg>

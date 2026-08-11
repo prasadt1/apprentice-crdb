@@ -1,0 +1,76 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 800" width="1200" height="800" font-family="system-ui, -apple-system, 'Segoe UI', sans-serif">
+  <rect width="1200" height="800" fill="#fcfcfb"/>
+
+  <text x="60" y="48" font-size="26" font-weight="700" fill="#0b0b0b">Memory helped, then hurt - and it replicated</text>
+  <text x="60" y="78" font-size="16" fill="#52514e">Same frozen exam, same AOST epochs, two Bedrock models. Retrieval at full memory: 44/44.</text>
+
+  <line x1="200" y1="120" x2="200" y2="480" stroke="#c3c2b7" stroke-width="1.5"/>
+  <line x1="200" y1="480" x2="1120" y2="480" stroke="#c3c2b7" stroke-width="1.5"/>
+  <g stroke="#e1e0d9" stroke-width="1">
+    <line x1="200" y1="408" x2="1120" y2="408"/>
+    <line x1="200" y1="336" x2="1120" y2="336"/>
+    <line x1="200" y1="264" x2="1120" y2="264"/>
+    <line x1="200" y1="192" x2="1120" y2="192"/>
+  </g>
+  <g font-size="13" fill="#898781" text-anchor="end">
+    <text x="188" y="484">0</text>
+    <text x="188" y="412">12.5</text>
+    <text x="188" y="340">25</text>
+    <text x="188" y="268">37.5</text>
+    <text x="188" y="196">50</text>
+  </g>
+  <text x="72" y="310" font-size="13" fill="#898781" transform="rotate(-90 72 310)">correct / 50</text>
+
+  <!-- x: 280, 520, 760, 1000. y = 480 - n/50*360 -->
+  <!-- oracle 6,7,31,44 -> 436.8, 429.6, 256.8, 163.2 -->
+  <polyline fill="none" stroke="#2a78d6" stroke-width="3"
+            points="280,436.8 520,429.6 760,256.8 1000,163.2"/>
+  <!-- micro 8,21,18,13 -> 422.4, 328.8, 350.4, 386.4 -->
+  <polyline fill="none" stroke="#eb6834" stroke-width="3"
+            points="280,422.4 520,328.8 760,350.4 1000,386.4"/>
+  <!-- lite 14,19,19,16 -> 379.2, 343.2, 343.2, 364.8 -->
+  <polyline fill="none" stroke="#0ca30c" stroke-width="3"
+            points="280,379.2 520,343.2 760,343.2 1000,364.8"/>
+
+  <circle cx="280" cy="436.8" r="6" fill="#ffffff" stroke="#2a78d6" stroke-width="2.5"/>
+  <circle cx="520" cy="429.6" r="6" fill="#ffffff" stroke="#2a78d6" stroke-width="2.5"/>
+  <circle cx="760" cy="256.8" r="6" fill="#ffffff" stroke="#2a78d6" stroke-width="2.5"/>
+  <circle cx="1000" cy="163.2" r="6" fill="#2a78d6" stroke="#2a78d6" stroke-width="2.5"/>
+
+  <circle cx="280" cy="422.4" r="6" fill="#ffffff" stroke="#eb6834" stroke-width="2.5"/>
+  <circle cx="520" cy="328.8" r="6" fill="#eb6834" stroke="#eb6834" stroke-width="2.5"/>
+  <circle cx="760" cy="350.4" r="6" fill="#ffffff" stroke="#eb6834" stroke-width="2.5"/>
+  <circle cx="1000" cy="386.4" r="6" fill="#ffffff" stroke="#eb6834" stroke-width="2.5"/>
+
+  <circle cx="280" cy="379.2" r="6" fill="#ffffff" stroke="#0ca30c" stroke-width="2.5"/>
+  <circle cx="520" cy="343.2" r="6" fill="#ffffff" stroke="#0ca30c" stroke-width="2.5"/>
+  <circle cx="760" cy="343.2" r="6" fill="#0ca30c" stroke="#0ca30c" stroke-width="2.5"/>
+  <circle cx="1000" cy="364.8" r="6" fill="#ffffff" stroke="#0ca30c" stroke-width="2.5"/>
+
+  <text x="1018" y="158" font-size="14" font-weight="700" fill="#2a78d6">44</text>
+  <text x="536" y="322" font-size="14" font-weight="700" fill="#eb6834">21</text>
+  <text x="776" y="336" font-size="14" font-weight="700" fill="#0ca30c">19</text>
+
+  <text x="280" y="508" font-size="14" font-weight="700" fill="#0b0b0b" text-anchor="middle">memory_zero</text>
+  <text x="520" y="508" font-size="14" font-weight="700" fill="#0b0b0b" text-anchor="middle">filters</text>
+  <text x="760" y="508" font-size="14" font-weight="700" fill="#0b0b0b" text-anchor="middle">revenue + fiscal</text>
+  <text x="1000" y="508" font-size="14" font-weight="700" fill="#0b0b0b" text-anchor="middle">join_path</text>
+  <text x="280" y="528" font-size="12" fill="#898781" text-anchor="middle">0 rules</text>
+  <text x="520" y="528" font-size="12" fill="#898781" text-anchor="middle">2 rules</text>
+  <text x="760" y="528" font-size="12" fill="#898781" text-anchor="middle">4 rules</text>
+  <text x="1000" y="528" font-size="12" fill="#898781" text-anchor="middle">5 rules</text>
+
+  <rect x="220" y="548" width="14" height="4" fill="#2a78d6"/>
+  <text x="242" y="554" font-size="13" fill="#52514e">Oracle ceiling (selector)</text>
+  <rect x="500" y="548" width="14" height="4" fill="#eb6834"/>
+  <text x="522" y="554" font-size="13" fill="#52514e">Nova Micro</text>
+  <rect x="700" y="548" width="14" height="4" fill="#0ca30c"/>
+  <text x="722" y="554" font-size="13" fill="#52514e">Nova Lite</text>
+
+  <rect x="60" y="580" width="1080" height="178" rx="12" fill="#ffffff" stroke="#e1e0d9" stroke-width="1.5"/>
+  <text x="88" y="616" font-size="13" font-weight="600" fill="#eb6834" letter-spacing="0.6">THE THIRD LEG</text>
+  <text x="88" y="650" font-size="17" font-weight="700" fill="#0b0b0b">At join_path, retrieval is 44/44. The oracle scores 88%. Both agents are falling.</text>
+  <text x="88" y="682" font-size="15" fill="#52514e">Storage worked. Recall worked. Utilization did not. k=5 with five rules injects the whole corpus - including on items that need none.</text>
+  <text x="88" y="710" font-size="15" fill="#52514e">Lite is better cold (14 vs 8) and still ends below its own peak. Not one weak model.</text>
+  <text x="88" y="738" font-size="14" fill="#52514e">Source: eval/RESULTS.md  /  labels frozen at b043aea  /  temperature=0</text>
+</svg>

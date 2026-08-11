@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 630" width="1200" height="630" font-family="system-ui, -apple-system, 'Segoe UI', sans-serif">
+  <rect width="1200" height="630" fill="#fcfcfb"/>
+  <rect x="0" y="0" width="12" height="630" fill="#eb6834"/>
+
+  <text x="64" y="88" font-size="14" font-weight="600" fill="#898781" letter-spacing="1.4">COCKROACHDB   /   AWS   /   AGENTIC MEMORY</text>
+  <text x="64" y="168" font-size="52" font-weight="700" fill="#0b0b0b">Apprentice</text>
+  <text x="64" y="228" font-size="28" fill="#52514e">memory that helps, then hurts</text>
+
+  <text x="64" y="320" font-size="36" font-weight="700" fill="#0b0b0b">14</text>
+  <text x="140" y="320" font-size="24" fill="#898781">/</text>
+  <text x="168" y="320" font-size="36" font-weight="700" fill="#0ca30c">19</text>
+  <text x="244" y="320" font-size="24" fill="#898781">/</text>
+  <text x="272" y="320" font-size="36" font-weight="700" fill="#0ca30c">19</text>
+  <text x="348" y="320" font-size="24" fill="#898781">/</text>
+  <text x="376" y="320" font-size="36" font-weight="700" fill="#d03b3b">16</text>
+  <text x="460" y="320" font-size="20" fill="#52514e">Nova Lite / 50</text>
+
+  <text x="64" y="372" font-size="18" fill="#52514e">Retrieval at the last epoch: 44/44. Accuracy is already falling.</text>
+  <text x="64" y="404" font-size="18" fill="#52514e">Storage worked. Recall worked. Utilization did not.</text>
+
+  <rect x="64" y="460" width="1072" height="110" rx="12" fill="#ffffff" stroke="#e1e0d9" stroke-width="1.5"/>
+  <text x="92" y="508" font-size="16" fill="#52514e">CockroachDB Cloud   /   AS OF SYSTEM TIME   /   vector index</text>
+  <text x="92" y="540" font-size="16" fill="#52514e">Amazon Bedrock   /   Titan + Converse   /   utilization is the gap</text>
+</svg>

@@ -1,4 +1,7 @@
-"""Embedding interface. Mock is labeled and local-only; Bedrock is the production path."""
+"""Embedding interface. Mock is labeled and local-only; Bedrock Titan is the production path.
+
+Titan Text Embeddings V2 accepts 256 / 512 / 1024 dims — not 384. Memory column is VECTOR(1024).
+"""
 
 from __future__ import annotations
 
@@ -8,11 +11,12 @@ import os
 from typing import Protocol
 
 
-DIM = 384
+DIM = 1024
 
 
 class Embedder(Protocol):
     provider: str
+    dim: int
 
     def embed(self, text: str) -> list[float]: ...
 
@@ -21,6 +25,7 @@ class MockHasher:
     """Deterministic bag-of-bytes vector. Not semantic. Never claim it is Titan."""
 
     provider = "mock-hasher"
+    dim = DIM
 
     def embed(self, text: str) -> list[float]:
         digest = hashlib.sha256(text.encode()).digest()
@@ -32,6 +37,7 @@ class MockHasher:
 
 class BedrockTitan:
     provider = "bedrock-titan"
+    dim = DIM
 
     def __init__(self, region: str | None = None, model_id: str | None = None) -> None:
         self.region = region or os.environ.get("AWS_REGION", "us-east-1")
@@ -50,7 +56,10 @@ class BedrockTitan:
             body=json.dumps({"inputText": text, "dimensions": DIM, "normalize": True}),
         )
         payload = json.loads(resp["body"].read())
-        return list(payload["embedding"])
+        vec = list(payload["embedding"])
+        if len(vec) != DIM:
+            raise RuntimeError(f"Titan returned dim={len(vec)}, expected {DIM}")
+        return vec
 
 
 def get_embedder() -> Embedder:

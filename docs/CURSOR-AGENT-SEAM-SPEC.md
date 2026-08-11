@@ -25,7 +25,8 @@ This also converts AWS from zero to load-bearing and makes the vector index real
 ## 1. Embeddings — make the vectors real
 
 `APPRENTICE_EMBEDDER=bedrock` (already implemented in `embeddings.py`). Titan
-`amazon.titan-embed-text-v2:0`, 384 dims, matching the existing column. Re-embed every
+`amazon.titan-embed-text-v2:0`. **Dim is 1024, not 384** — Titan v2 only accepts
+256 / 512 / 1024; the memory column was widened to `VECTOR(1024)`. Re-embed every
 rule on write. Record `provider` in the run artifact so a mock run can never be confused
 with a Titan run.
 

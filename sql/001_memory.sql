@@ -26,7 +26,7 @@ CREATE TABLE IF NOT EXISTS semantic_rules (
     statement TEXT NOT NULL,
     evidence_episode_id UUID REFERENCES episodic_events (id),
     superseded_by UUID,
-    embedding VECTOR(384),
+    embedding VECTOR(1024),
     INDEX semantic_key_idx (rule_key),
     INDEX semantic_created_idx (created_at) USING HASH
 );
