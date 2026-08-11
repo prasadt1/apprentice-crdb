@@ -41,9 +41,20 @@ Two mechanisms, both visible in strata the exam was designed to separate.
 
 **1. Over-application.** The `unaffected` stratum (6 items where house rules do *not*
 apply and the naive answer is correct) exists to catch memory being used where it should
-not be. Nova Micro: 4/6 cold → 5/6 at `filters` → **2/6** at `revenue_and_fiscal`.
-Nova Lite: 6/6 cold → **3/6** at `filters`. Teaching the join rule drove Nova Micro's
-`join_path` stratum from 2/6 to **0/6** — the rule meant to fix those questions broke them.
+not be.
+
+| Epoch | Rules | Nova Micro | Nova Lite |
+|---|---|---:|---:|
+| `memory_zero` | 0 | 4/6 | **6/6** |
+| `filters` | 2 | **5/6** | **3/6** |
+| `revenue_and_fiscal` | 4 | **2/6** | 4/6 |
+| `join_path` | 5 | 3/6 | 4/6 |
+
+Both models end below their own `unaffected` peak (Micro 5/6 → 3/6, Lite 6/6 → 4/6).
+Lite's worst cell is 3/6 at `filters` — two rules, not five. Micro bottoms at 2/6
+mid-curriculum. Over-application is real and replicated; it is not monotonic with rule
+count. Teaching the join rule also drove Nova Micro's `join_path` stratum from 2/6 to
+**0/6** — the rule meant to fix those questions broke them.
 
 **2. Harder SQL, attempted and botched.** Invalid-SQL counts per epoch:
 
@@ -73,8 +84,9 @@ the k=3 column is computed post-hoc from recorded rank order, not from a second 
 This exposes a design limit worth stating plainly: **with five rules total and k=5,
 retrieval returns the entire corpus and ranks nothing.** Every prompt at full memory
 carried all five rules, including on `unaffected` items where none applied. So this run
-measures *undifferentiated memory injection*, not relevance-gated recall — and the
-`unaffected` degradation is the direct consequence.
+measures *undifferentiated memory injection*, not relevance-gated recall. That is the
+right description of the prompt. It is not a complete explanation of the `unaffected`
+column — Lite's worst cell is at two rules, not five.
 
 ## Regression baits — my prediction was wrong
 
@@ -116,10 +128,10 @@ it. This measures the third: **utilization**. On that leg, more memory made both
 worse, and the effect is invisible to storage and retrieval metrics, which both look
 perfect at the exact epoch where accuracy is falling.
 
-The honest read of the mechanism is that undifferentiated injection is the culprit, not
-memory as such. Relevance gating — retrieving *fewer* rules, ranked by whether they bear
-on the question — is the obvious next experiment, and this exam is the instrument for
-running it.
+The honest read is that undifferentiated injection is a real property of this setup, not
+that every `unaffected` miss is caused by the fifth rule. Relevance gating — retrieving
+*fewer* rules, ranked by whether they bear on the question — is the obvious next
+experiment, and this exam is the instrument for running it.
 
 ## Self-reported citations are not evidence
 
@@ -133,6 +145,30 @@ taken at face value; only the retrieval log and the graded result can.
   `join:customers` instead of the canonical rule keys. Superseded; labels were not edited
   to chase the score.
 - The oracle 44/50 was briefly published as the learning curve. Corrected above.
+
+## Vector index — real, unused at this scale
+
+`CREATE VECTOR INDEX semantic_embedding_idx ON semantic_rules (embedding)` succeeded
+(`vector_l2_ops` in `SHOW CREATE`). Live row count at the probe: **5** embedded live
+rules, 15 rows including superseded. `EXPLAIN` of the answering-path recall
+(`ORDER BY embedding <-> $1 LIMIT 5`, `superseded_by IS NULL`) on 2026-08-11:
+
+```
+• top-k
+│ estimated row count: 5
+│ k: 5
+│
+└── • filter
+    │ filter: (superseded_by IS NULL) AND (embedding IS NOT NULL)
+    │
+    └── • scan
+          estimated row count: 15 (100% of the table)
+          table: semantic_rules@semantic_rules_pkey
+          spans: FULL SCAN
+```
+
+The index is in the catalog. The planner full-scans the primary key. Five rows is too
+small for a vector index to win. I say so rather than claim scale I do not have.
 
 ## Limitations
 

@@ -112,7 +112,9 @@ Bold = that column's peak. Both agents peak *before* full memory. Lite is better
 
 **The oracle is not an agent.** It is a selector over frozen SQL bodies, gated on exam metadata. Its 44/50 cannot fail and never wrote a line of SQL. I keep it only as the ceiling: what a perfect consumer of the retrieved rules would score. I briefly published that 44/50 as the learning curve. That was wrong. The correction is why the agent columns exist.
 
-**Retrieval was not the bottleneck.** At `join_path`, every rule an item needed was in the model's context on **44/44** rule-bearing items. With five live rules and `k=5`, retrieval returns the whole corpus and ranks nothing. Every prompt carries all five rules — including on `unaffected` items that need none. Lite's `unaffected` goes 6/6 → 3/6. That is undifferentiated injection, not memory as such.
+**Retrieval was not the bottleneck.** At `join_path`, every rule an item needed was in the model's context on **44/44** rule-bearing items. `k=5` was fixed before the run and never adjusted after a score. With five live rules that means retrieval returns the whole corpus and ranks nothing — every prompt carries all five rules, including on `unaffected` items that need none.
+
+Over-application is real and replicated; it is not monotonic with rule count. Both models end below their own `unaffected` peak — Micro **5/6 → 3/6**, Lite **6/6 → 4/6**. Lite's worst cell (**3/6**) is at `filters` (two rules), not at full memory. Micro bottoms at **2/6** mid-curriculum. The number 3/6 is real; attaching it to five undifferentiated rules was wrong.
 
 **The baits did not fire as designed.** I predicted six regressions. Lite resists four of six at full memory. q50 is wrong in every cell for both models at every epoch, including before its rule existed. q31 is wrong cold and right once `metric:revenue` lands — memory corrected a bias I had predicted it would cause. Self-reported `-- used_rules:` citations are not evidence: at `memory_zero`, with zero rules retrieved, Nova Micro still cited memory on 34/50 items.
 
@@ -169,7 +171,7 @@ Beyond what the diagram shows:
 - **Freeze first** — `eval/questions.json` and `eval/labels.json` are immutable after `FREEZE.md`. Wrong label → erratum in RESULTS, never an edit.
 - **Two curves on purpose** — oracle is the ceiling (did memory hold the rule). Agent is the measurement (could the model use it). The A−B gap is the finding.
 - **Hard leakage rule** — the generator consumes `{id, question}` plus warehouse DDL and retrieved rule *statements*. Never `house_rules.py`, never `seed.sql`, never gold/naive/bait.
-- **Vector index is real** — `CREATE VECTOR INDEX` on Basic succeeded; recall is `ORDER BY embedding <-> $1` inside the AOST transaction. Titan v2 is 1024-d (not 384); the column was widened to match.
+- **Vector index is real; the planner does not use it here** — `CREATE VECTOR INDEX semantic_embedding_idx` succeeded (`vector_l2_ops`). Live `EXPLAIN` of the answering-path recall still reads `semantic_rules@semantic_rules_pkey` / `spans: FULL SCAN` (15 estimated rows, 100% of the table, 5 live rules). The index exists; the corpus is too small for the planner to pick it. I say so rather than claim scale I do not have. Titan v2 is 1024-d (not 384); the column was widened to match.
 - **Compressed clock** — Basic will not raise `gc.ttlseconds` above 4500. Epochs are minutes apart. I disclose that instead of pretending I have months of history.
 - **Refuse bad SQL** — anything that is not a single `SELECT`/`WITH` grades wrong, not skipped.
 
@@ -177,7 +179,7 @@ Beyond what the diagram shows:
 
 | Tool | How, not just that it is configured |
 |---|---|
-| **Distributed vector indexing** | `CREATE VECTOR INDEX` on `semantic_rules.embedding`; answering path orders by `<->` |
+| **Distributed vector indexing** | `CREATE VECTOR INDEX` succeeded; answering path orders by `<->`. `EXPLAIN` is a full primary scan — five rows, planner will not use the index. Receipt in [`eval/RESULTS.md`](https://github.com/prasadt1/apprentice-crdb/blob/main/eval/RESULTS.md) |
 | **Cloud Managed MCP Server** | Cursor connected to the live cluster (read path for inspection). Writes stay on the CLI. |
 | **ccloud CLI** | 🔄 cluster list / zone proof — screenshot before submit |
 
@@ -194,7 +196,7 @@ Beyond what the diagram shows:
 - Titan v2 does not do 384 dimensions. The first schema assumed 384 for a mock hasher. I widened to `VECTOR(1024)` rather than fake a Titan vector.
 - The first educate run plateaued at 15/50 because the distiller named joins `join:customers`. I did not edit labels. I fixed the keys and re-ran.
 - I published the oracle 44/50 as the learning curve, then had to take it back. The agent curves exist because of that mistake.
-- With five rules and k=5, “vector recall” is just injecting the whole memory. The `unaffected` collapse is the receipt. Next experiment is smaller k / relevance gating — not a bigger model.
+- With five rules and k=5 (fixed before the run), “vector recall” injects the whole memory. Over-application is real (both models end below their `unaffected` peak) but not monotonic with rule count. Next experiment is smaller k / relevance gating — not a bigger model.
 - Basic GC TTL is 75 minutes. I compressed the curriculum instead of claiming a year of memory.
 
 ## Accomplishments that I'm proud of
@@ -229,7 +231,7 @@ Beyond what the diagram shows:
 | Demo video | 🔄 |
 | Project page | 🔄 |
 
-**Honest scope.** The warehouse is six orders by design — labels are hand-checkable. Single run per model at temperature=0. Two Nova-family models only (Claude on Bedrock needed an inference profile I did not have). Nova Lite was added *after* seeing the Micro drop, as a disclosed extra arm, not a replacement. The `unaffected` stratum is n=6. Epochs are minutes apart inside a 75-minute GC window. Every generated SQL string is in `eval/runs-nova-micro/` and `eval/runs-nova-lite/`.
+**Honest scope.** The warehouse is six orders by design — labels are hand-checkable. Single run per model at temperature=0. Two Nova-family models only (Claude on Bedrock needed an inference profile I did not have). Nova Lite was added *after* seeing the Micro drop, as a disclosed extra arm, not a replacement. `k=5` was fixed before the run. The `unaffected` stratum is n=6. Epochs are minutes apart inside a 75-minute GC window. Every generated SQL string is in `eval/runs-nova-micro/` and `eval/runs-nova-lite/`.
 
 <!-- ════════════ COPY TO HERE ════════════ -->
 
@@ -301,8 +303,8 @@ Voice: “Two house rules land — soft-delete, cancelled orders. Micro jumps to
 
 **The ugly epoch (1:05–1:50) — climax**
 Split: left = retrieval log `44/44`. Right = scores Micro `13`, Lite `16`.
-Then: `unaffected` table, Lite `6/6 → 3/6`.
-Voice: “Full memory. Five rules. Retrieval is forty-four out of forty-four — every rule an item needed was in the prompt. Accuracy is already falling. On the six questions that need *no* house rule, Lite goes from six of six to three of six. k equals five with five rules. The retriever returns the whole corpus. It ranks nothing. That is not a storage miss. That is utilization.”
+Then: `unaffected` table — Micro `5/6 → 3/6` at full memory (bottomed `2/6` mid-curriculum); Lite `6/6 → 4/6` (worst was `3/6` at `filters`, two rules).
+Voice: “Full memory. Five rules. Retrieval is forty-four out of forty-four — every rule an item needed was in the prompt. Accuracy is already falling. On the six questions that need no house rule, Micro was five of six. At full memory it is three of six. Lite ends at four of six, below its own cold six. k was five before I ran anything. Five rules, k five: the retriever returns the whole corpus. It ranks nothing. That is not a storage miss. That is utilization.”
 
 **Rewind (1:50–2:25)**
 Live: `BEGIN AS OF SYSTEM TIME` / `apprentice recall --as-of` again → empty.
@@ -342,6 +344,9 @@ Do **not** film: warehouse-copilot tour, “watch it learn to 88%,” a rising-o
 
 - [x] Curve B numbers written into RESULTS (`4df72a5`) + this draft
 - [x] README + gallery SVGs/PNGs lead with 14 / 19 / 19 / 16, not the oracle rise
+- [x] `unaffected` epoch attribution fixed (Lite 3/6 is `filters`, not full memory)
+- [x] `k=5` called out as frozen before the run
+- [x] Vector-index `EXPLAIN` receipt: index exists, planner full-scans five rows
 - [ ] Video filmed + YouTube URL pasted in story + Video field
 - [ ] `ccloud cluster list` screenshot in gallery or proof doc
 - [ ] GitHub social preview (`docs/media/social-preview.png`) uploaded on the GitHub repo settings page
