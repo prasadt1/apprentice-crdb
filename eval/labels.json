@@ -1,0 +1,421 @@
+[
+  {
+    "id": "q01",
+    "columns": [
+      "region",
+      "revenue_cents"
+    ],
+    "row_count": 2,
+    "sha256": "f5d61f16d1c6246754e6623009eef256f9d352791c9bf2c0ce9e4841a32bc336"
+  },
+  {
+    "id": "q02",
+    "columns": [
+      "revenue_cents"
+    ],
+    "row_count": 1,
+    "sha256": "13b485477917714a7f5eeb75a985f27c43a3b87b499044adb9b99f001599f2a4"
+  },
+  {
+    "id": "q03",
+    "columns": [
+      "cancelled_count"
+    ],
+    "row_count": 1,
+    "sha256": "05dd529079a280617ce018548e715eb37ff67e2e91914eaa79d628b8a3fd95e5"
+  },
+  {
+    "id": "q04",
+    "columns": [
+      "revenue_cents"
+    ],
+    "row_count": 1,
+    "sha256": "413fa790616f9d8edeb45bb18e2b933c22b63f8f033b4cbeb154284465ed5b2a"
+  },
+  {
+    "id": "q05",
+    "columns": [
+      "category",
+      "revenue_cents"
+    ],
+    "row_count": 1,
+    "sha256": "36f202d58621975520fadffdf879f396d2e6d565e7b1550238bf4cd1501fdd46"
+  },
+  {
+    "id": "q06",
+    "columns": [
+      "region",
+      "services_revenue_cents"
+    ],
+    "row_count": 1,
+    "sha256": "a3fb0e75ffb94f109d1ce5be7ca57f220a3ed07aab0ea379550da499ed397833"
+  },
+  {
+    "id": "q07",
+    "columns": [
+      "soft_deleted_count"
+    ],
+    "row_count": 1,
+    "sha256": "8d004de36f81bd00d4c5ed0704af6cd4f7a58a22cb8d44e6a63be2b5292b3031"
+  },
+  {
+    "id": "q08",
+    "columns": [
+      "region",
+      "net_revenue_cents"
+    ],
+    "row_count": 1,
+    "sha256": "d3df4414205e1d3d04908a222913fee21fe4de3ad769dac3f70c5ca8c1f3d921"
+  },
+  {
+    "id": "q09",
+    "columns": [
+      "order_value_cents"
+    ],
+    "row_count": 1,
+    "sha256": "9dd5f66333123e93177c461dc9db4fd56fe8ba3985ad40dfa45d28413dc1ac3d"
+  },
+  {
+    "id": "q10",
+    "columns": [
+      "revenue_cents"
+    ],
+    "row_count": 1,
+    "sha256": "69e98165761f9b8af06ac0d3fca16fda6f0adeea4dfa37de39bc26d22c3ca066"
+  },
+  {
+    "id": "q11",
+    "columns": [
+      "gross_cents"
+    ],
+    "row_count": 1,
+    "sha256": "7997aa027c88a1430206adaaf60c2cc82073bc4df337dc0da3db30f57c956641"
+  },
+  {
+    "id": "q12",
+    "columns": [
+      "customer",
+      "revenue_cents"
+    ],
+    "row_count": 1,
+    "sha256": "9c50cf99c392c4a4924719ec0c9751c67bb47fe8351d6a88b70e99a605445999"
+  },
+  {
+    "id": "q13",
+    "columns": [
+      "fiscal_quarter",
+      "revenue_cents"
+    ],
+    "row_count": 2,
+    "sha256": "1ece32e36851cf75101cfbeb854924c78e3666830a40325f439202f6f250012a"
+  },
+  {
+    "id": "q14",
+    "columns": [
+      "avg_revenue_cents"
+    ],
+    "row_count": 1,
+    "sha256": "dca41dda990ec4435d7201a8a31ed91f19b4a01552af7d44365dc957c61fe5cb"
+  },
+  {
+    "id": "q15",
+    "columns": [
+      "customer",
+      "revenue_cents"
+    ],
+    "row_count": 1,
+    "sha256": "7f575b7c4067de42a429c630ca4616b791b1bb27984a5e964c843394f2709b07"
+  },
+  {
+    "id": "q16",
+    "columns": [
+      "customer_count"
+    ],
+    "row_count": 1,
+    "sha256": "e626f1d6f162c31c8d683ac245b3be945d2a5523024c5a1431b2b2f377dda611"
+  },
+  {
+    "id": "q17",
+    "columns": [
+      "q3_revenue_cents"
+    ],
+    "row_count": 1,
+    "sha256": "21fc6a232c591970af55b6fc598228572606c57f810a1b3418d0f5f9fd6bae6d"
+  },
+  {
+    "id": "q18",
+    "columns": [
+      "revenue_cents"
+    ],
+    "row_count": 1,
+    "sha256": "4c0c7c190481c6f00aec38b37665625ff521808dd6cd89241811ddf81c501893"
+  },
+  {
+    "id": "q19",
+    "columns": [
+      "region",
+      "units"
+    ],
+    "row_count": 3,
+    "sha256": "a0c06ee7dbb2e346d99cad417f6e7fadfb5ce80c2eb071c71fdd0450690b5edf"
+  },
+  {
+    "id": "q20",
+    "columns": [
+      "revenue_cents"
+    ],
+    "row_count": 1,
+    "sha256": "435de153b5131669ff3c06e497e486cccc5dbf2321a6ea31c83a87f27b6742e8"
+  },
+  {
+    "id": "q21",
+    "columns": [
+      "customer",
+      "revenue_cents"
+    ],
+    "row_count": 1,
+    "sha256": "f4b0641450b4209c1aecee8dcf97f75dac68d313549d360098bdae9c5105433e"
+  },
+  {
+    "id": "q22",
+    "columns": [
+      "gadget_revenue_cents"
+    ],
+    "row_count": 1,
+    "sha256": "445d96c468a995608f482743613bcfcff35bc9b03e9baa754391af4930f63579"
+  },
+  {
+    "id": "q23",
+    "columns": [
+      "order_id",
+      "amount_cents"
+    ],
+    "row_count": 1,
+    "sha256": "82e8b03d48236b9cafce534f412ebd6193a4a7f7413020a22a10f9f6e8e8757a"
+  },
+  {
+    "id": "q24",
+    "columns": [
+      "refund_cents"
+    ],
+    "row_count": 1,
+    "sha256": "10e5b424d6e71afe4cdec3d29de6268596a7fd5f6595292a9a9fcd3ed217e2bb"
+  },
+  {
+    "id": "q25",
+    "columns": [
+      "region",
+      "rank_no"
+    ],
+    "row_count": 2,
+    "sha256": "d25dd7f09b5209f41f0269f023b726ae8582ba79e1f8018e51bf40022851763e"
+  },
+  {
+    "id": "q26",
+    "columns": [
+      "september_revenue_cents"
+    ],
+    "row_count": 1,
+    "sha256": "a4e211c96392f82ffa42892bf422913a8473361c983963feb16dafdf4935ff6e"
+  },
+  {
+    "id": "q27",
+    "columns": [
+      "revenue_cents"
+    ],
+    "row_count": 1,
+    "sha256": "454a20583322ec9e7d1e137d1f18301e520b4aa19df672a861d80dab269d8065"
+  },
+  {
+    "id": "q28",
+    "columns": [
+      "revenue_cents"
+    ],
+    "row_count": 1,
+    "sha256": "464952d754140ab70429a2d1259029a9020e9f985ca532f2988803551873cd03"
+  },
+  {
+    "id": "q29",
+    "columns": [
+      "product_count"
+    ],
+    "row_count": 1,
+    "sha256": "2084f32ed1ed86c7b234cc5df0dff1a628b6bb8c2474668985d933d8e3873667"
+  },
+  {
+    "id": "q30",
+    "columns": [
+      "region",
+      "avg_order_value_cents"
+    ],
+    "row_count": 2,
+    "sha256": "fff8668dd92ac20f2f4c9192700da07efecc1e1c79166278d97c02b08f90f48f"
+  },
+  {
+    "id": "q31",
+    "columns": [
+      "gross_cents"
+    ],
+    "row_count": 1,
+    "sha256": "9c5538cccfbd4cb2cbbd627e88a223568c448536549b6061486701c2a905b165"
+  },
+  {
+    "id": "q32",
+    "columns": [
+      "region",
+      "revenue_cents"
+    ],
+    "row_count": 3,
+    "sha256": "46c12f0946586eb9168177156e48772880f2aeaa0c6f9736d7aa2c2143cea31b"
+  },
+  {
+    "id": "q33",
+    "columns": [
+      "month",
+      "revenue_cents"
+    ],
+    "row_count": 2,
+    "sha256": "ac8679a3886c038918b5dc4c123056a8b8c5a46f7b576cae317ecd201a4a0e53"
+  },
+  {
+    "id": "q34",
+    "columns": [
+      "sku",
+      "category"
+    ],
+    "row_count": 3,
+    "sha256": "3520b1a02d2561ea95a7e0a355ff119ccc449c27a9e52fb7e06d9ece85d52987"
+  },
+  {
+    "id": "q35",
+    "columns": [
+      "region",
+      "customer_count"
+    ],
+    "row_count": 3,
+    "sha256": "ba6f9c6bce78818f4e969aab0d78517245ca2b64b4fe715f90446195403748bf"
+  },
+  {
+    "id": "q36",
+    "columns": [
+      "revenue_cents"
+    ],
+    "row_count": 1,
+    "sha256": "f0804a5e10d91e6fed77d2991c1fdde283e346cd2b32635644f7c42ae729cd0a"
+  },
+  {
+    "id": "q37",
+    "columns": [
+      "order_count"
+    ],
+    "row_count": 1,
+    "sha256": "1ff420b5d493915f908a06ea99f8fd571260adafe6337ff853fd08441ae6169b"
+  },
+  {
+    "id": "q38",
+    "columns": [
+      "fytd_revenue_cents"
+    ],
+    "row_count": 1,
+    "sha256": "0d84ea6169741a8d7c1090585f913568d7d10f41e5dd39cedf7000c674b6095a"
+  },
+  {
+    "id": "q39",
+    "columns": [
+      "amount_cents"
+    ],
+    "row_count": 1,
+    "sha256": "9dc3d4f95e64532c6674ff509454dc75c014c738f2a3ae68358ed99eae0a4dd1"
+  },
+  {
+    "id": "q40",
+    "columns": [
+      "region",
+      "revenue_cents"
+    ],
+    "row_count": 1,
+    "sha256": "a7b4d2ab71d0f300c3deeb9e76785012002e4b7193b8f0ac394604fc6edf0d50"
+  },
+  {
+    "id": "q41",
+    "columns": [
+      "refund_share"
+    ],
+    "row_count": 1,
+    "sha256": "39469f98bebc487544f9c183c84101558e6c396dd28c4d248da1e2ef5b81494e"
+  },
+  {
+    "id": "q42",
+    "columns": [
+      "revenue_cents"
+    ],
+    "row_count": 1,
+    "sha256": "f8f89df3ae2814b8d9a53467abd8e7a1f71fd16945fca02ebae7cc066beed2f9"
+  },
+  {
+    "id": "q43",
+    "columns": [
+      "widget_units"
+    ],
+    "row_count": 1,
+    "sha256": "fa4399b8c067f8217b3d47439b9b4c2705111105b1a873666cb2ddefea123fc1"
+  },
+  {
+    "id": "q44",
+    "columns": [
+      "region",
+      "revenue_cents"
+    ],
+    "row_count": 1,
+    "sha256": "0eb3213e324c85180650cc76657db542abddf4108f62904be21ea4f97b635e62"
+  },
+  {
+    "id": "q45",
+    "columns": [
+      "widget_revenue_cents"
+    ],
+    "row_count": 1,
+    "sha256": "c04c34b97d80c4e890fa3c5758a3a92c414742f50495b5d63402f951ec7913ea"
+  },
+  {
+    "id": "q46",
+    "columns": [
+      "region",
+      "october_revenue_cents"
+    ],
+    "row_count": 1,
+    "sha256": "1dac754a13b0a1c85688a0a3302d93cf3509d41d5bca4d037db3b8e08d750e87"
+  },
+  {
+    "id": "q47",
+    "columns": [
+      "billed_cents"
+    ],
+    "row_count": 1,
+    "sha256": "3a60b9fbed2698fb0637463ce80e03dcd250b4320c2ba075f30d3804177e9616"
+  },
+  {
+    "id": "q48",
+    "columns": [
+      "units"
+    ],
+    "row_count": 1,
+    "sha256": "0997b5fa460203d306e48fc41a8a2a5395f794feefabfd6bbcb8804aedadc09a"
+  },
+  {
+    "id": "q49",
+    "columns": [
+      "revenue_cents"
+    ],
+    "row_count": 1,
+    "sha256": "0b1c214a2b4d545f5bd67aa8d4b544f3e75382aed1d8a4f76cf618268c876d9a"
+  },
+  {
+    "id": "q50",
+    "columns": [
+      "placed_order_count"
+    ],
+    "row_count": 1,
+    "sha256": "1c61a377d94bf33506267e04dc38e42744a7a1ba29fa14176725aa06cbe7c9c9"
+  }
+]

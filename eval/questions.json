@@ -1,0 +1,642 @@
+[
+  {
+    "id": "q01",
+    "question": "What was fiscal Q3 2026 net revenue by region? Include only regions with revenue. Return columns: region, revenue_cents.",
+    "gold_sql": "WITH keep AS (\n  SELECT od.order_id, cu.region_id\n  FROM orders od\n  JOIN customers cu ON cu.customer_id = od.customer_id\n  WHERE od.deleted_at IS NULL AND od.status <> 'cancelled' AND od.ordered_at >= '2026-08-01' AND od.ordered_at < '2026-11-01'\n)\nSELECT rg.name AS region,\n       SUM(li.amount_cents)\n         - COALESCE((SELECT SUM(re.amount_cents) FROM refunds re\n                     WHERE re.order_id IN (SELECT k2.order_id FROM keep k2\n                                           WHERE k2.region_id = rg.region_id)), 0) AS revenue_cents\nFROM keep k\nJOIN order_lines li ON li.order_id = k.order_id\nJOIN regions rg ON rg.region_id = k.region_id\nGROUP BY rg.region_id, rg.name",
+    "naive_sql": "SELECT rg.name AS region, SUM(li.amount_cents) AS revenue_cents\nFROM order_lines li\nJOIN orders od ON od.order_id = li.order_id\nJOIN customers cu ON cu.customer_id = od.customer_id\nJOIN regions rg ON rg.region_id = cu.region_id\nWHERE od.ordered_at >= '2026-07-01' AND od.ordered_at < '2026-10-01'\nGROUP BY rg.name",
+    "stratum": "metric_revenue",
+    "house_rules": [
+      "metric:revenue",
+      "filter:orders_soft_delete",
+      "filter:orders_not_cancelled",
+      "calendar:fiscal",
+      "join:orders_customers_regions"
+    ],
+    "notes": "Flagship. Naive calendar-Q3 gross disagrees on every row and invents an APAC number from a soft-deleted order."
+  },
+  {
+    "id": "q02",
+    "question": "What was total net revenue for fiscal Q2 2026? Return columns: revenue_cents.",
+    "gold_sql": "SELECT COALESCE(SUM(li.amount_cents), 0)\n     - COALESCE((SELECT SUM(re.amount_cents)\n                 FROM refunds re\n                 WHERE re.order_id IN (SELECT od.order_id FROM orders od\n                                       WHERE od.deleted_at IS NULL AND od.status <> 'cancelled' AND od.ordered_at >= '2026-05-01' AND od.ordered_at < '2026-08-01')), 0) AS revenue_cents\nFROM order_lines li\nJOIN orders od ON od.order_id = li.order_id\nWHERE od.deleted_at IS NULL AND od.status <> 'cancelled' AND od.ordered_at >= '2026-05-01' AND od.ordered_at < '2026-08-01'",
+    "naive_sql": "SELECT COALESCE(SUM(li.amount_cents), 0) AS revenue_cents\nFROM order_lines li\nJOIN orders od ON od.order_id = li.order_id\nWHERE od.ordered_at >= '2026-04-01' AND od.ordered_at < '2026-07-01'",
+    "stratum": "fiscal_calendar",
+    "house_rules": [
+      "metric:revenue",
+      "filter:orders_soft_delete",
+      "filter:orders_not_cancelled",
+      "calendar:fiscal"
+    ],
+    "notes": "Fiscal Q2 is May-Jul and catches both the May order and July's refunded order; calendar Q2 sees only May."
+  },
+  {
+    "id": "q03",
+    "question": "How many orders were cancelled in calendar 2026? Return columns: cancelled_count.",
+    "gold_sql": "SELECT COUNT(*) AS cancelled_count\nFROM orders od\nWHERE od.status = 'cancelled' AND od.ordered_at >= '2026-01-01' AND od.ordered_at < '2027-01-01'",
+    "naive_sql": "SELECT COUNT(od.order_id) AS cancelled_count\nFROM orders od\nWHERE od.status = 'cancelled' AND od.ordered_at >= '2026-01-01' AND od.ordered_at < '2027-01-01'",
+    "stratum": "unaffected",
+    "house_rules": [],
+    "notes": "Regression bait: over-applying 'exclude cancelled' to a question about cancellations yields 0.",
+    "regression_bait": true,
+    "bait_sql": "SELECT COUNT(*) AS cancelled_count\nFROM orders od\nWHERE od.status = 'cancelled' AND od.status <> 'cancelled' AND od.ordered_at >= '2026-01-01' AND od.ordered_at < '2027-01-01'"
+  },
+  {
+    "id": "q04",
+    "question": "What was total net revenue for fiscal Q4 2026 (Nov 2026 - Jan 2027)? Return 0 if none. Return columns: revenue_cents.",
+    "gold_sql": "SELECT COALESCE(SUM(li.amount_cents), 0)\n     - COALESCE((SELECT SUM(re.amount_cents)\n                 FROM refunds re\n                 WHERE re.order_id IN (SELECT od.order_id FROM orders od\n                                       WHERE od.deleted_at IS NULL AND od.status <> 'cancelled' AND od.ordered_at >= '2026-11-01' AND od.ordered_at < '2027-02-01')), 0) AS revenue_cents\nFROM order_lines li\nJOIN orders od ON od.order_id = li.order_id\nWHERE od.deleted_at IS NULL AND od.status <> 'cancelled' AND od.ordered_at >= '2026-11-01' AND od.ordered_at < '2027-02-01'",
+    "naive_sql": "SELECT COALESCE(SUM(li.amount_cents), 0) AS revenue_cents\nFROM order_lines li\nJOIN orders od ON od.order_id = li.order_id\nWHERE od.ordered_at >= '2026-10-01' AND od.ordered_at < '2027-01-01'",
+    "stratum": "fiscal_calendar",
+    "house_rules": [
+      "metric:revenue",
+      "calendar:fiscal"
+    ],
+    "notes": "Zero-revenue quarter: naive calendar Q4 wrongly claims October's 250000."
+  },
+  {
+    "id": "q05",
+    "question": "Which product category earned more net revenue in fiscal Q3 2026, and how much? Return one row. Return columns: category, revenue_cents.",
+    "gold_sql": "SELECT pr.category AS category,\n       SUM(li.amount_cents)\n         - COALESCE((SELECT SUM(re.amount_cents) FROM refunds re\n                     JOIN orders o2 ON o2.order_id = re.order_id\n                     JOIN order_lines l2 ON l2.order_id = o2.order_id\n                     JOIN products p2 ON p2.product_id = l2.product_id\n                     WHERE p2.category = pr.category\n                       AND o2.deleted_at IS NULL AND o2.status <> 'cancelled'\n                       AND o2.ordered_at >= '2026-08-01' AND o2.ordered_at < '2026-11-01'), 0) AS revenue_cents\nFROM order_lines li\nJOIN products pr ON pr.product_id = li.product_id\nJOIN orders od ON od.order_id = li.order_id\nWHERE od.deleted_at IS NULL AND od.status <> 'cancelled' AND od.ordered_at >= '2026-08-01' AND od.ordered_at < '2026-11-01'\nGROUP BY pr.category\nORDER BY revenue_cents DESC\nLIMIT 1",
+    "naive_sql": "SELECT pr.category AS category, SUM(li.amount_cents) AS revenue_cents\nFROM order_lines li\nJOIN products pr ON pr.product_id = li.product_id\nJOIN orders od ON od.order_id = li.order_id\nWHERE od.ordered_at >= '2026-07-01' AND od.ordered_at < '2026-10-01'\nGROUP BY pr.category\nORDER BY revenue_cents DESC\nLIMIT 1",
+    "stratum": "composition",
+    "house_rules": [
+      "metric:revenue",
+      "filter:orders_soft_delete",
+      "filter:orders_not_cancelled",
+      "calendar:fiscal"
+    ],
+    "notes": "Category ranking flips: naive says hardware 720000; under house rules services wins at 250000."
+  },
+  {
+    "id": "q06",
+    "question": "Which region does our services-category revenue come from in fiscal 2026, and how much net? Return columns: region, services_revenue_cents.",
+    "gold_sql": "SELECT rg.name AS region,\n       COALESCE(SUM(li.amount_cents), 0) AS services_revenue_cents\nFROM order_lines li\nJOIN products pr ON pr.product_id = li.product_id\nJOIN orders od ON od.order_id = li.order_id\nJOIN customers cu ON cu.customer_id = od.customer_id\nJOIN regions rg ON rg.region_id = cu.region_id\nWHERE pr.category = 'services' AND od.deleted_at IS NULL AND od.status <> 'cancelled' AND od.ordered_at >= '2026-02-01' AND od.ordered_at < '2027-02-01'\nGROUP BY rg.name",
+    "naive_sql": "SELECT rg.name AS region,\n       COALESCE(SUM(li.amount_cents), 0) AS services_revenue_cents\nFROM order_lines li\nJOIN products pr ON pr.product_id = li.product_id\nJOIN orders od ON od.order_id = li.order_id\nJOIN regions rg ON rg.region_id = li.product_id\nWHERE pr.category = 'services' AND od.ordered_at >= '2026-02-01' AND od.ordered_at < '2027-02-01'\nGROUP BY rg.name",
+    "stratum": "join_path",
+    "house_rules": [
+      "join:orders_customers_regions"
+    ],
+    "notes": "The services order is AMER via its customer; region-by-product misattribution reports APAC."
+  },
+  {
+    "id": "q07",
+    "question": "How many orders are currently soft-deleted in the warehouse? Return columns: soft_deleted_count.",
+    "gold_sql": "SELECT COUNT(*) AS soft_deleted_count\nFROM orders od\nWHERE od.deleted_at IS NOT NULL",
+    "naive_sql": "SELECT COUNT(od.order_id) AS soft_deleted_count\nFROM orders od\nWHERE od.deleted_at IS NOT NULL",
+    "stratum": "unaffected",
+    "house_rules": [],
+    "notes": "Regression bait: an agent that over-generalizes 'always filter deleted_at IS NULL' reports 0 soft-deleted orders.",
+    "regression_bait": true,
+    "bait_sql": "SELECT COUNT(*) AS soft_deleted_count\nFROM orders od\nWHERE od.deleted_at IS NULL AND od.deleted_at IS NOT NULL"
+  },
+  {
+    "id": "q08",
+    "question": "What was net revenue for the APAC region in calendar 2026? Return columns: region, net_revenue_cents.",
+    "gold_sql": "SELECT rg.name AS region, COALESCE(SUM(li.amount_cents), 0) AS net_revenue_cents\nFROM regions rg\nJOIN customers cu ON cu.region_id = rg.region_id\nJOIN orders od ON od.customer_id = cu.customer_id AND od.deleted_at IS NULL AND od.status <> 'cancelled' AND od.ordered_at >= '2026-01-01' AND od.ordered_at < '2027-01-01'\nJOIN order_lines li ON li.order_id = od.order_id\nWHERE rg.name = 'APAC'\nGROUP BY rg.name",
+    "naive_sql": "SELECT rg.name AS region, COALESCE(SUM(li.amount_cents), 0) AS net_revenue_cents\nFROM regions rg\nJOIN customers cu ON cu.region_id = rg.region_id\nJOIN orders od ON od.customer_id = cu.customer_id AND od.ordered_at >= '2026-01-01' AND od.ordered_at < '2027-01-01'\nJOIN order_lines li ON li.order_id = od.order_id\nWHERE rg.name = 'APAC'\nGROUP BY rg.name",
+    "stratum": "soft_delete",
+    "house_rules": [
+      "metric:revenue",
+      "filter:orders_soft_delete",
+      "join:orders_customers_regions"
+    ],
+    "notes": "APAC's big September order is soft-deleted; 520000 naive vs 20000 truthful. No refunds or cancellations in APAC."
+  },
+  {
+    "id": "q09",
+    "question": "Our EMEA lead asked for the total August 2026 order value. Per our definitions, what is the right number across all regions? Return columns: order_value_cents.",
+    "gold_sql": "SELECT COALESCE(SUM(li.amount_cents), 0)\n     - COALESCE((SELECT SUM(re.amount_cents)\n                 FROM refunds re\n                 WHERE re.order_id IN (SELECT od.order_id FROM orders od\n                                       WHERE od.deleted_at IS NULL AND od.status <> 'cancelled' AND od.ordered_at >= '2026-08-01' AND od.ordered_at < '2026-09-01')), 0) AS order_value_cents\nFROM order_lines li\nJOIN orders od ON od.order_id = li.order_id\nWHERE od.deleted_at IS NULL AND od.status <> 'cancelled' AND od.ordered_at >= '2026-08-01' AND od.ordered_at < '2026-09-01'",
+    "naive_sql": "SELECT COALESCE(SUM(li.amount_cents), 0) AS order_value_cents\nFROM order_lines li\nJOIN orders od ON od.order_id = li.order_id\nWHERE od.ordered_at >= '2026-08-01' AND od.ordered_at < '2026-09-01'",
+    "stratum": "trap",
+    "house_rules": [
+      "metric:revenue",
+      "filter:orders_not_cancelled",
+      "filter:orders_soft_delete"
+    ],
+    "notes": "Decoy: 'order value' still means net revenue; the cancelled August order triples the naive number."
+  },
+  {
+    "id": "q10",
+    "question": "What was total net revenue for fiscal year 2026 (all regions)? Return columns: revenue_cents.",
+    "gold_sql": "SELECT COALESCE(SUM(li.amount_cents), 0)\n     - COALESCE((SELECT SUM(re.amount_cents)\n                 FROM refunds re\n                 WHERE re.order_id IN (SELECT od.order_id FROM orders od\n                                       WHERE od.deleted_at IS NULL AND od.status <> 'cancelled' AND od.ordered_at >= '2026-02-01' AND od.ordered_at < '2027-02-01')), 0) AS revenue_cents\nFROM order_lines li\nJOIN orders od ON od.order_id = li.order_id\nWHERE od.deleted_at IS NULL AND od.status <> 'cancelled' AND od.ordered_at >= '2026-02-01' AND od.ordered_at < '2027-02-01'",
+    "naive_sql": "SELECT COALESCE(SUM(li.amount_cents), 0) AS revenue_cents\nFROM order_lines li\nJOIN orders od ON od.order_id = li.order_id\nWHERE od.ordered_at >= '2026-01-01' AND od.ordered_at < '2027-01-01'",
+    "stratum": "metric_revenue",
+    "house_rules": [
+      "metric:revenue",
+      "filter:orders_soft_delete",
+      "filter:orders_not_cancelled",
+      "calendar:fiscal"
+    ],
+    "notes": "All three revenue levers plus the FY window. Naive gross calendar-2026 = 740000."
+  },
+  {
+    "id": "q11",
+    "question": "What were gross billings (before refunds) on live, non-cancelled hardware order lines in calendar 2026? Return columns: gross_cents.",
+    "gold_sql": "SELECT COALESCE(SUM(li.amount_cents), 0) AS gross_cents\nFROM order_lines li\nJOIN orders od ON od.order_id = li.order_id\nWHERE od.deleted_at IS NULL AND od.status <> 'cancelled' AND od.ordered_at >= '2026-01-01' AND od.ordered_at < '2027-01-01'\n  AND li.product_id IN (SELECT pr.product_id FROM products pr WHERE pr.category = 'hardware')",
+    "naive_sql": "SELECT COALESCE(SUM(li.amount_cents), 0) AS gross_cents\nFROM order_lines li\nJOIN orders od ON od.order_id = li.order_id\nWHERE od.ordered_at >= '2026-01-01' AND od.ordered_at < '2027-01-01'\n  AND li.product_id IN (SELECT pr.product_id FROM products pr WHERE pr.category = 'hardware')",
+    "stratum": "soft_delete",
+    "house_rules": [
+      "filter:orders_soft_delete",
+      "filter:orders_not_cancelled"
+    ],
+    "notes": "Explicitly gross, so refund-netting is out of scope; the two order-status filters do all the work (740000 -> 160000)."
+  },
+  {
+    "id": "q12",
+    "question": "Which customer generated the most net revenue in fiscal 2026, and how much? Return one row. Return columns: customer, revenue_cents.",
+    "gold_sql": "WITH per_cust AS (\n  SELECT cu.name AS customer,\n         SUM(li.amount_cents)\n           - COALESCE((SELECT SUM(re.amount_cents) FROM refunds re\n                       WHERE re.order_id IN (SELECT o2.order_id FROM orders o2\n                                             WHERE o2.customer_id = cu.customer_id\n                                               AND o2.deleted_at IS NULL AND o2.status <> 'cancelled'\n                                               AND o2.ordered_at >= '2026-02-01' AND o2.ordered_at < '2027-02-01')), 0)\n           AS revenue_cents\n  FROM customers cu\n  JOIN orders od ON od.customer_id = cu.customer_id AND od.deleted_at IS NULL AND od.status <> 'cancelled' AND od.ordered_at >= '2026-02-01' AND od.ordered_at < '2027-02-01'\n  JOIN order_lines li ON li.order_id = od.order_id\n  GROUP BY cu.customer_id, cu.name\n)\nSELECT customer, revenue_cents FROM per_cust ORDER BY revenue_cents DESC LIMIT 1",
+    "naive_sql": "SELECT cu.name AS customer, SUM(li.amount_cents) AS revenue_cents\nFROM customers cu\nJOIN orders od ON od.customer_id = cu.customer_id AND od.ordered_at >= '2026-01-01' AND od.ordered_at < '2027-01-01'\nJOIN order_lines li ON li.order_id = od.order_id\nGROUP BY cu.customer_id, cu.name\nORDER BY revenue_cents DESC\nLIMIT 1",
+    "stratum": "composition",
+    "house_rules": [
+      "metric:revenue",
+      "filter:orders_soft_delete",
+      "filter:orders_not_cancelled",
+      "calendar:fiscal"
+    ],
+    "notes": "Customer ranking flips: naive crowns Harbor Pacific on a soft-deleted order (520000); the truth is Northwind at 325000."
+  },
+  {
+    "id": "q13",
+    "question": "Compare fiscal Q2 2026 and fiscal Q3 2026 net revenue. Return two rows labeled FQ2 and FQ3. Return columns: fiscal_quarter, revenue_cents.",
+    "gold_sql": "SELECT 'FQ2' AS fiscal_quarter,\n       (SELECT COALESCE(SUM(li.amount_cents), 0)\n             - COALESCE((SELECT SUM(re.amount_cents)\n                         FROM refunds re\n                         WHERE re.order_id IN (SELECT od.order_id FROM orders od\n                                               WHERE od.deleted_at IS NULL AND od.status <> 'cancelled' AND od.ordered_at >= '2026-05-01' AND od.ordered_at < '2026-08-01')), 0) AS revenue_cents\n        FROM order_lines li\n        JOIN orders od ON od.order_id = li.order_id\n        WHERE od.deleted_at IS NULL AND od.status <> 'cancelled' AND od.ordered_at >= '2026-05-01' AND od.ordered_at < '2026-08-01') AS revenue_cents\nUNION ALL\nSELECT 'FQ3',\n       (SELECT COALESCE(SUM(li.amount_cents), 0)\n             - COALESCE((SELECT SUM(re.amount_cents)\n                         FROM refunds re\n                         WHERE re.order_id IN (SELECT od.order_id FROM orders od\n                                               WHERE od.deleted_at IS NULL AND od.status <> 'cancelled' AND od.ordered_at >= '2026-08-01' AND od.ordered_at < '2026-11-01')), 0) AS revenue_cents\n        FROM order_lines li\n        JOIN orders od ON od.order_id = li.order_id\n        WHERE od.deleted_at IS NULL AND od.status <> 'cancelled' AND od.ordered_at >= '2026-08-01' AND od.ordered_at < '2026-11-01')",
+    "naive_sql": "SELECT 'FQ2' AS fiscal_quarter,\n       (SELECT COALESCE(SUM(li.amount_cents), 0) AS x\n        FROM order_lines li\n        JOIN orders od ON od.order_id = li.order_id\n        WHERE od.ordered_at >= '2026-04-01' AND od.ordered_at < '2026-07-01') AS revenue_cents\nUNION ALL\nSELECT 'FQ3',\n       (SELECT COALESCE(SUM(li.amount_cents), 0) AS x\n        FROM order_lines li\n        JOIN orders od ON od.order_id = li.order_id\n        WHERE od.ordered_at >= '2026-07-01' AND od.ordered_at < '2026-10-01')",
+    "stratum": "composition",
+    "house_rules": [
+      "metric:revenue",
+      "filter:orders_soft_delete",
+      "filter:orders_not_cancelled",
+      "calendar:fiscal"
+    ],
+    "notes": "Two-quarter comparison composing all revenue rules with the fiscal calendar; naive reports 20000 / 720000."
+  },
+  {
+    "id": "q14",
+    "question": "What was the average net revenue per live, non-cancelled order in fiscal 2026? Net per order = its line total minus its refunds. Return columns: avg_revenue_cents.",
+    "gold_sql": "WITH per_order AS (\n  SELECT od.order_id,\n         (SELECT COALESCE(SUM(li.amount_cents), 0) FROM order_lines li WHERE li.order_id = od.order_id)\n       - (SELECT COALESCE(SUM(re.amount_cents), 0) FROM refunds re WHERE re.order_id = od.order_id) AS net_cents\n  FROM orders od\n  WHERE od.deleted_at IS NULL AND od.status <> 'cancelled' AND od.ordered_at >= '2026-02-01' AND od.ordered_at < '2027-02-01'\n)\nSELECT AVG(net_cents) AS avg_revenue_cents FROM per_order",
+    "naive_sql": "WITH per_order AS (\n  SELECT od.order_id,\n         (SELECT COALESCE(SUM(li.amount_cents), 0) FROM order_lines li WHERE li.order_id = od.order_id) AS total_cents\n  FROM orders od\n  WHERE od.ordered_at >= '2026-01-01' AND od.ordered_at < '2027-01-01'\n)\nSELECT AVG(total_cents) AS avg_revenue_cents FROM per_order",
+    "stratum": "metric_revenue",
+    "house_rules": [
+      "metric:revenue",
+      "filter:orders_soft_delete",
+      "filter:orders_not_cancelled",
+      "calendar:fiscal"
+    ],
+    "notes": "Average grain. Naive averages gross over all six orders (123333.33) vs 96250 over the four live ones."
+  },
+  {
+    "id": "q15",
+    "question": "What was net revenue from customer Rhine Goods in fiscal 2026? Return columns: customer, revenue_cents.",
+    "gold_sql": "SELECT cu.name AS customer,\n       COALESCE(SUM(li.amount_cents), 0) AS revenue_cents\nFROM customers cu\nJOIN orders od ON od.customer_id = cu.customer_id AND od.deleted_at IS NULL AND od.status <> 'cancelled' AND od.ordered_at >= '2026-02-01' AND od.ordered_at < '2027-02-01'\nJOIN order_lines li ON li.order_id = od.order_id\nWHERE cu.name = 'Rhine Goods'\nGROUP BY cu.name",
+    "naive_sql": "SELECT cu.name AS customer, COALESCE(SUM(li.amount_cents), 0) AS revenue_cents\nFROM customers cu\nJOIN orders od ON od.customer_id = cu.customer_id AND od.ordered_at >= '2026-01-01' AND od.ordered_at < '2027-01-01'\nJOIN order_lines li ON li.order_id = od.order_id\nWHERE cu.name = 'Rhine Goods'\nGROUP BY cu.name",
+    "stratum": "metric_revenue",
+    "house_rules": [
+      "metric:revenue",
+      "filter:orders_not_cancelled"
+    ],
+    "notes": "Isolates the cancelled lever: Rhine's August cancellation is not revenue (120000 -> 40000). No refunds on this customer."
+  },
+  {
+    "id": "q16",
+    "question": "How many distinct customers had live, non-cancelled orders in calendar Q3 2026 (Jul-Sep)? Return columns: customer_count.",
+    "gold_sql": "SELECT COUNT(DISTINCT od.customer_id) AS customer_count\nFROM orders od\nWHERE od.deleted_at IS NULL AND od.status <> 'cancelled' AND od.ordered_at >= '2026-07-01' AND od.ordered_at < '2026-10-01'",
+    "naive_sql": "SELECT COUNT(DISTINCT od.customer_id) AS customer_count\nFROM orders od\nWHERE od.ordered_at >= '2026-07-01' AND od.ordered_at < '2026-10-01'",
+    "stratum": "soft_delete",
+    "house_rules": [
+      "filter:orders_soft_delete",
+      "filter:orders_not_cancelled"
+    ],
+    "notes": "Distinct-count grain: naive counts 3 customers, but one only has a soft-deleted order in the window."
+  },
+  {
+    "id": "q17",
+    "question": "Q3 2026 revenue - total, please. Return columns: q3_revenue_cents.",
+    "gold_sql": "SELECT COALESCE(SUM(li.amount_cents), 0)\n     - COALESCE((SELECT SUM(re.amount_cents)\n                 FROM refunds re\n                 WHERE re.order_id IN (SELECT od.order_id FROM orders od\n                                       WHERE od.deleted_at IS NULL AND od.status <> 'cancelled' AND od.ordered_at >= '2026-08-01' AND od.ordered_at < '2026-11-01')), 0) AS q3_revenue_cents\nFROM order_lines li\nJOIN orders od ON od.order_id = li.order_id\nWHERE od.deleted_at IS NULL AND od.status <> 'cancelled' AND od.ordered_at >= '2026-08-01' AND od.ordered_at < '2026-11-01'",
+    "naive_sql": "SELECT COALESCE(SUM(li.amount_cents), 0) AS q3_revenue_cents\nFROM order_lines li\nJOIN orders od ON od.order_id = li.order_id\nWHERE od.ordered_at >= '2026-07-01' AND od.ordered_at < '2026-10-01'",
+    "stratum": "trap",
+    "house_rules": [
+      "metric:revenue",
+      "filter:orders_soft_delete",
+      "filter:orders_not_cancelled",
+      "calendar:fiscal"
+    ],
+    "notes": "Decoy: no 'fiscal' qualifier, but house convention says quarters are fiscal. Same truth as F1, different phrasing and contract."
+  },
+  {
+    "id": "q18",
+    "question": "What was net revenue for the EMEA region in fiscal Q3 2026? Return columns: revenue_cents.",
+    "gold_sql": "SELECT COALESCE(SUM(li.amount_cents), 0)\n     - COALESCE((SELECT SUM(re.amount_cents) FROM refunds re\n                 WHERE re.order_id IN (SELECT od.order_id FROM orders od\n                                       JOIN customers cu ON cu.customer_id = od.customer_id\n                                       JOIN regions rg ON rg.region_id = cu.region_id\n                                       WHERE rg.name = 'EMEA' AND od.deleted_at IS NULL AND od.status <> 'cancelled' AND od.ordered_at >= '2026-08-01' AND od.ordered_at < '2026-11-01')), 0) AS revenue_cents\nFROM order_lines li\nJOIN orders od ON od.order_id = li.order_id\nJOIN customers cu ON cu.customer_id = od.customer_id\nJOIN regions rg ON rg.region_id = cu.region_id\nWHERE rg.name = 'EMEA' AND od.deleted_at IS NULL AND od.status <> 'cancelled' AND od.ordered_at >= '2026-08-01' AND od.ordered_at < '2026-11-01'",
+    "naive_sql": "SELECT COALESCE(SUM(li.amount_cents), 0) AS revenue_cents\nFROM order_lines li\nJOIN orders od ON od.order_id = li.order_id\nJOIN customers cu ON cu.customer_id = od.customer_id\nJOIN regions rg ON rg.region_id = cu.region_id\nWHERE rg.name = 'EMEA' AND od.ordered_at >= '2026-07-01' AND od.ordered_at < '2026-10-01'",
+    "stratum": "composition",
+    "house_rules": [
+      "metric:revenue",
+      "filter:orders_soft_delete",
+      "filter:orders_not_cancelled",
+      "calendar:fiscal",
+      "join:orders_customers_regions"
+    ],
+    "notes": "Region + quarter + cancellation: EMEA's cancelled August order doubles the naive number (120000 vs 40000)."
+  },
+  {
+    "id": "q19",
+    "question": "What were total units (qty) on live, non-cancelled orders per region in calendar 2026? Include only regions with units. Return columns: region, units.",
+    "gold_sql": "SELECT rg.name AS region, SUM(li.qty) AS units\nFROM order_lines li\nJOIN orders od ON od.order_id = li.order_id\nJOIN customers cu ON cu.customer_id = od.customer_id\nJOIN regions rg ON rg.region_id = cu.region_id\nWHERE od.deleted_at IS NULL AND od.status <> 'cancelled' AND od.ordered_at >= '2026-01-01' AND od.ordered_at < '2027-01-01'\nGROUP BY rg.name",
+    "naive_sql": "SELECT rg.name AS region, SUM(li.qty) AS units\nFROM order_lines li\nJOIN orders od ON od.order_id = li.order_id\nJOIN regions rg ON rg.region_id = li.product_id\nWHERE od.ordered_at >= '2026-01-01' AND od.ordered_at < '2027-01-01'\nGROUP BY rg.name",
+    "stratum": "join_path",
+    "house_rules": [
+      "join:orders_customers_regions",
+      "filter:orders_soft_delete",
+      "filter:orders_not_cancelled"
+    ],
+    "notes": "Quantity per region: the misattributed naive reports AMER 62 / EMEA 12 / APAC 1."
+  },
+  {
+    "id": "q20",
+    "question": "What was fiscal-year-to-date net revenue as of 2026-09-01 (orders placed 1 Feb through 31 Aug 2026)? Return columns: revenue_cents.",
+    "gold_sql": "SELECT COALESCE(SUM(li.amount_cents), 0)\n     - COALESCE((SELECT SUM(re.amount_cents)\n                 FROM refunds re\n                 WHERE re.order_id IN (SELECT od.order_id FROM orders od\n                                       WHERE od.deleted_at IS NULL AND od.status <> 'cancelled' AND od.ordered_at >= '2026-02-01' AND od.ordered_at < '2026-09-01')), 0) AS revenue_cents\nFROM order_lines li\nJOIN orders od ON od.order_id = li.order_id\nWHERE od.deleted_at IS NULL AND od.status <> 'cancelled' AND od.ordered_at >= '2026-02-01' AND od.ordered_at < '2026-09-01'",
+    "naive_sql": "SELECT COALESCE(SUM(li.amount_cents), 0) AS revenue_cents\nFROM order_lines li\nJOIN orders od ON od.order_id = li.order_id\nWHERE od.ordered_at >= '2026-01-01' AND od.ordered_at < '2026-09-01'",
+    "stratum": "fiscal_calendar",
+    "house_rules": [
+      "metric:revenue",
+      "filter:orders_soft_delete",
+      "filter:orders_not_cancelled",
+      "calendar:fiscal"
+    ],
+    "notes": "Year-to-date anchored to the fiscal year start; naive calendar-YTD gross reports 740000 vs 135000."
+  },
+  {
+    "id": "q21",
+    "question": "What was total net revenue from customer Harbor Pacific in fiscal 2026? Return columns: customer, revenue_cents.",
+    "gold_sql": "SELECT cu.name AS customer, COALESCE(SUM(li.amount_cents), 0) AS revenue_cents\nFROM customers cu\nJOIN orders od ON od.customer_id = cu.customer_id AND od.deleted_at IS NULL AND od.status <> 'cancelled' AND od.ordered_at >= '2026-02-01' AND od.ordered_at < '2027-02-01'\nJOIN order_lines li ON li.order_id = od.order_id\nWHERE cu.name = 'Harbor Pacific'\nGROUP BY cu.name",
+    "naive_sql": "SELECT cu.name AS customer, COALESCE(SUM(li.amount_cents), 0) AS revenue_cents\nFROM customers cu\nJOIN orders od ON od.customer_id = cu.customer_id AND od.ordered_at >= '2026-01-01' AND od.ordered_at < '2027-01-01'\nJOIN order_lines li ON li.order_id = od.order_id\nWHERE cu.name = 'Harbor Pacific'\nGROUP BY cu.name",
+    "stratum": "soft_delete",
+    "house_rules": [
+      "metric:revenue",
+      "filter:orders_soft_delete"
+    ],
+    "notes": "Customer grain; the soft-delete lever alone moves 520000 to 20000."
+  },
+  {
+    "id": "q22",
+    "question": "What was net revenue from the Gadget product (SKU GAD-200) in calendar 2026? Return columns: gadget_revenue_cents.",
+    "gold_sql": "SELECT COALESCE(SUM(li.amount_cents), 0)\n     - COALESCE((SELECT SUM(re.amount_cents) FROM refunds re\n                 WHERE re.order_id IN (SELECT od.order_id FROM orders od\n                                       JOIN order_lines l2 ON l2.order_id = od.order_id\n                                       JOIN products pr ON pr.product_id = l2.product_id\n                                       WHERE pr.sku = 'GAD-200' AND od.deleted_at IS NULL AND od.status <> 'cancelled' AND od.ordered_at >= '2026-01-01' AND od.ordered_at < '2027-01-01')), 0) AS gadget_revenue_cents\nFROM order_lines li\nJOIN products pr ON pr.product_id = li.product_id\nJOIN orders od ON od.order_id = li.order_id\nWHERE pr.sku = 'GAD-200' AND od.deleted_at IS NULL AND od.status <> 'cancelled' AND od.ordered_at >= '2026-01-01' AND od.ordered_at < '2027-01-01'",
+    "naive_sql": "SELECT COALESCE(SUM(li.amount_cents), 0) AS gadget_revenue_cents\nFROM order_lines li\nJOIN products pr ON pr.product_id = li.product_id\nJOIN orders od ON od.order_id = li.order_id\nWHERE pr.sku = 'GAD-200' AND od.ordered_at >= '2026-01-01' AND od.ordered_at < '2027-01-01'",
+    "stratum": "metric_revenue",
+    "house_rules": [
+      "metric:revenue",
+      "filter:orders_not_cancelled"
+    ],
+    "notes": "Calendar window on purpose; the cancelled Gadget order is the only lever (120000 -> 40000)."
+  },
+  {
+    "id": "q23",
+    "question": "What was the single largest live, non-cancelled order of fiscal 2026 by billed line total? Return one row. Return columns: order_id, amount_cents.",
+    "gold_sql": "SELECT od.order_id AS order_id, SUM(li.amount_cents) AS amount_cents\nFROM orders od\nJOIN order_lines li ON li.order_id = od.order_id\nWHERE od.deleted_at IS NULL AND od.status <> 'cancelled' AND od.ordered_at >= '2026-02-01' AND od.ordered_at < '2027-02-01'\nGROUP BY od.order_id\nORDER BY amount_cents DESC\nLIMIT 1",
+    "naive_sql": "SELECT od.order_id AS order_id, SUM(li.amount_cents) AS amount_cents\nFROM orders od\nJOIN order_lines li ON li.order_id = od.order_id\nWHERE od.ordered_at >= '2026-02-01' AND od.ordered_at < '2027-02-01'\nGROUP BY od.order_id\nORDER BY amount_cents DESC\nLIMIT 1",
+    "stratum": "soft_delete",
+    "house_rules": [
+      "filter:orders_soft_delete"
+    ],
+    "notes": "Top-1 flips: naive crowns the soft-deleted 500000 order; the real largest live order is #40 at 250000."
+  },
+  {
+    "id": "q24",
+    "question": "What was the total refund amount issued during fiscal Q2 2026? Return 0 if none. Return columns: refund_cents.",
+    "gold_sql": "SELECT COALESCE(SUM(re.amount_cents), 0) AS refund_cents\nFROM refunds re\nWHERE re.refunded_at >= '2026-05-01' AND re.refunded_at < '2026-08-01'",
+    "naive_sql": "SELECT COALESCE(SUM(re.amount_cents), 0) AS refund_cents\nFROM refunds re\nWHERE re.refunded_at >= '2026-04-01' AND re.refunded_at < '2026-07-01'",
+    "stratum": "fiscal_calendar",
+    "house_rules": [
+      "calendar:fiscal"
+    ],
+    "notes": "Pure calendar lever on the refunds table: the late-July refund is fiscal Q2 but not calendar Q2."
+  },
+  {
+    "id": "q25",
+    "question": "Rank the regions by net revenue for fiscal Q3 2026 (1 = highest). Include only regions with revenue. Return columns: region, rank_no.",
+    "gold_sql": "WITH keep AS (\n  SELECT od.order_id, cu.region_id\n  FROM orders od\n  JOIN customers cu ON cu.customer_id = od.customer_id\n  WHERE od.deleted_at IS NULL AND od.status <> 'cancelled' AND od.ordered_at >= '2026-08-01' AND od.ordered_at < '2026-11-01'\n),\nregrev AS (\n  SELECT rg.name AS region,\n         SUM(li.amount_cents)\n           - COALESCE((SELECT SUM(re.amount_cents) FROM refunds re\n                       WHERE re.order_id IN (SELECT k2.order_id FROM keep k2\n                                             WHERE k2.region_id = rg.region_id)), 0) AS revenue_cents\n  FROM keep k\n  JOIN order_lines li ON li.order_id = k.order_id\n  JOIN regions rg ON rg.region_id = k.region_id\n  GROUP BY rg.region_id, rg.name\n)\nSELECT region, ROW_NUMBER() OVER (ORDER BY revenue_cents DESC) AS rank_no\nFROM regrev",
+    "naive_sql": "WITH regrev AS (\n  SELECT rg.name AS region, SUM(li.amount_cents) AS revenue_cents\n  FROM order_lines li\n  JOIN orders od ON od.order_id = li.order_id\n  JOIN customers cu ON cu.customer_id = od.customer_id\n  JOIN regions rg ON rg.region_id = cu.region_id\n  WHERE od.ordered_at >= '2026-07-01' AND od.ordered_at < '2026-10-01'\n  GROUP BY rg.name\n)\nSELECT region, ROW_NUMBER() OVER (ORDER BY revenue_cents DESC) AS rank_no\nFROM regrev",
+    "stratum": "composition",
+    "house_rules": [
+      "metric:revenue",
+      "filter:orders_soft_delete",
+      "filter:orders_not_cancelled",
+      "calendar:fiscal",
+      "join:orders_customers_regions"
+    ],
+    "notes": "Ordinal output: house rules produce AMER>EMEA; naive produces APAC>EMEA>AMER."
+  },
+  {
+    "id": "q26",
+    "question": "What was total net revenue in September 2026? Return 0 if none. Return columns: september_revenue_cents.",
+    "gold_sql": "SELECT COALESCE(SUM(li.amount_cents), 0)\n     - COALESCE((SELECT SUM(re.amount_cents)\n                 FROM refunds re\n                 WHERE re.order_id IN (SELECT od.order_id FROM orders od\n                                       WHERE od.deleted_at IS NULL AND od.status <> 'cancelled' AND od.ordered_at >= '2026-09-01' AND od.ordered_at < '2026-10-01')), 0) AS september_revenue_cents\nFROM order_lines li\nJOIN orders od ON od.order_id = li.order_id\nWHERE od.deleted_at IS NULL AND od.status <> 'cancelled' AND od.ordered_at >= '2026-09-01' AND od.ordered_at < '2026-10-01'",
+    "naive_sql": "SELECT COALESCE(SUM(li.amount_cents), 0) AS september_revenue_cents\nFROM order_lines li\nJOIN orders od ON od.order_id = li.order_id\nWHERE od.ordered_at >= '2026-09-01' AND od.ordered_at < '2026-10-01'",
+    "stratum": "soft_delete",
+    "house_rules": [
+      "metric:revenue",
+      "filter:orders_soft_delete"
+    ],
+    "notes": "September's only order is soft-deleted: the truthful answer is 0, the naive answer is 500000."
+  },
+  {
+    "id": "q27",
+    "question": "What was net revenue in calendar 2026 for the region where customer Harbor Pacific is based? Return columns: revenue_cents.",
+    "gold_sql": "SELECT COALESCE(SUM(li.amount_cents), 0) AS revenue_cents\nFROM order_lines li\nJOIN orders od ON od.order_id = li.order_id\nJOIN customers cu ON cu.customer_id = od.customer_id\nWHERE od.deleted_at IS NULL AND od.status <> 'cancelled' AND od.ordered_at >= '2026-01-01' AND od.ordered_at < '2027-01-01'\n  AND cu.region_id = (SELECT c2.region_id FROM customers c2 WHERE c2.name = 'Harbor Pacific')",
+    "naive_sql": "SELECT COALESCE(SUM(li.amount_cents), 0) AS revenue_cents\nFROM order_lines li\nJOIN orders od ON od.order_id = li.order_id\nJOIN customers cu ON cu.customer_id = od.customer_id\nWHERE od.ordered_at >= '2026-01-01' AND od.ordered_at < '2027-01-01'\n  AND cu.region_id = (SELECT c2.region_id FROM customers c2 WHERE c2.name = 'Harbor Pacific')",
+    "stratum": "join_path",
+    "house_rules": [
+      "join:orders_customers_regions",
+      "filter:orders_soft_delete"
+    ],
+    "notes": "Region resolved through the customer record; the naive number is dominated by the soft-deleted APAC order (520000)."
+  },
+  {
+    "id": "q28",
+    "question": "What was net revenue from customer Northwind Retail in fiscal 2026? Return columns: revenue_cents.",
+    "gold_sql": "SELECT COALESCE(SUM(li.amount_cents), 0)\n     - COALESCE((SELECT SUM(re.amount_cents) FROM refunds re\n                 WHERE re.order_id IN (SELECT od.order_id FROM orders od\n                                       JOIN customers cu ON cu.customer_id = od.customer_id\n                                       WHERE cu.name = 'Northwind Retail' AND od.deleted_at IS NULL AND od.status <> 'cancelled' AND od.ordered_at >= '2026-02-01' AND od.ordered_at < '2027-02-01')), 0) AS revenue_cents\nFROM order_lines li\nJOIN orders od ON od.order_id = li.order_id\nJOIN customers cu ON cu.customer_id = od.customer_id\nWHERE cu.name = 'Northwind Retail' AND od.deleted_at IS NULL AND od.status <> 'cancelled' AND od.ordered_at >= '2026-02-01' AND od.ordered_at < '2027-02-01'",
+    "naive_sql": "SELECT COALESCE(SUM(li.amount_cents), 0) AS revenue_cents\nFROM order_lines li\nJOIN orders od ON od.order_id = li.order_id\nJOIN customers cu ON cu.customer_id = od.customer_id\nWHERE cu.name = 'Northwind Retail' AND od.ordered_at >= '2026-01-01' AND od.ordered_at < '2027-01-01'",
+    "stratum": "metric_revenue",
+    "house_rules": [
+      "metric:revenue"
+    ],
+    "notes": "Isolates the refund lever: this customer has no deleted or cancelled orders, so only netting moves the number (350000 -> 325000)."
+  },
+  {
+    "id": "q29",
+    "question": "How many products are in the catalog? Return columns: product_count.",
+    "gold_sql": "SELECT COUNT(*) AS product_count\nFROM products pr",
+    "naive_sql": "SELECT COUNT(pr.product_id) AS product_count\nFROM products pr",
+    "stratum": "unaffected",
+    "house_rules": [],
+    "notes": "No house rule touches the product catalog; gold and naive agree at 3."
+  },
+  {
+    "id": "q30",
+    "question": "What was the average net order value of live, non-cancelled orders in fiscal Q3 2026, by region? Net per order = line total minus refunds on that order. Include only regions with orders. Return columns: region, avg_order_value_cents.",
+    "gold_sql": "WITH per_order AS (\n  SELECT od.order_id, cu.region_id,\n         (SELECT COALESCE(SUM(li.amount_cents), 0) FROM order_lines li WHERE li.order_id = od.order_id)\n       - (SELECT COALESCE(SUM(re.amount_cents), 0) FROM refunds re WHERE re.order_id = od.order_id) AS net_cents\n  FROM orders od\n  JOIN customers cu ON cu.customer_id = od.customer_id\n  WHERE od.deleted_at IS NULL AND od.status <> 'cancelled' AND od.ordered_at >= '2026-08-01' AND od.ordered_at < '2026-11-01'\n)\nSELECT rg.name AS region, AVG(po.net_cents) AS avg_order_value_cents\nFROM per_order po\nJOIN regions rg ON rg.region_id = po.region_id\nGROUP BY rg.name",
+    "naive_sql": "WITH per_order AS (\n  SELECT od.order_id, cu.region_id,\n         (SELECT COALESCE(SUM(li.amount_cents), 0) FROM order_lines li WHERE li.order_id = od.order_id) AS total_cents\n  FROM orders od\n  JOIN customers cu ON cu.customer_id = od.customer_id\n  WHERE od.ordered_at >= '2026-07-01' AND od.ordered_at < '2026-10-01'\n)\nSELECT rg.name AS region, AVG(po.total_cents) AS avg_order_value_cents\nFROM per_order po\nJOIN regions rg ON rg.region_id = po.region_id\nGROUP BY rg.name",
+    "stratum": "composition",
+    "house_rules": [
+      "metric:revenue",
+      "filter:orders_soft_delete",
+      "filter:orders_not_cancelled",
+      "calendar:fiscal",
+      "join:orders_customers_regions"
+    ],
+    "notes": "Average-by-region composes four rules; naive produces three regions with wrong averages."
+  },
+  {
+    "id": "q31",
+    "question": "What were gross billings (before any refunds) on live, non-cancelled orders in fiscal Q2 2026? Return columns: gross_cents.",
+    "gold_sql": "SELECT COALESCE(SUM(li.amount_cents), 0) AS gross_cents\nFROM order_lines li\nJOIN orders od ON od.order_id = li.order_id\nWHERE od.deleted_at IS NULL AND od.status <> 'cancelled' AND od.ordered_at >= '2026-05-01' AND od.ordered_at < '2026-08-01'",
+    "naive_sql": "SELECT COALESCE(SUM(li.amount_cents), 0) AS gross_cents\nFROM order_lines li\nJOIN orders od ON od.order_id = li.order_id\nWHERE od.ordered_at >= '2026-04-01' AND od.ordered_at < '2026-07-01'",
+    "stratum": "fiscal_calendar",
+    "house_rules": [
+      "calendar:fiscal",
+      "filter:orders_soft_delete",
+      "filter:orders_not_cancelled"
+    ],
+    "notes": "Regression bait: the question is explicitly gross. An agent that over-generalizes 'revenue always nets refunds' reports 95000 instead of 120000.",
+    "regression_bait": true,
+    "bait_sql": "SELECT COALESCE(SUM(li.amount_cents), 0)\n     - COALESCE((SELECT SUM(re.amount_cents)\n                 FROM refunds re\n                 WHERE re.order_id IN (SELECT od.order_id FROM orders od\n                                       WHERE od.deleted_at IS NULL AND od.status <> 'cancelled' AND od.ordered_at >= '2026-05-01' AND od.ordered_at < '2026-08-01')), 0) AS gross_cents\nFROM order_lines li\nJOIN orders od ON od.order_id = li.order_id\nWHERE od.deleted_at IS NULL AND od.status <> 'cancelled' AND od.ordered_at >= '2026-05-01' AND od.ordered_at < '2026-08-01'"
+  },
+  {
+    "id": "q32",
+    "question": "What was net revenue by region for fiscal 2026? Include only regions with revenue. Return columns: region, revenue_cents.",
+    "gold_sql": "WITH keep AS (\n  SELECT od.order_id, cu.region_id\n  FROM orders od\n  JOIN customers cu ON cu.customer_id = od.customer_id\n  WHERE od.deleted_at IS NULL AND od.status <> 'cancelled' AND od.ordered_at >= '2026-02-01' AND od.ordered_at < '2027-02-01'\n)\nSELECT rg.name AS region,\n       SUM(li.amount_cents)\n         - COALESCE((SELECT SUM(re.amount_cents) FROM refunds re\n                     WHERE re.order_id IN (SELECT k2.order_id FROM keep k2\n                                           WHERE k2.region_id = rg.region_id)), 0) AS revenue_cents\nFROM keep k\nJOIN order_lines li ON li.order_id = k.order_id\nJOIN regions rg ON rg.region_id = k.region_id\nGROUP BY rg.region_id, rg.name",
+    "naive_sql": "SELECT rg.name AS region, SUM(li.amount_cents) AS revenue_cents\nFROM order_lines li\nJOIN orders od ON od.order_id = li.order_id\nJOIN regions rg ON rg.region_id = li.product_id\nWHERE od.ordered_at >= '2026-01-01' AND od.ordered_at < '2027-01-01'\nGROUP BY rg.name",
+    "stratum": "join_path",
+    "house_rules": [
+      "metric:revenue",
+      "filter:orders_soft_delete",
+      "filter:orders_not_cancelled",
+      "calendar:fiscal",
+      "join:orders_customers_regions"
+    ],
+    "notes": "Full-year regional split; the misattributed naive moves both October services and May APAC revenue to the wrong regions."
+  },
+  {
+    "id": "q33",
+    "question": "What was net revenue by month for fiscal Q3 2026? Report only months with revenue. Return columns: month (as YYYY-MM), revenue_cents.",
+    "gold_sql": "WITH keep AS (\n  SELECT od.order_id, strftime('%Y-%m', od.ordered_at) AS month\n  FROM orders od\n  WHERE od.deleted_at IS NULL AND od.status <> 'cancelled' AND od.ordered_at >= '2026-08-01' AND od.ordered_at < '2026-11-01'\n)\nSELECT k.month AS month,\n       SUM(li.amount_cents)\n         - COALESCE((SELECT SUM(re.amount_cents) FROM refunds re\n                     WHERE re.order_id IN (SELECT k2.order_id FROM keep k2\n                                           WHERE k2.month = k.month)), 0) AS revenue_cents\nFROM keep k\nJOIN order_lines li ON li.order_id = k.order_id\nGROUP BY k.month",
+    "naive_sql": "SELECT strftime('%Y-%m', od.ordered_at) AS month, SUM(li.amount_cents) AS revenue_cents\nFROM order_lines li\nJOIN orders od ON od.order_id = li.order_id\nWHERE od.ordered_at >= '2026-07-01' AND od.ordered_at < '2026-10-01'\nGROUP BY strftime('%Y-%m', od.ordered_at)",
+    "stratum": "fiscal_calendar",
+    "house_rules": [
+      "metric:revenue",
+      "filter:orders_soft_delete",
+      "filter:orders_not_cancelled",
+      "calendar:fiscal"
+    ],
+    "notes": "Monthly grain: the fiscal window yields Aug+Oct rows; naive yields Jul/Aug/Sep rows with inflated values."
+  },
+  {
+    "id": "q34",
+    "question": "List all product SKUs with their category. Return columns: sku, category.",
+    "gold_sql": "SELECT pr.sku AS sku, pr.category AS category\nFROM products pr",
+    "naive_sql": "SELECT p.sku AS sku, p.category AS category\nFROM products p",
+    "stratum": "unaffected",
+    "house_rules": [],
+    "notes": "Catalog listing; row order is irrelevant to the signature."
+  },
+  {
+    "id": "q35",
+    "question": "How many customers are based in each region? Return columns: region, customer_count.",
+    "gold_sql": "SELECT rg.name AS region, COUNT(cu.customer_id) AS customer_count\nFROM regions rg\nJOIN customers cu ON cu.region_id = rg.region_id\nGROUP BY rg.region_id, rg.name",
+    "naive_sql": "SELECT rg.name AS region, COUNT(*) AS customer_count\nFROM customers cu\nJOIN regions rg ON rg.region_id = cu.region_id\nGROUP BY rg.name",
+    "stratum": "unaffected",
+    "house_rules": [],
+    "notes": "Customer-region lookup involves no order semantics at all."
+  },
+  {
+    "id": "q36",
+    "question": "What was net revenue for calendar Q3 2026 - the July-through-September calendar window, explicitly NOT the fiscal quarter? Return columns: revenue_cents.",
+    "gold_sql": "SELECT COALESCE(SUM(li.amount_cents), 0)\n     - COALESCE((SELECT SUM(re.amount_cents)\n                 FROM refunds re\n                 WHERE re.order_id IN (SELECT od.order_id FROM orders od\n                                       WHERE od.deleted_at IS NULL AND od.status <> 'cancelled' AND od.ordered_at >= '2026-07-01' AND od.ordered_at < '2026-10-01')), 0) AS revenue_cents\nFROM order_lines li\nJOIN orders od ON od.order_id = li.order_id\nWHERE od.deleted_at IS NULL AND od.status <> 'cancelled' AND od.ordered_at >= '2026-07-01' AND od.ordered_at < '2026-10-01'",
+    "naive_sql": "SELECT COALESCE(SUM(li.amount_cents), 0) AS revenue_cents\nFROM order_lines li\nJOIN orders od ON od.order_id = li.order_id\nWHERE od.ordered_at >= '2026-07-01' AND od.ordered_at < '2026-10-01'",
+    "stratum": "metric_revenue",
+    "house_rules": [
+      "metric:revenue",
+      "filter:orders_soft_delete",
+      "filter:orders_not_cancelled"
+    ],
+    "notes": "Regression bait: an agent that over-generalizes 'quarters are always fiscal' shifts the window to Aug-Oct and reports 290000 instead of 115000.",
+    "regression_bait": true,
+    "bait_sql": "SELECT COALESCE(SUM(li.amount_cents), 0)\n     - COALESCE((SELECT SUM(re.amount_cents)\n                 FROM refunds re\n                 WHERE re.order_id IN (SELECT od.order_id FROM orders od\n                                       WHERE od.deleted_at IS NULL AND od.status <> 'cancelled' AND od.ordered_at >= '2026-08-01' AND od.ordered_at < '2026-11-01')), 0) AS revenue_cents\nFROM order_lines li\nJOIN orders od ON od.order_id = li.order_id\nWHERE od.deleted_at IS NULL AND od.status <> 'cancelled' AND od.ordered_at >= '2026-08-01' AND od.ordered_at < '2026-11-01'"
+  },
+  {
+    "id": "q37",
+    "question": "How many live, non-cancelled orders were placed in fiscal Q3 2026? Return columns: order_count.",
+    "gold_sql": "SELECT COUNT(*) AS order_count\nFROM orders od\nWHERE od.deleted_at IS NULL AND od.status <> 'cancelled' AND od.ordered_at >= '2026-08-01' AND od.ordered_at < '2026-11-01'",
+    "naive_sql": "SELECT COUNT(*) AS order_count\nFROM orders od\nWHERE od.ordered_at >= '2026-07-01' AND od.ordered_at < '2026-10-01'",
+    "stratum": "fiscal_calendar",
+    "house_rules": [
+      "calendar:fiscal",
+      "filter:orders_soft_delete",
+      "filter:orders_not_cancelled"
+    ],
+    "notes": "Count grain: 2 under house rules, 4 under the naive calendar window with no filters."
+  },
+  {
+    "id": "q38",
+    "question": "For the board deck: FY2026 revenue so far, as of 2026-11-05 - one number. Return columns: fytd_revenue_cents.",
+    "gold_sql": "SELECT COALESCE(SUM(li.amount_cents), 0)\n     - COALESCE((SELECT SUM(re.amount_cents)\n                 FROM refunds re\n                 WHERE re.order_id IN (SELECT od.order_id FROM orders od\n                                       WHERE od.deleted_at IS NULL AND od.status <> 'cancelled' AND od.ordered_at >= '2026-02-01' AND od.ordered_at < '2026-11-05')), 0) AS fytd_revenue_cents\nFROM order_lines li\nJOIN orders od ON od.order_id = li.order_id\nWHERE od.deleted_at IS NULL AND od.status <> 'cancelled' AND od.ordered_at >= '2026-02-01' AND od.ordered_at < '2026-11-05'",
+    "naive_sql": "SELECT COALESCE(SUM(li.amount_cents), 0) AS fytd_revenue_cents\nFROM order_lines li\nJOIN orders od ON od.order_id = li.order_id\nWHERE od.ordered_at >= '2026-01-01' AND od.ordered_at < '2026-11-05'",
+    "stratum": "trap",
+    "house_rules": [
+      "metric:revenue",
+      "filter:orders_soft_delete",
+      "filter:orders_not_cancelled",
+      "calendar:fiscal"
+    ],
+    "notes": "Decoy: 'FY so far' anchors to the 1 Feb fiscal start; naive calendar-YTD gross reports 740000."
+  },
+  {
+    "id": "q39",
+    "question": "What amount did we make from Rhine Goods in Q3 2026, net of everything? Return columns: amount_cents.",
+    "gold_sql": "SELECT COALESCE(SUM(li.amount_cents), 0)\n     - COALESCE((SELECT SUM(re.amount_cents) FROM refunds re\n                 WHERE re.order_id IN (SELECT od.order_id FROM orders od\n                                       JOIN customers cu ON cu.customer_id = od.customer_id\n                                       WHERE cu.name = 'Rhine Goods' AND od.deleted_at IS NULL AND od.status <> 'cancelled' AND od.ordered_at >= '2026-08-01' AND od.ordered_at < '2026-11-01')), 0) AS amount_cents\nFROM order_lines li\nJOIN orders od ON od.order_id = li.order_id\nJOIN customers cu ON cu.customer_id = od.customer_id\nWHERE cu.name = 'Rhine Goods' AND od.deleted_at IS NULL AND od.status <> 'cancelled' AND od.ordered_at >= '2026-08-01' AND od.ordered_at < '2026-11-01'",
+    "naive_sql": "SELECT COALESCE(SUM(li.amount_cents), 0) AS amount_cents\nFROM order_lines li\nJOIN orders od ON od.order_id = li.order_id\nJOIN customers cu ON cu.customer_id = od.customer_id\nWHERE cu.name = 'Rhine Goods' AND od.ordered_at >= '2026-07-01' AND od.ordered_at < '2026-10-01'",
+    "stratum": "trap",
+    "house_rules": [
+      "metric:revenue",
+      "filter:orders_soft_delete",
+      "filter:orders_not_cancelled",
+      "calendar:fiscal"
+    ],
+    "notes": "Decoy: 'amount we made' means net revenue; naive includes the cancelled August order (120000 vs 40000)."
+  },
+  {
+    "id": "q40",
+    "question": "What was net revenue by region for May 2026? Include only regions with revenue. Return columns: region, revenue_cents.",
+    "gold_sql": "WITH keep AS (\n  SELECT od.order_id, cu.region_id\n  FROM orders od\n  JOIN customers cu ON cu.customer_id = od.customer_id\n  WHERE od.deleted_at IS NULL AND od.status <> 'cancelled' AND od.ordered_at >= '2026-05-01' AND od.ordered_at < '2026-06-01'\n)\nSELECT rg.name AS region,\n       SUM(li.amount_cents)\n         - COALESCE((SELECT SUM(re.amount_cents) FROM refunds re\n                     WHERE re.order_id IN (SELECT k2.order_id FROM keep k2\n                                           WHERE k2.region_id = rg.region_id)), 0) AS revenue_cents\nFROM keep k\nJOIN order_lines li ON li.order_id = k.order_id\nJOIN regions rg ON rg.region_id = k.region_id\nGROUP BY rg.region_id, rg.name",
+    "naive_sql": "SELECT rg.name AS region, SUM(li.amount_cents) AS revenue_cents\nFROM order_lines li\nJOIN orders od ON od.order_id = li.order_id\nJOIN regions rg ON rg.region_id = li.product_id\nWHERE od.ordered_at >= '2026-05-01' AND od.ordered_at < '2026-06-01'\nGROUP BY rg.name",
+    "stratum": "join_path",
+    "house_rules": [
+      "join:orders_customers_regions"
+    ],
+    "notes": "Single-order window: the May Widget order belongs to APAC via its customer; product-based attribution says AMER."
+  },
+  {
+    "id": "q41",
+    "question": "What share of fiscal Q2 2026 gross billings (live, non-cancelled orders) was refunded? Report a ratio between 0 and 1. Return columns: refund_share.",
+    "gold_sql": "SELECT CAST((SELECT COALESCE(SUM(re.amount_cents), 0) FROM refunds re\n             WHERE re.order_id IN (SELECT od.order_id FROM orders od WHERE od.deleted_at IS NULL AND od.status <> 'cancelled' AND od.ordered_at >= '2026-05-01' AND od.ordered_at < '2026-08-01')) AS REAL)\n     / (SELECT SUM(li.amount_cents)\n        FROM order_lines li\n        JOIN orders od ON od.order_id = li.order_id\n        WHERE od.deleted_at IS NULL AND od.status <> 'cancelled' AND od.ordered_at >= '2026-05-01' AND od.ordered_at < '2026-08-01') AS refund_share",
+    "naive_sql": "SELECT CAST((SELECT COALESCE(SUM(re.amount_cents), 0) FROM refunds re\n             WHERE re.refunded_at >= '2026-04-01' AND re.refunded_at < '2026-07-01') AS REAL)\n     / (SELECT SUM(li.amount_cents)\n        FROM order_lines li\n        JOIN orders od ON od.order_id = li.order_id\n        WHERE od.ordered_at >= '2026-04-01' AND od.ordered_at < '2026-07-01') AS refund_share",
+    "stratum": "composition",
+    "house_rules": [
+      "metric:revenue",
+      "filter:orders_soft_delete",
+      "filter:orders_not_cancelled",
+      "calendar:fiscal"
+    ],
+    "notes": "Ratio metric: 25000/120000 = 0.208333 under house rules; the naive calendar version computes 0.0."
+  },
+  {
+    "id": "q42",
+    "question": "What was net revenue for the AMER region in fiscal Q2 2026? Return 0 if none. Return columns: revenue_cents.",
+    "gold_sql": "SELECT COALESCE(SUM(li.amount_cents), 0)\n     - COALESCE((SELECT SUM(re.amount_cents) FROM refunds re\n                 WHERE re.order_id IN (SELECT od.order_id FROM orders od\n                                       JOIN customers cu ON cu.customer_id = od.customer_id\n                                       JOIN regions rg ON rg.region_id = cu.region_id\n                                       WHERE rg.name = 'AMER' AND od.deleted_at IS NULL AND od.status <> 'cancelled' AND od.ordered_at >= '2026-05-01' AND od.ordered_at < '2026-08-01')), 0) AS revenue_cents\nFROM order_lines li\nJOIN orders od ON od.order_id = li.order_id\nJOIN customers cu ON cu.customer_id = od.customer_id\nJOIN regions rg ON rg.region_id = cu.region_id\nWHERE rg.name = 'AMER' AND od.deleted_at IS NULL AND od.status <> 'cancelled' AND od.ordered_at >= '2026-05-01' AND od.ordered_at < '2026-08-01'",
+    "naive_sql": "SELECT COALESCE(SUM(li.amount_cents), 0) AS revenue_cents\nFROM order_lines li\nJOIN orders od ON od.order_id = li.order_id\nJOIN customers cu ON cu.customer_id = od.customer_id\nJOIN regions rg ON rg.region_id = cu.region_id\nWHERE rg.name = 'AMER' AND od.ordered_at >= '2026-04-01' AND od.ordered_at < '2026-07-01'",
+    "stratum": "metric_revenue",
+    "house_rules": [
+      "metric:revenue",
+      "calendar:fiscal",
+      "join:orders_customers_regions"
+    ],
+    "notes": "Fiscal Q2 catches July's refunded order; naive calendar Q2 (Apr-Jun) finds nothing at all (0 vs 75000)."
+  },
+  {
+    "id": "q43",
+    "question": "How many Widget units (SKU WID-100) were sold on live, non-cancelled orders in calendar 2026? Return columns: widget_units.",
+    "gold_sql": "SELECT COALESCE(SUM(li.qty), 0) AS widget_units\nFROM order_lines li\nJOIN products pr ON pr.product_id = li.product_id\nJOIN orders od ON od.order_id = li.order_id\nWHERE pr.sku = 'WID-100' AND od.deleted_at IS NULL AND od.status <> 'cancelled' AND od.ordered_at >= '2026-01-01' AND od.ordered_at < '2027-01-01'",
+    "naive_sql": "SELECT COALESCE(SUM(li.qty), 0) AS widget_units\nFROM order_lines li\nJOIN products pr ON pr.product_id = li.product_id\nJOIN orders od ON od.order_id = li.order_id\nWHERE pr.sku = 'WID-100' AND od.ordered_at >= '2026-01-01' AND od.ordered_at < '2027-01-01'",
+    "stratum": "soft_delete",
+    "house_rules": [
+      "filter:orders_soft_delete",
+      "filter:orders_not_cancelled"
+    ],
+    "notes": "Quantity, not revenue: the soft-deleted order carries 50 of the 62 naive units."
+  },
+  {
+    "id": "q44",
+    "question": "Which single region generated the most net revenue in fiscal 2026, and how much? Return one row. Return columns: region, revenue_cents.",
+    "gold_sql": "WITH keep AS (\n  SELECT od.order_id, cu.region_id\n  FROM orders od\n  JOIN customers cu ON cu.customer_id = od.customer_id\n  WHERE od.deleted_at IS NULL AND od.status <> 'cancelled' AND od.ordered_at >= '2026-02-01' AND od.ordered_at < '2027-02-01'\n),\nregrev AS (\n  SELECT rg.name AS region,\n         SUM(li.amount_cents)\n           - COALESCE((SELECT SUM(re.amount_cents) FROM refunds re\n                       WHERE re.order_id IN (SELECT k2.order_id FROM keep k2\n                                             WHERE k2.region_id = rg.region_id)), 0) AS revenue_cents\n  FROM keep k\n  JOIN order_lines li ON li.order_id = k.order_id\n  JOIN regions rg ON rg.region_id = k.region_id\n  GROUP BY rg.region_id, rg.name\n)\nSELECT region, revenue_cents FROM regrev ORDER BY revenue_cents DESC LIMIT 1",
+    "naive_sql": "SELECT rg.name AS region, SUM(li.amount_cents) AS revenue_cents\nFROM order_lines li\nJOIN orders od ON od.order_id = li.order_id\nJOIN customers cu ON cu.customer_id = od.customer_id\nJOIN regions rg ON rg.region_id = cu.region_id\nWHERE od.ordered_at >= '2026-01-01' AND od.ordered_at < '2027-01-01'\nGROUP BY rg.name\nORDER BY 2 DESC LIMIT 1",
+    "stratum": "metric_revenue",
+    "house_rules": [
+      "metric:revenue",
+      "filter:orders_soft_delete",
+      "filter:orders_not_cancelled",
+      "calendar:fiscal",
+      "join:orders_customers_regions"
+    ],
+    "notes": "Ranking flips under house rules: naive crowns APAC on a soft-deleted 5000-dollar order; the true leader is AMER."
+  },
+  {
+    "id": "q45",
+    "question": "What was net revenue from the Widget product (SKU WID-100) in fiscal 2026? Return columns: widget_revenue_cents.",
+    "gold_sql": "SELECT COALESCE(SUM(li.amount_cents), 0)\n     - COALESCE((SELECT SUM(re.amount_cents) FROM refunds re\n                 WHERE re.order_id IN (SELECT od.order_id FROM orders od\n                                       JOIN order_lines l2 ON l2.order_id = od.order_id\n                                       JOIN products pr ON pr.product_id = l2.product_id\n                                       WHERE pr.sku = 'WID-100' AND od.deleted_at IS NULL AND od.status <> 'cancelled' AND od.ordered_at >= '2026-02-01' AND od.ordered_at < '2027-02-01')), 0) AS widget_revenue_cents\nFROM order_lines li\nJOIN products pr ON pr.product_id = li.product_id\nJOIN orders od ON od.order_id = li.order_id\nWHERE pr.sku = 'WID-100' AND od.deleted_at IS NULL AND od.status <> 'cancelled' AND od.ordered_at >= '2026-02-01' AND od.ordered_at < '2027-02-01'",
+    "naive_sql": "SELECT COALESCE(SUM(li.amount_cents), 0) AS widget_revenue_cents\nFROM order_lines li\nJOIN products pr ON pr.product_id = li.product_id\nJOIN orders od ON od.order_id = li.order_id\nWHERE pr.sku = 'WID-100' AND od.ordered_at >= '2026-01-01' AND od.ordered_at < '2027-01-01'",
+    "stratum": "metric_revenue",
+    "house_rules": [
+      "metric:revenue",
+      "filter:orders_soft_delete",
+      "filter:orders_not_cancelled"
+    ],
+    "notes": "Product grain. Soft-deleted September Widget order dominates the naive number (620000 vs 95000)."
+  },
+  {
+    "id": "q46",
+    "question": "Which region is credited with our October 2026 revenue, and how much net? Return columns: region, october_revenue_cents.",
+    "gold_sql": "SELECT rg.name AS region,\n       COALESCE(SUM(li.amount_cents), 0) AS october_revenue_cents\nFROM order_lines li\nJOIN orders od ON od.order_id = li.order_id\nJOIN customers cu ON cu.customer_id = od.customer_id\nJOIN regions rg ON rg.region_id = cu.region_id\nWHERE od.deleted_at IS NULL AND od.status <> 'cancelled' AND od.ordered_at >= '2026-10-01' AND od.ordered_at < '2026-11-01'\nGROUP BY rg.name",
+    "naive_sql": "SELECT rg.name AS region,\n       COALESCE(SUM(li.amount_cents), 0) AS october_revenue_cents\nFROM order_lines li\nJOIN orders od ON od.order_id = li.order_id\nJOIN regions rg ON rg.region_id = li.product_id\nWHERE od.ordered_at >= '2026-10-01' AND od.ordered_at < '2026-11-01'\nGROUP BY rg.name",
+    "stratum": "join_path",
+    "house_rules": [
+      "join:orders_customers_regions"
+    ],
+    "notes": "October's Support-plan order is an AMER customer; attributing region via the product lands it in APAC."
+  },
+  {
+    "id": "q47",
+    "question": "For the audit: what is the total amount originally billed on soft-deleted orders? Return 0 if none. Return columns: billed_cents.",
+    "gold_sql": "SELECT COALESCE(SUM(li.amount_cents), 0) AS billed_cents\nFROM order_lines li\nJOIN orders od ON od.order_id = li.order_id\nWHERE od.deleted_at IS NOT NULL",
+    "naive_sql": "SELECT COALESCE(SUM(li.amount_cents), 0) AS billed_cents\nFROM orders od\nJOIN order_lines li ON li.order_id = od.order_id\nWHERE od.deleted_at IS NOT NULL",
+    "stratum": "unaffected",
+    "house_rules": [],
+    "notes": "Regression bait: the audit explicitly targets soft-deleted rows; the over-applied filter empties the result to 0.",
+    "regression_bait": true,
+    "bait_sql": "SELECT COALESCE(SUM(li.amount_cents), 0) AS billed_cents\nFROM order_lines li\nJOIN orders od ON od.order_id = li.order_id\nWHERE od.deleted_at IS NOT NULL AND od.deleted_at IS NULL"
+  },
+  {
+    "id": "q48",
+    "question": "How many total units (qty) shipped on live, non-cancelled orders in fiscal Q3 2026? Return columns: units.",
+    "gold_sql": "SELECT COALESCE(SUM(li.qty), 0) AS units\nFROM order_lines li\nJOIN orders od ON od.order_id = li.order_id\nWHERE od.deleted_at IS NULL AND od.status <> 'cancelled' AND od.ordered_at >= '2026-08-01' AND od.ordered_at < '2026-11-01'",
+    "naive_sql": "SELECT COALESCE(SUM(li.qty), 0) AS units\nFROM order_lines li\nJOIN orders od ON od.order_id = li.order_id\nWHERE od.ordered_at >= '2026-07-01' AND od.ordered_at < '2026-10-01'",
+    "stratum": "composition",
+    "house_rules": [
+      "calendar:fiscal",
+      "filter:orders_soft_delete",
+      "filter:orders_not_cancelled"
+    ],
+    "notes": "Composes fiscal window with both status filters on a non-revenue metric: 5 vs the naive 72."
+  },
+  {
+    "id": "q49",
+    "question": "What was total net revenue for fiscal Q3 2026? Return columns: revenue_cents.",
+    "gold_sql": "SELECT COALESCE(SUM(li.amount_cents), 0)\n     - COALESCE((SELECT SUM(re.amount_cents)\n                 FROM refunds re\n                 WHERE re.order_id IN (SELECT od.order_id FROM orders od\n                                       WHERE od.deleted_at IS NULL AND od.status <> 'cancelled' AND od.ordered_at >= '2026-08-01' AND od.ordered_at < '2026-11-01')), 0) AS revenue_cents\nFROM order_lines li\nJOIN orders od ON od.order_id = li.order_id\nWHERE od.deleted_at IS NULL AND od.status <> 'cancelled' AND od.ordered_at >= '2026-08-01' AND od.ordered_at < '2026-11-01'",
+    "naive_sql": "SELECT COALESCE(SUM(li.amount_cents), 0) AS revenue_cents\nFROM order_lines li\nJOIN orders od ON od.order_id = li.order_id\nWHERE od.ordered_at >= '2026-07-01' AND od.ordered_at < '2026-10-01'",
+    "stratum": "fiscal_calendar",
+    "house_rules": [
+      "metric:revenue",
+      "filter:orders_soft_delete",
+      "filter:orders_not_cancelled",
+      "calendar:fiscal"
+    ],
+    "notes": "The headline fiscal number: Aug-Oct net 290000 vs the calendar-Q3 gross 720000."
+  },
+  {
+    "id": "q50",
+    "question": "How many orders were placed in calendar 2026? Soft-deleted records are not live facts; a cancelled order was still placed. Return columns: placed_order_count.",
+    "gold_sql": "SELECT COUNT(*) AS placed_order_count\nFROM orders od\nWHERE od.deleted_at IS NULL AND od.ordered_at >= '2026-01-01' AND od.ordered_at < '2027-01-01'",
+    "naive_sql": "SELECT COUNT(*) AS placed_order_count\nFROM orders od\nWHERE od.ordered_at >= '2026-01-01' AND od.ordered_at < '2027-01-01'",
+    "stratum": "soft_delete",
+    "house_rules": [
+      "filter:orders_soft_delete"
+    ],
+    "notes": "Regression bait: rule-scope precision. Over-applying the cancelled filter to a 'placed' count gives 4; the truth is 5 (naive says 6).",
+    "regression_bait": true,
+    "bait_sql": "SELECT COUNT(*) AS placed_order_count\nFROM orders od\nWHERE od.deleted_at IS NULL AND od.status <> 'cancelled' AND od.ordered_at >= '2026-01-01' AND od.ordered_at < '2027-01-01'"
+  }
+]
