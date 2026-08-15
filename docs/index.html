@@ -107,63 +107,95 @@
       color: #fffaf4;
     }
     .try .pitch {
-      margin: 0 0 1rem;
+      margin: 0 0 1.15rem;
       color: #cfc6ba;
-      max-width: 38rem;
-      font-size: 0.98rem;
-    }
-    .try label {
-      display: block;
-      font-size: 0.75rem;
-      letter-spacing: 0.04em;
-      text-transform: uppercase;
-      color: #a89f92;
-      margin-bottom: 0.3rem;
+      max-width: 40rem;
+      font-size: 1.02rem;
     }
     .try .prompt {
-      margin: 0 0 0.85rem;
-      padding: 0.75rem 0.85rem;
-      background: rgba(0, 0, 0, 0.28);
-      border-left: 3px solid var(--accent);
-      font-size: 0.95rem;
-      color: #f0e9df;
-    }
-    .try select {
-      width: 100%;
-      max-width: 100%;
-      padding: 0.5rem 0.55rem;
-      border: 1px solid rgba(255, 252, 247, 0.18);
-      background: #2a241e;
-      color: #f4efe8;
-      font: inherit;
-      margin-bottom: 0.9rem;
+      margin: 0 0 1.15rem;
+      padding: 1.05rem 1.15rem;
+      background: rgba(255, 252, 247, 0.07);
+      border: 1px solid rgba(255, 252, 247, 0.16);
+      border-left: 4px solid var(--accent);
+      font-family: var(--display);
+      font-size: clamp(1.2rem, 2.8vw, 1.5rem);
+      font-weight: 600;
+      line-height: 1.35;
+      letter-spacing: -0.015em;
+      color: #fffaf4;
     }
     .try .actions {
       display: flex;
       flex-wrap: wrap;
-      gap: 0.55rem;
-      margin-bottom: 0.85rem;
+      gap: 0.7rem;
+      margin: 0 0 1.25rem;
     }
     .try button {
-      font: inherit;
-      font-size: 0.95rem;
+      flex: 1 1 12rem;
+      min-height: 3.25rem;
+      font-family: var(--sans);
+      font-size: 1.05rem;
       font-weight: 600;
-      padding: 0.65rem 1.05rem;
-      border: 1px solid transparent;
+      padding: 0.85rem 1.25rem;
+      border: 2px solid transparent;
+      border-radius: 4px;
       cursor: pointer;
-      transition: transform 0.15s ease, background 0.15s ease;
+      box-shadow: 0 6px 16px rgba(0, 0, 0, 0.28);
+      transition: transform 0.15s ease, box-shadow 0.15s ease, background 0.15s ease;
     }
-    .try button:hover:not(:disabled) { transform: translateY(-1px); }
+    .try button:hover:not(:disabled) {
+      transform: translateY(-2px);
+      box-shadow: 0 10px 22px rgba(0, 0, 0, 0.34);
+    }
+    .try button:active:not(:disabled) {
+      transform: translateY(0);
+      box-shadow: 0 3px 10px rgba(0, 0, 0, 0.24);
+    }
     .try button.primary {
       background: var(--accent);
       color: #fffaf4;
+      border-color: #a84a1f;
     }
     .try button.secondary {
-      background: transparent;
-      color: #f4efe8;
-      border-color: rgba(244, 239, 232, 0.35);
+      background: #fffaf4;
+      color: var(--bg-deep);
+      border-color: #e8dfd2;
     }
-    .try button:disabled { opacity: 0.45; cursor: wait; transform: none; }
+    .try button:disabled {
+      opacity: 0.5;
+      cursor: wait;
+      transform: none;
+      box-shadow: none;
+    }
+    .try label {
+      display: block;
+      font-size: 0.78rem;
+      font-weight: 600;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: #a89f92;
+      margin: 0 0 0.4rem;
+    }
+    .try select {
+      width: 100%;
+      max-width: 100%;
+      min-height: 2.75rem;
+      padding: 0.65rem 0.8rem;
+      border: 1.5px solid rgba(255, 252, 247, 0.22);
+      background: #322b24;
+      color: #f0e9df;
+      font-family: var(--sans);
+      font-size: 0.98rem;
+      line-height: 1.35;
+      margin-bottom: 0.35rem;
+      cursor: pointer;
+    }
+    .try select:focus {
+      outline: 2px solid #e8c4a8;
+      outline-offset: 2px;
+      border-color: #e8c4a8;
+    }
     .try .note {
       font-size: 0.85rem;
       color: #d4a88a;
@@ -358,12 +390,12 @@
         Open “What’s the data?” if the warehouse feels abstract.
       </p>
       <p class="prompt" id="prompt-text">Loading question…</p>
-      <label for="qid">Exam question <span style="color:#d4a88a">(★ recommended = cleanest contrast)</span></label>
-      <select id="qid" aria-describedby="prompt-text"></select>
       <div class="actions">
         <button type="button" class="secondary" id="btn-cold">Ask without memory</button>
         <button type="button" class="primary" id="btn-mem">Ask with memory</button>
       </div>
+      <label for="qid">Try another exam question</label>
+      <select id="qid" aria-describedby="prompt-text"></select>
       <p class="note" id="live-note" hidden></p>
       <div class="panel" id="live-panel" hidden>
         <span class="verdict" id="live-verdict"></span>
