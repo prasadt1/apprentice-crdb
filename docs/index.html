@@ -683,6 +683,13 @@ python eval/run_exam.py verify</pre>
     function setBusy(busy) {
       btnCold.disabled = busy;
       btnMem.disabled = busy;
+      if (busy) {
+        if (!btnCold.dataset.label) btnCold.dataset.label = btnCold.textContent;
+        if (!btnMem.dataset.label) btnMem.dataset.label = btnMem.textContent;
+      } else {
+        if (btnCold.dataset.label) btnCold.textContent = btnCold.dataset.label;
+        if (btnMem.dataset.label) btnMem.textContent = btnMem.dataset.label;
+      }
     }
 
     function syncPrompt() {
@@ -740,11 +747,15 @@ python eval/run_exam.py verify</pre>
     async function ask(mode) {
       const qid = sel.value;
       setBusy(true);
-      noteEl.hidden = false;
-      noteEl.textContent =
-        mode === "no_memory"
-          ? "Asking without memory…"
-          : "Asking with memory…";
+      if (mode === "no_memory") {
+        btnCold.textContent = "Asking…";
+        noteEl.hidden = false;
+        noteEl.textContent = "Step 2 · Asking without memory…";
+      } else {
+        btnMem.textContent = "Asking…";
+        noteEl.hidden = false;
+        noteEl.textContent = "Step 3 · Asking with memory…";
+      }
       try {
         let data = null;
         let degraded = false;
