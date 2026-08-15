@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512">
+  <!-- Apprentice mark — growth rings + AS OF read head.
+       Same semantics as the cover: rings read outward through time, the accented
+       inner ring is the timestamp being queried, the cursor travels inward to it.
+       Rings are heavier here than on the cover so the mark survives a 40px avatar.
+       All artwork sits inside r=200 of centre, so a circular avatar crop is safe. -->
+  <rect width="512" height="512" fill="#0b0b0d"/>
+  <g transform="translate(256,256)">
+    <circle r="196" fill="none" stroke="#eb6834" stroke-width="6" opacity="0.30"/>
+    <circle r="148" fill="none" stroke="#eb6834" stroke-width="6" opacity="0.42"/>
+    <circle r="92"  fill="none" stroke="#eb6834" stroke-width="20" opacity="0.16"/>
+    <circle r="92"  fill="none" stroke="#eb6834" stroke-width="13" opacity="1"/>
+    <circle r="20" fill="#eb6834"/>
+    <line x1="0" y1="-228" x2="0" y2="-92" stroke="#f6f4ef" stroke-width="6" opacity="0.55"/>
+    <circle cy="-92" r="17" fill="#f6f4ef"/>
+  </g>
+</svg>
