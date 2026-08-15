@@ -1,24 +1,64 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 630" width="1200" height="630" font-family="system-ui, -apple-system, 'Segoe UI', sans-serif">
-  <rect width="1200" height="630" fill="#fcfcfb"/>
-  <rect x="0" y="0" width="12" height="630" fill="#eb6834"/>
+<svg xmlns="http://www.w3.org/2000/svg" width="1500" height="1000" viewBox="0 0 1500 1000">
+  <!-- Apprentice — Devpost project thumbnail (3:2).
+       Growth-ring mark matches YouTube cover. Render:
+         rsvg-convert -w 1500 -h 1000 docs/media/thumbnail-devpost.svg -o docs/media/thumbnail-devpost.png
+  -->
+  <defs>
+    <radialGradient id="bg" cx="0.78" cy="0.48" r="0.78">
+      <stop offset="0%" stop-color="#2b1d15"/>
+      <stop offset="45%" stop-color="#151416"/>
+      <stop offset="100%" stop-color="#0a0a0c"/>
+    </radialGradient>
+    <radialGradient id="halo" cx="0.5" cy="0.5" r="0.5">
+      <stop offset="0%" stop-color="#eb6834" stop-opacity="0.22"/>
+      <stop offset="70%" stop-color="#eb6834" stop-opacity="0.05"/>
+      <stop offset="100%" stop-color="#eb6834" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
 
-  <text x="64" y="88" font-size="14" font-weight="600" fill="#898781" letter-spacing="1.4">COCKROACHDB   /   AWS   /   AGENTIC MEMORY</text>
-  <text x="64" y="168" font-size="52" font-weight="700" fill="#0b0b0b">Apprentice</text>
-  <text x="64" y="228" font-size="28" fill="#52514e">memory that helps, then hurts</text>
+  <rect width="1500" height="1000" fill="url(#bg)"/>
+  <circle cx="1120" cy="500" r="340" fill="url(#halo)"/>
 
-  <text x="64" y="320" font-size="36" font-weight="700" fill="#0b0b0b">14</text>
-  <text x="140" y="320" font-size="24" fill="#898781">/</text>
-  <text x="168" y="320" font-size="36" font-weight="700" fill="#0ca30c">19</text>
-  <text x="244" y="320" font-size="24" fill="#898781">/</text>
-  <text x="272" y="320" font-size="36" font-weight="700" fill="#0ca30c">19</text>
-  <text x="348" y="320" font-size="24" fill="#898781">/</text>
-  <text x="376" y="320" font-size="36" font-weight="700" fill="#d03b3b">16</text>
-  <text x="460" y="320" font-size="20" fill="#52514e">Nova Lite / 50</text>
+  <!-- growth rings (t0..t3) -->
+  <g transform="translate(1120,500)">
+    <circle r="250" fill="none" stroke="#eb6834" stroke-width="22" opacity="0.07"/>
+    <g fill="none" stroke="#eb6834">
+      <circle r="210" stroke-width="2.2" opacity="0.42"/>
+      <circle r="160" stroke-width="2.2" opacity="0.36"/>
+      <circle r="112" stroke-width="2.2" opacity="0.32"/>
+    </g>
+    <circle r="64" fill="none" stroke="#eb6834" stroke-width="16" opacity="0.18"/>
+    <circle r="64" fill="none" stroke="#eb6834" stroke-width="5" opacity="1"/>
+    <circle r="7" fill="#eb6834" opacity="0.9"/>
+    <line x1="0" y1="-240" x2="0" y2="-64" stroke="#f6f4ef" stroke-width="1.6" opacity="0.28"/>
+    <circle cy="-64" r="9" fill="#f6f4ef"/>
+    <g font-family="ui-monospace, Menlo, monospace" font-size="20" fill="#f6f4ef">
+      <text x="18" y="-200" opacity="0.4">t3</text>
+      <text x="18" y="-150" opacity="0.4">t2</text>
+      <text x="18" y="-102" opacity="0.4">t1</text>
+      <text x="20" y="-52" opacity="0.85" font-size="22">AS OF t0</text>
+    </g>
+  </g>
 
-  <text x="64" y="372" font-size="18" fill="#52514e">Retrieval at the last epoch: 44/44. Accuracy is already falling.</text>
-  <text x="64" y="404" font-size="18" fill="#52514e">Storage worked. Recall worked. Utilization did not.</text>
+  <!-- brand mark + name -->
+  <g transform="translate(120,168)">
+    <circle r="28" fill="none" stroke="#eb6834" stroke-width="2" opacity="0.42"/>
+    <circle r="17" fill="none" stroke="#eb6834" stroke-width="2.8" opacity="0.95"/>
+    <circle r="6" fill="#eb6834"/>
+    <line x1="0" y1="-34" x2="0" y2="34" stroke="#f6f4ef" stroke-width="1.4" opacity="0.42"/>
+  </g>
+  <text x="168" y="182" font-family="Georgia, 'Times New Roman', serif" font-size="56"
+        font-weight="700" letter-spacing="0.4" fill="#f6f4ef">Apprentice</text>
 
-  <rect x="64" y="460" width="1072" height="110" rx="12" fill="#ffffff" stroke="#e1e0d9" stroke-width="1.5"/>
-  <text x="92" y="508" font-size="16" fill="#52514e">CockroachDB Cloud   /   AS OF SYSTEM TIME   /   vector index</text>
-  <text x="92" y="540" font-size="16" fill="#52514e">Amazon Bedrock   /   Titan + Converse   /   utilization is the gap</text>
+  <g font-family="Georgia, 'Times New Roman', serif" font-weight="700" letter-spacing="-1.2">
+    <text x="110" y="420" font-size="78" fill="#f6f4ef">Memory that</text>
+    <text x="110" y="510" font-size="78" fill="#eb6834">helps, then hurts.</text>
+  </g>
+
+  <g font-family="system-ui, -apple-system, 'Segoe UI', sans-serif">
+    <rect x="110" y="560" width="64" height="3" fill="#eb6834" opacity="0.9"/>
+    <text x="110" y="620" font-size="28" font-weight="500" fill="#a8a5a0">Frozen exam. CockroachDB rewind.</text>
+    <text x="110" y="660" font-size="28" font-weight="500" fill="#a8a5a0">Retrieval 44/44 — accuracy still falls.</text>
+    <text x="110" y="740" font-size="20" font-weight="600" fill="#6e6c68" letter-spacing="2">COCKROACHDB × AWS · AGENTIC MEMORY</text>
+  </g>
 </svg>
