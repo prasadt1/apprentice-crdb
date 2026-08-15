@@ -281,7 +281,7 @@ python eval/run_exam.py verify</pre>
   <script>
     // One line to enable live: set API to the Lambda Function URL.
     // Leave empty (or point at a dead URL) to force the recorded degradation path.
-    const API = "";
+    const API = "https://7ccfjofiq5t2ttiigqjk2x5y2i0julit.lambda-url.us-east-1.on.aws/";
     const RECORDED_NOTE = "Live endpoint unavailable; showing the recorded run from 2026-08-14.";
 
     const sel = document.getElementById("qid");
@@ -365,7 +365,10 @@ python eval/run_exam.py verify</pre>
             clearTimeout(timer);
             if (!res.ok) throw new Error("HTTP " + res.status);
             data = await res.json();
-            if (data.source === "recorded") degraded = true;
+            if (data.source === "recorded") {
+              degraded = true;
+              data = await loadRecorded(qid, mode);
+            }
           } catch (err) {
             clearTimeout(timer);
             degraded = true;

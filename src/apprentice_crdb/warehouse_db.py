@@ -1,7 +1,11 @@
 from __future__ import annotations
 
-import sqlite3
 from pathlib import Path
+
+try:
+    import pysqlite3 as sqlite3  # Lambda: full SQLite with CTEs
+except ImportError:  # pragma: no cover - local/dev uses stdlib
+    import sqlite3
 
 from apprentice_crdb.paths import WAREHOUSE_SCHEMA, WAREHOUSE_SEED
 

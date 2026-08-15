@@ -150,6 +150,22 @@ def _ask(question_id: str, mode: str) -> dict[str, Any]:
     question = items[question_id]
     recall = mode == "with_memory"
 
+    if recall and not os.environ.get("APPRENTICE_CRDB_DSN", "").strip():
+        return {
+            "question": question,
+            "mode": mode,
+            "retrieved": [],
+            "sql": None,
+            "columns": [],
+            "rows": [],
+            "verdict": "error",
+            "expected_row_count": labels[question_id]["row_count"],
+            "model_id": os.environ.get("APPRENTICE_GEN_MODEL"),
+            "elapsed_ms": 0,
+            "source": "recorded",
+            "error": "APPRENTICE_CRDB_DSN not set on Lambda",
+        }
+
     try:
         receipt = answer_with_receipt(
             question,

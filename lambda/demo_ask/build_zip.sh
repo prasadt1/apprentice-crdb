@@ -8,8 +8,15 @@ ZIP="$ROOT/lambda/demo_ask/demo_ask.zip"
 trap 'rm -rf "$STAGE"' EXIT
 
 python3.11 -m pip install \
-  --quiet --target "$STAGE" \
-  "psycopg[binary]>=3.1" "boto3>=1.34" "sqlglot>=25" "pydantic>=2"
+  --quiet --upgrade \
+  --target "$STAGE" \
+  --platform manylinux2014_x86_64 \
+  --implementation cp \
+  --python-version 3.11 \
+  --only-binary=:all: \
+  "psycopg[binary]>=3.1" "boto3>=1.34" "sqlglot>=25" "pydantic>=2" "pysqlite3-binary>=0.5.0"
+
+
 
 # Library + warehouse SQL
 mkdir -p "$STAGE/apprentice_crdb"
