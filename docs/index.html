@@ -4,143 +4,426 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Apprentice — memory that helps, then hurts</title>
-  <meta name="description" content="Frozen 50-question exam on CockroachDB AS OF SYSTEM TIME. Two Bedrock agents peak before full memory and decline. Retrieval at that epoch is 44/44." />
+  <meta name="description" content="Try the same fiscal Q2 question live: wrong without memory, correct with CockroachDB rules. Then see the 50-question curve where retrieval hits 44/44 and accuracy still falls." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet" />
   <style>
     :root {
-      --bg: #fcfcfb;
-      --ink: #0b0b0b;
-      --muted: #52514e;
-      --line: #e1e0d9;
-      --accent: #eb6834;
-      --blue: #2a78d6;
-      --green: #0ca30c;
-      --sans: system-ui, -apple-system, "Segoe UI", sans-serif;
-      --mono: ui-monospace, Menlo, Consolas, monospace;
+      --bg: #f7f4ef;
+      --bg-deep: #1a1612;
+      --ink: #1a1612;
+      --muted: #5c564c;
+      --line: #d9d2c5;
+      --accent: #c45a28;
+      --accent-soft: #f3e4da;
+      --green: #1f7a3a;
+      --red: #a32018;
+      --paper: #fffcf7;
+      --sans: "IBM Plex Sans", system-ui, sans-serif;
+      --display: "Fraunces", Georgia, serif;
+      --mono: "IBM Plex Mono", ui-monospace, monospace;
     }
     * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
     body {
       margin: 0;
-      background: var(--bg);
+      background:
+        radial-gradient(1200px 500px at 10% -10%, #efe4d6 0%, transparent 55%),
+        radial-gradient(900px 420px at 100% 0%, #e8ddd0 0%, transparent 50%),
+        var(--bg);
       color: var(--ink);
       font-family: var(--sans);
-      line-height: 1.5;
+      line-height: 1.55;
     }
-    .bar { width: 12px; background: var(--accent); position: fixed; inset: 0 auto 0 0; }
-    main { max-width: 52rem; margin: 0 auto; padding: 2.25rem 1.25rem 4rem 1.75rem; }
-    h1 { font-size: clamp(1.8rem, 4vw, 2.4rem); margin: 0 0 0.35rem; letter-spacing: -0.03em; }
-    .tag { color: var(--muted); font-size: 1.1rem; margin: 0 0 1.25rem; }
+    .bar { width: 10px; background: var(--accent); position: fixed; inset: 0 auto 0 0; z-index: 2; }
+    main { max-width: 52rem; margin: 0 auto; padding: 2rem 1.25rem 4rem 1.85rem; }
+    .brand {
+      font-family: var(--display);
+      font-size: clamp(2.35rem, 6vw, 3.35rem);
+      font-weight: 700;
+      letter-spacing: -0.03em;
+      line-height: 1.05;
+      margin: 0 0 0.4rem;
+    }
+    .tag {
+      margin: 0 0 1rem;
+      font-size: 1.15rem;
+      color: var(--muted);
+      font-weight: 500;
+    }
+    .lede {
+      margin: 0 0 1.1rem;
+      font-size: 1.05rem;
+      max-width: 40rem;
+    }
+    .topnav {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.55rem 1.1rem;
+      margin: 0 0 1.75rem;
+      font-size: 0.92rem;
+    }
+    .topnav a { color: var(--ink); }
+    .topnav a.cta-link {
+      color: var(--accent);
+      font-weight: 600;
+      text-decoration: none;
+      border-bottom: 2px solid var(--accent);
+    }
+
+    /* —— Try it (hero CTA) —— */
+    .try {
+      position: relative;
+      margin: 0 0 2.25rem;
+      padding: 1.35rem 1.25rem 1.4rem;
+      background: var(--bg-deep);
+      color: #f4efe8;
+      border-radius: 2px;
+      box-shadow: 0 18px 40px rgba(26, 22, 18, 0.18);
+    }
+    .try::before {
+      content: "";
+      position: absolute;
+      inset: 0 auto 0 0;
+      width: 5px;
+      background: var(--accent);
+    }
+    .try .eyebrow {
+      margin: 0 0 0.45rem;
+      font-size: 0.72rem;
+      font-weight: 600;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: #d4a88a;
+    }
+    .try h2 {
+      font-family: var(--display);
+      font-size: clamp(1.55rem, 3.5vw, 2rem);
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      margin: 0 0 0.55rem;
+      line-height: 1.15;
+      color: #fffaf4;
+    }
+    .try .pitch {
+      margin: 0 0 1rem;
+      color: #cfc6ba;
+      max-width: 38rem;
+      font-size: 0.98rem;
+    }
+    .try label {
+      display: block;
+      font-size: 0.75rem;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      color: #a89f92;
+      margin-bottom: 0.3rem;
+    }
+    .try .prompt {
+      margin: 0 0 0.85rem;
+      padding: 0.75rem 0.85rem;
+      background: rgba(0, 0, 0, 0.28);
+      border-left: 3px solid var(--accent);
+      font-size: 0.95rem;
+      color: #f0e9df;
+    }
+    .try select {
+      width: 100%;
+      max-width: 100%;
+      padding: 0.5rem 0.55rem;
+      border: 1px solid rgba(255, 252, 247, 0.18);
+      background: #2a241e;
+      color: #f4efe8;
+      font: inherit;
+      margin-bottom: 0.9rem;
+    }
+    .try .actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.55rem;
+      margin-bottom: 0.85rem;
+    }
+    .try button {
+      font: inherit;
+      font-size: 0.95rem;
+      font-weight: 600;
+      padding: 0.65rem 1.05rem;
+      border: 1px solid transparent;
+      cursor: pointer;
+      transition: transform 0.15s ease, background 0.15s ease;
+    }
+    .try button:hover:not(:disabled) { transform: translateY(-1px); }
+    .try button.primary {
+      background: var(--accent);
+      color: #fffaf4;
+    }
+    .try button.secondary {
+      background: transparent;
+      color: #f4efe8;
+      border-color: rgba(244, 239, 232, 0.35);
+    }
+    .try button:disabled { opacity: 0.45; cursor: wait; transform: none; }
+    .try .note {
+      font-size: 0.85rem;
+      color: #d4a88a;
+      margin: 0 0 0.65rem;
+      padding: 0.5rem 0.6rem;
+      background: rgba(196, 90, 40, 0.18);
+      border-left: 3px solid var(--accent);
+    }
+    .try .note[hidden], .try .panel[hidden] { display: none; }
+    .try .panel {
+      margin-top: 0.35rem;
+      padding: 0.9rem 0.95rem;
+      background: var(--paper);
+      color: var(--ink);
+      border-radius: 2px;
+    }
+    .try .verdict {
+      display: inline-block;
+      font-size: 0.75rem;
+      font-weight: 700;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      padding: 0.2rem 0.5rem;
+      border: 1.5px solid var(--line);
+    }
+    .try .verdict.correct { color: var(--green); border-color: var(--green); background: #e8f5ec; }
+    .try .verdict.wrong,
+    .try .verdict.rejected,
+    .try .verdict.error { color: var(--red); border-color: var(--red); background: #fceceb; }
+    .try .meta { font-size: 0.82rem; color: var(--muted); margin: 0.4rem 0 0.65rem; }
+    .try .panel strong { font-size: 0.78rem; letter-spacing: 0.03em; text-transform: uppercase; color: var(--muted); }
+    .try ul.rules { margin: 0.35rem 0 0.75rem; padding-left: 1.1rem; font-size: 0.88rem; }
+    .try .panel pre {
+      margin: 0.35rem 0 0.75rem;
+      padding: 0.7rem 0.8rem;
+      overflow-x: auto;
+      background: #f3efe8;
+      border: 1px solid var(--line);
+      font-family: var(--mono);
+      font-size: 0.78rem;
+      line-height: 1.45;
+      color: var(--ink);
+    }
+    .try .foot {
+      margin: 0.9rem 0 0;
+      font-size: 0.78rem;
+      color: #8f8578;
+      max-width: 42rem;
+    }
+    .try .foot code { font-family: var(--mono); font-size: 0.74rem; }
+    .try .context {
+      margin: 0.95rem 0 0;
+      border: 1px solid rgba(255, 252, 247, 0.14);
+      background: rgba(0, 0, 0, 0.22);
+    }
+    .try .context > summary {
+      cursor: pointer;
+      list-style: none;
+      padding: 0.7rem 0.85rem;
+      font-size: 0.88rem;
+      font-weight: 600;
+      color: #e8c4a8;
+    }
+    .try .context > summary::-webkit-details-marker { display: none; }
+    .try .context > summary::before {
+      content: "+ ";
+      font-family: var(--mono);
+      color: #a89f92;
+    }
+    .try .context[open] > summary::before { content: "− "; }
+    .try .context-body {
+      padding: 0 0.85rem 0.95rem;
+      color: #cfc6ba;
+      font-size: 0.88rem;
+    }
+    .try .context-body p { margin: 0.55rem 0; }
+    .try .context-body ul {
+      margin: 0.35rem 0 0.65rem;
+      padding-left: 1.15rem;
+    }
+    .try .context-body li { margin: 0.25rem 0; }
+    .try .context-body code {
+      font-family: var(--mono);
+      font-size: 0.8rem;
+      color: #f0e9df;
+    }
+    .try .context-body .schema {
+      margin: 0.5rem 0 0;
+      padding: 0.65rem 0.75rem;
+      background: rgba(0, 0, 0, 0.28);
+      border: 1px solid rgba(255, 252, 247, 0.08);
+      font-family: var(--mono);
+      font-size: 0.72rem;
+      line-height: 1.45;
+      color: #d8d0c4;
+      overflow-x: auto;
+      white-space: pre;
+    }
+
+    .bridge {
+      margin: -0.5rem 0 1.75rem;
+      padding: 0.85rem 1rem;
+      background: var(--accent-soft);
+      border-left: 4px solid var(--accent);
+      font-size: 0.95rem;
+    }
+    .bridge strong { font-weight: 600; }
+
+    .stats { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0.7rem; margin: 0 0 1.5rem; }
+    .stat {
+      border: 1px solid var(--line);
+      background: var(--paper);
+      padding: 0.85rem 0.8rem;
+    }
+    .stat .n {
+      font-family: var(--display);
+      font-size: 1.45rem;
+      font-variant-numeric: tabular-nums;
+      line-height: 1.1;
+    }
+    .stat .l { display: block; margin-top: 0.35rem; font-size: 0.78rem; color: var(--muted); }
+
+    h2.section {
+      font-family: var(--display);
+      font-size: 1.45rem;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      margin: 2rem 0 0.65rem;
+    }
     p { margin: 0.7rem 0; }
     .muted { color: var(--muted); }
     a { color: var(--ink); }
-    .stats { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0.7rem; margin: 1.25rem 0; }
-    .stat { border: 1px solid var(--line); background: #fff; padding: 0.85rem 0.8rem; }
-    .stat .n { font-size: 1.55rem; font-variant-numeric: tabular-nums; line-height: 1; }
-    .stat .l { display: block; margin-top: 0.35rem; font-size: 0.78rem; color: var(--muted); }
-    .live {
-      margin: 1.5rem 0 1.75rem;
-      padding: 1rem 1rem 1.1rem;
-      border: 1px solid var(--line);
-      background: #fff;
-    }
-    .live h2 { margin: 0 0 0.35rem; font-size: 1.15rem; }
-    .live .hint { margin: 0 0 0.85rem; font-size: 0.9rem; color: var(--muted); }
-    .live label { display: block; font-size: 0.78rem; color: var(--muted); margin-bottom: 0.25rem; }
-    .live select {
-      width: 100%;
-      max-width: 100%;
-      padding: 0.45rem 0.5rem;
-      border: 1px solid var(--line);
-      background: var(--bg);
-      font: inherit;
-      margin-bottom: 0.75rem;
-    }
-    .live .actions { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 0.75rem; }
-    .live button {
-      font: inherit;
-      font-size: 0.92rem;
-      padding: 0.45rem 0.85rem;
-      border: 1px solid var(--ink);
-      background: var(--ink);
-      color: #fff;
-      cursor: pointer;
-    }
-    .live button.secondary { background: #fff; color: var(--ink); }
-    .live button:disabled { opacity: 0.45; cursor: wait; }
-    .live .note {
-      font-size: 0.85rem;
-      color: var(--muted);
-      margin: 0 0 0.65rem;
-      padding: 0.45rem 0.55rem;
-      border-left: 3px solid var(--accent);
-      background: #fbf6f2;
-    }
-    .live .note[hidden], .live .panel[hidden] { display: none; }
-    .live .verdict {
-      display: inline-block;
-      font-size: 0.78rem;
-      font-weight: 700;
-      letter-spacing: 0.04em;
-      text-transform: uppercase;
-      padding: 0.15rem 0.45rem;
-      border: 1px solid var(--line);
-    }
-    .live .verdict.correct { color: var(--green); border-color: var(--green); }
-    .live .verdict.wrong, .live .verdict.rejected, .live .verdict.error { color: #b42318; border-color: #b42318; }
-    .live .meta { font-size: 0.82rem; color: var(--muted); margin: 0.35rem 0 0.6rem; }
-    .live ul.rules { margin: 0.35rem 0 0.75rem; padding-left: 1.1rem; font-size: 0.88rem; }
-    .live .foot { margin: 0.75rem 0 0; font-size: 0.8rem; color: var(--muted); }
-    table { width: 100%; border-collapse: collapse; font-size: 0.92rem; background: #fff; }
+    table { width: 100%; border-collapse: collapse; font-size: 0.92rem; background: var(--paper); }
     th, td { border: 1px solid var(--line); padding: 0.45rem 0.55rem; text-align: left; }
     td.n, th.n { text-align: right; font-variant-numeric: tabular-nums; }
     th { font-size: 0.78rem; color: var(--muted); font-weight: 600; }
     .peak { font-weight: 700; }
     figure { margin: 1.25rem 0 0.25rem; }
-    figure img { display: block; width: 100%; height: auto; border: 1px solid var(--line); background: #fff; }
+    figure img {
+      display: block;
+      width: 100%;
+      height: auto;
+      border: 1px solid var(--line);
+      background: var(--paper);
+    }
     figcaption { margin-top: 0.5rem; font-size: 0.88rem; color: var(--muted); }
-    nav { display: flex; flex-wrap: wrap; gap: 0.65rem 1.1rem; margin: 1rem 0 1.5rem; font-size: 0.92rem; }
-    pre {
+    pre.shell {
       margin: 0.75rem 0;
       padding: 0.85rem 0.95rem;
       overflow-x: auto;
-      background: #fff;
+      background: var(--paper);
       border: 1px solid var(--line);
       font-family: var(--mono);
       font-size: 0.82rem;
       line-height: 1.45;
     }
     footer { margin-top: 2.5rem; font-size: 0.85rem; color: var(--muted); }
-    @media (max-width: 640px) { .stats { grid-template-columns: 1fr; } }
+    @media (max-width: 640px) {
+      .stats { grid-template-columns: 1fr; }
+      .bar { width: 6px; }
+      main { padding-left: 1.35rem; }
+    }
   </style>
 </head>
 <body>
   <div class="bar" aria-hidden="true"></div>
   <main>
-    <h1>Apprentice</h1>
-    <p class="tag">memory that helps, then hurts</p>
-    <p>
-      Teach a correction → memory lives in CockroachDB → replay that education at any
-      timestamp. A frozen 50-question exam, graded via
-      <code>AS OF SYSTEM TIME</code>. Two Bedrock agents peak on partial memory
-      and decline at full memory. Retrieval at that last epoch is <strong>44/44</strong>.
-      Storage worked. Recall worked. Utilization did not.
+    <h1 class="brand">Apprentice</h1>
+    <p class="tag">Teacher corrections live in CockroachDB. Accuracy still falls.</p>
+    <p class="lede">
+      An analyst agent writes SQL against a tiny company sales database. House rules
+      (how this company defines revenue, quarters, and live orders) are <em>not</em> in
+      the schema — they live in CockroachDB memory after a teacher corrects the agent.
+      Ask the same exam question cold, then with memory. Then see what happens when you
+      scale that to fifty questions.
     </p>
-
-    <figure>
-      <img src="media/agent-loop.png" width="1200" height="220" alt="Agent loop: Teach (human) → Distill (sqlglot) → Remember (CockroachDB + Titan) → Recall (CockroachDB AS OF) → Answer (Bedrock); Prove is the frozen exam" />
-      <figcaption>
-        The agent loop. A human teaches; CockroachDB remembers and rewinds; Bedrock answers;
-        the frozen exam decides. Wiring detail:
-        <a href="https://github.com/prasadt1/apprentice-crdb/blob/main/docs/media/architecture.png">architecture diagram</a>.
-      </figcaption>
-    </figure>
-
-    <nav>
+    <nav class="topnav" aria-label="Page">
+      <a class="cta-link" href="#try">Try it live ↓</a>
+      <a href="#curve">Exam curve</a>
+      <a href="#why">Why it fell</a>
+      <a href="#loop">How it works</a>
+      <a href="https://youtu.be/xmxEFkEiJLY">3‑min walkthrough</a>
       <a href="https://github.com/prasadt1/apprentice-crdb">Source</a>
-      <a href="https://github.com/prasadt1/apprentice-crdb/blob/main/eval/RESULTS.md">Published results</a>
-      <a href="https://github.com/prasadt1/apprentice-crdb/tree/main/eval/runs-nova-lite">Every Lite SQL string</a>
-      <a href="#reproduce">Reproduce the freeze</a>
     </nav>
 
+    <section class="try" id="try" aria-labelledby="try-title">
+      <p class="eyebrow">Live · CockroachDB memory + Bedrock SQL + toy warehouse</p>
+      <h2 id="try-title">Ask without memory, then with it</h2>
+      <p class="pitch">
+        Cold ask runs as the page loads. Watch the retrieved-rules list and the graded
+        answer — then click <strong>Ask with memory</strong> for the contrast.
+        Open “What’s the data?” if the warehouse feels abstract.
+      </p>
+      <p class="prompt" id="prompt-text">Loading question…</p>
+      <label for="qid">Exam question <span style="color:#d4a88a">(★ recommended = cleanest contrast)</span></label>
+      <select id="qid" aria-describedby="prompt-text"></select>
+      <div class="actions">
+        <button type="button" class="secondary" id="btn-cold">Ask without memory</button>
+        <button type="button" class="primary" id="btn-mem">Ask with memory</button>
+      </div>
+      <p class="note" id="live-note" hidden></p>
+      <div class="panel" id="live-panel" hidden>
+        <span class="verdict" id="live-verdict"></span>
+        <p class="meta" id="live-meta"></p>
+        <div id="live-rules-wrap">
+          <strong>Retrieved rules</strong>
+          <ul class="rules" id="live-rules"></ul>
+        </div>
+        <strong>Generated SQL</strong>
+        <pre id="live-sql"></pre>
+        <strong>Rows</strong>
+        <pre id="live-rows"></pre>
+      </div>
+
+      <details class="context">
+        <summary>What’s the data? (warehouse + house rules)</summary>
+        <div class="context-body">
+          <p>
+            Two stores, on purpose. <strong>CockroachDB</strong> holds the agent’s memory
+            (teacher corrections as semantic rules). A separate <strong>SQLite prop
+            warehouse</strong> holds the fake company’s sales data the SQL runs against —
+            about six orders, seeded so “calendar quarter” and “this company’s fiscal
+            quarter” disagree.
+          </p>
+          <p><strong>Tables the agent can query</strong></p>
+          <div class="schema" role="img" aria-label="Warehouse tables">regions
+customers  → region_id
+products
+orders     → customer_id, ordered_at, deleted_at, status
+order_lines → order_id, product_id, amount_cents
+refunds    → order_id, amount_cents</div>
+          <p><strong>House rules that are not in the schema</strong> (they arrive via memory)</p>
+          <ul>
+            <li><code>revenue</code> = line amounts <em>minus</em> refunds; skip cancelled and soft-deleted orders</li>
+            <li>This company’s fiscal year starts <strong>1 February</strong> — so “fiscal Q2 2026” is May–July, not April–June</li>
+            <li>Region rolls up through the customer, not the product</li>
+          </ul>
+          <p>
+            “Frozen label” means: before any agent ran, I computed the correct row for each
+            exam question and checked it into git. Live answers are graded against that —
+            not against a judge’s gut feel.
+          </p>
+        </div>
+      </details>
+
+      <p class="foot">
+        Live path: recall from CockroachDB → SQL from Bedrock → execute on the prop warehouse
+        → grade vs labels at <code>b043aea</code>. The curve below is <em>recorded</em>
+        (epoch HLCs are past the 75-minute GC window). Optional
+        <a href="https://youtu.be/xmxEFkEiJLY" style="color:#e8c4a8">3‑min walkthrough</a>.
+      </p>
+    </section>
+
+    <p class="bridge" id="curve">
+      <strong>What you just saw on one question</strong> — cold wrong, memory correct —
+      is the easy case. Scale it to a 50-question exam and the story flips: retrieval stays high,
+      accuracy peaks early, then falls.
+    </p>
+
+    <h2 class="section">At exam scale — the recorded curve</h2>
     <div class="stats">
       <div class="stat">
         <div class="n">14 / 19 / 19 / 16</div>
@@ -156,38 +439,6 @@
       </div>
     </div>
 
-    <section class="live" id="ask" aria-labelledby="ask-title">
-      <h2 id="ask-title">Ask the agent</h2>
-      <p class="hint">
-        Pick a frozen exam question. Ask without memory, then with memory.
-        Suggested first pick: <strong>q02</strong> — the video beat (20,000 wrong cold → 95,000 correct with rules).
-      </p>
-      <label for="qid">Frozen question</label>
-      <select id="qid"></select>
-      <div class="actions">
-        <button type="button" class="secondary" id="btn-cold">Ask without memory</button>
-        <button type="button" id="btn-mem">Ask with memory</button>
-      </div>
-      <p class="note" id="live-note" hidden></p>
-      <div class="panel" id="live-panel" hidden>
-        <span class="verdict" id="live-verdict"></span>
-        <p class="meta" id="live-meta"></p>
-        <div id="live-rules-wrap">
-          <strong>Retrieved rules</strong>
-          <ul class="rules" id="live-rules"></ul>
-        </div>
-        <strong>Generated SQL</strong>
-        <pre id="live-sql"></pre>
-        <strong>Rows</strong>
-        <pre id="live-rows"></pre>
-      </div>
-      <p class="foot">
-        Live: CockroachDB recall + Amazon Bedrock generation + execution against the prop warehouse,
-        graded against labels frozen at <code>b043aea</code>.
-        The four-epoch curve below is <em>recorded</em> — those HLCs are outside the 75-minute GC window.
-      </p>
-    </section>
-
     <figure>
       <img src="media/learning-curve.png" width="1200" height="800" alt="Three curves: oracle rises to 44/50; Nova Micro 8-21-18-13; Nova Lite 14-19-19-16" />
       <figcaption>
@@ -196,7 +447,7 @@
       </figcaption>
     </figure>
 
-    <h2>The three curves</h2>
+    <h2 class="section">Scores by education epoch</h2>
     <table>
       <thead>
         <tr>
@@ -238,9 +489,14 @@
         </tr>
       </tbody>
     </table>
-    <p class="muted">Bold in RESULTS.md = that column’s peak. Both agents peak before full memory.</p>
+    <p class="muted">Bold cells = that column’s peak. Both agents peak before full memory.</p>
 
-    <h2>Why it fell</h2>
+    <h2 class="section" id="why">Why accuracy fell</h2>
+    <p>
+      The drop is not “memory failed to store.” At full memory, retrieval of the rules the
+      gold SQL needed was <strong>44/44</strong>. Storage and recall worked. Utilization did not:
+      the model over-applies house rules on questions that should stay untouched.
+    </p>
     <p>
       Over-application is real and replicated; it is not monotonic with rule count.
       Both models end below their own <code>unaffected</code> peak — Micro 5/6 → 3/6,
@@ -253,38 +509,61 @@
       explain the <code>unaffected</code> column.
     </p>
 
+    <h2 class="section" id="loop">How the agent is wired</h2>
+    <p class="muted" style="margin-top:-0.25rem">
+      Separate beat from “why it fell.” This is the teach → remember → answer loop that produces
+      the memory the try widget and the exam both use.
+    </p>
     <figure>
-      <img src="media/aost-replay.png" width="1200" height="800" alt="AOST rewind: same cluster, earlier brain, zero rules at memory_zero" />
+      <img src="media/agent-loop.png" width="1200" height="220" alt="Agent loop: Teach → Distill → Remember → Recall → Answer; Prove is the frozen exam" />
       <figcaption>
-        <strong>Recorded.</strong> Replay is a timestamp, not a backup restore. The published
-        epoch HLCs are outside Basic’s 75-minute GC window — they cannot be re-queried live.
-        The ask widget above uses <em>current</em> memory instead.
+        A human corrects SQL; sqlglot distils rules (no LLM); CockroachDB stores and embeds;
+        Bedrock writes one SELECT; the frozen exam scores storage, recall, and utilization apart.
+        Detail:
+        <a href="https://github.com/prasadt1/apprentice-crdb/blob/main/docs/media/architecture.png">architecture diagram</a>.
       </figcaption>
     </figure>
 
-    <h2 id="reproduce">Reproduce the freeze (no cluster)</h2>
-    <pre>git clone https://github.com/prasadt1/apprentice-crdb.git
+    <h2 class="section" id="replay">How education epochs rewind</h2>
+    <p>
+      The curve above is four snapshots of the <em>same</em> CockroachDB cluster at four
+      Hybrid Logical Clock timestamps — not four restored backups. After teaching, I score
+      the exam <code>AS OF</code> each education epoch (<code>memory_zero</code> →
+      <code>join_path</code>).
+    </p>
+    <figure>
+      <img src="media/aost-replay.png" width="1200" height="800" alt="AOST rewind: same cluster, earlier brain, zero rules at memory_zero" />
+      <figcaption>
+        <strong>Recorded.</strong> Replay is a timestamp, not a backup restore. Published
+        epoch HLCs are outside Basic’s 75-minute GC window — they cannot be re-queried live.
+        The try widget at the top uses <em>current</em> memory (cold vs full rules), not those
+        historical HLCs.
+      </figcaption>
+    </figure>
+
+    <h2 class="section" id="reproduce">Reproduce the freeze (no cluster)</h2>
+    <pre class="shell">git clone https://github.com/prasadt1/apprentice-crdb.git
 cd apprentice-crdb
 python3.11 -m venv .venv &amp;&amp; source .venv/bin/activate
 pip install -e ".[dev]"
 pytest -q
 python eval/run_exam.py verify</pre>
     <p class="muted">
-      This page is the functional demo URL: the published curve and the receipt.
-      The CLI is the product. Live memory needs <code>APPRENTICE_CRDB_DSN</code>.
+      This page is the functional demo URL. The CLI is the product.
+      Live memory needs <code>APPRENTICE_CRDB_DSN</code> on the Lambda behind the try widget.
     </p>
 
     <footer>
-      Apache-2.0 · CockroachDB × AWS Agentic Memory · I will not call the cluster an AWS service I built. Bedrock is the AWS service. Lambda serves this ask widget.
+      Apache-2.0 · CockroachDB × AWS Agentic Memory · Bedrock is the AWS service. Lambda serves the try widget. CockroachDB is not something I built on AWS.
     </footer>
   </main>
   <script>
-    // One line to enable live: set API to the Lambda Function URL.
-    // Leave empty (or point at a dead URL) to force the recorded degradation path.
     const API = "https://7ccfjofiq5t2ttiigqjk2x5y2i0julit.lambda-url.us-east-1.on.aws/";
     const RECORDED_NOTE = "Live endpoint unavailable; showing the recorded run from 2026-08-14.";
+    const DEFAULT_Q = "q02";
 
     const sel = document.getElementById("qid");
+    const promptEl = document.getElementById("prompt-text");
     const noteEl = document.getElementById("live-note");
     const panel = document.getElementById("live-panel");
     const verdictEl = document.getElementById("live-verdict");
@@ -297,15 +576,26 @@ python eval/run_exam.py verify</pre>
 
     let questions = [];
     let recorded = {};
+    const byId = {};
 
     function setBusy(busy) {
       btnCold.disabled = busy;
       btnMem.disabled = busy;
     }
 
-    function render(data, { degraded }) {
+    function syncPrompt() {
+      const q = byId[sel.value];
+      if (!q) {
+        promptEl.textContent = "Question unavailable.";
+        return;
+      }
+      const badge = q.id === DEFAULT_Q ? "★ recommended · " : "";
+      promptEl.textContent = badge + q.question;
+    }
+
+    function render(data, { degraded, reason }) {
       noteEl.hidden = !degraded && data.source !== "recorded";
-      if (!noteEl.hidden) noteEl.textContent = RECORDED_NOTE;
+      if (!noteEl.hidden) noteEl.textContent = reason || RECORDED_NOTE;
       panel.hidden = false;
       const v = data.verdict || "error";
       verdictEl.textContent = v;
@@ -348,7 +638,11 @@ python eval/run_exam.py verify</pre>
     async function ask(mode) {
       const qid = sel.value;
       setBusy(true);
-      noteEl.hidden = true;
+      noteEl.hidden = false;
+      noteEl.textContent =
+        mode === "no_memory"
+          ? "Asking without memory…"
+          : "Asking with memory…";
       try {
         let data = null;
         let degraded = false;
@@ -373,6 +667,17 @@ python eval/run_exam.py verify</pre>
             clearTimeout(timer);
             degraded = true;
             data = await loadRecorded(qid, mode);
+            const reason =
+              RECORDED_NOTE +
+              " (" +
+              (err && err.name === "AbortError"
+                ? "timeout"
+                : err && err.message
+                  ? err.message
+                  : String(err)) +
+              ")";
+            render(data, { degraded, reason });
+            return;
           }
         } else {
           degraded = true;
@@ -402,6 +707,7 @@ python eval/run_exam.py verify</pre>
 
     async function boot() {
       questions = await (await fetch("demo/questions.json")).json();
+      questions.forEach((q) => { byId[q.id] = q; });
       const byStratum = {};
       questions.forEach((q) => {
         (byStratum[q.stratum] || (byStratum[q.stratum] = [])).push(q);
@@ -416,19 +722,25 @@ python eval/run_exam.py verify</pre>
             .forEach((q) => {
               const opt = document.createElement("option");
               opt.value = q.id;
-              opt.textContent = q.id + " — " + q.question;
+              const mark = q.id === DEFAULT_Q ? "★ recommended · " : "";
+              opt.textContent = mark + q.question;
               og.appendChild(opt);
             });
           sel.appendChild(og);
         });
-      sel.value = "q02";
+      sel.value = DEFAULT_Q;
+      syncPrompt();
+      sel.addEventListener("change", syncPrompt);
       btnCold.addEventListener("click", () => ask("no_memory"));
       btnMem.addEventListener("click", () => ask("with_memory"));
+      // Hide cold latency behind page load — judge arrives at a populated wrong answer.
+      await ask("no_memory");
     }
 
     boot().catch((err) => {
       noteEl.hidden = false;
       noteEl.textContent = "Could not load demo/questions.json: " + err;
+      promptEl.textContent = "Could not load questions.";
     });
   </script>
 </body>

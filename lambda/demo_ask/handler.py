@@ -21,7 +21,6 @@ from apprentice_crdb.grader import result_signature, signatures_match  # noqa: E
 from apprentice_crdb.memory import cluster_now  # noqa: E402
 from apprentice_crdb.paths import REPO_ROOT  # noqa: E402
 
-ALLOWED_ORIGIN = "https://prasadt1.github.io"
 DAILY_CAP = 500
 RATE_WINDOW_S = 600
 RATE_MAX = 20
@@ -35,20 +34,12 @@ _ITEMS: dict[str, str] | None = None
 _LABELS: dict[str, Any] | None = None
 
 
-def _cors_headers() -> dict[str, str]:
-    return {
-        "Access-Control-Allow-Origin": ALLOWED_ORIGIN,
-        "Access-Control-Allow-Methods": "POST, OPTIONS",
-        "Access-Control-Allow-Headers": "content-type",
-        "Access-Control-Max-Age": "86400",
-        "content-type": "application/json",
-    }
-
-
 def _respond(status: int, body: dict[str, Any]) -> dict[str, Any]:
+    # CORS is configured on the Function URL only. Do not re-emit
+    # Access-Control-* here — duplicate Allow-Origin makes browsers fail the fetch.
     return {
         "statusCode": status,
-        "headers": _cors_headers(),
+        "headers": {"content-type": "application/json"},
         "body": json.dumps(body, default=str),
     }
 
@@ -239,7 +230,8 @@ def handler(event: dict[str, Any], _context: Any) -> dict[str, Any]:
         or "POST"
     ).upper()
     if method == "OPTIONS":
-        return {"statusCode": 204, "headers": _cors_headers(), "body": ""}
+        # Preflight CORS is answered by the Function URL config.
+        return {"statusCode": 204, "headers": {}, "body": ""}
 
     if method != "POST":
         return _respond(405, {"verdict": "error", "error": "POST only", "source": "live"})

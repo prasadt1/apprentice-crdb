@@ -54,9 +54,28 @@ def require_dsn() -> str:
     return url
 
 
+def _connect_dsn() -> str:
+    """On Lambda there is no cluster CA file; keep TLS via sslmode=require."""
+    from urllib.parse import parse_qsl, urlencode, urlparse, urlunparse
+
+    url = require_dsn()
+    on_lambda = bool(
+        os.environ.get("AWS_LAMBDA_FUNCTION_NAME") or os.path.isdir("/var/task")
+    )
+    if not on_lambda:
+        return url
+    parts = urlparse(url)
+    qs = dict(parse_qsl(parts.query, keep_blank_values=True))
+    # Cloud Connect defaults to verify-full + ~/.postgresql/root.crt — missing in Lambda.
+    if qs.get("sslmode", "verify-full") == "verify-full":
+        qs["sslmode"] = "require"
+    qs.pop("sslrootcert", None)
+    return urlunparse(parts._replace(query=urlencode(qs)))
+
+
 def connect(*, autocommit: bool = False) -> psycopg.Connection:
     return psycopg.connect(
-        require_dsn(),
+        _connect_dsn(),
         row_factory=dict_row,
         autocommit=autocommit,
         connect_timeout=15,
