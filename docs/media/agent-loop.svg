@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 220" width="1200" height="220" font-family="system-ui, -apple-system, 'Segoe UI', sans-serif">
+  <rect width="1200" height="220" fill="#fcfcfb"/>
+  <defs>
+    <marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0 0 L10 5 L0 10 z" fill="#52514e"/>
+    </marker>
+  </defs>
+
+  <text x="48" y="36" font-size="20" font-weight="700" fill="#0b0b0b">The agent loop</text>
+  <text x="48" y="58" font-size="13" fill="#52514e">A human teaches · CockroachDB remembers and rewinds · Bedrock answers · the frozen exam decides</text>
+
+  <rect x="48" y="78" width="196" height="78" rx="8" fill="#fbf6f2" stroke="#0b0b0b" stroke-width="1.5"/>
+  <text x="64" y="100" font-size="13" font-weight="700" fill="#0b0b0b">TEACH</text>
+  <text x="64" y="120" font-size="11" fill="#0b0b0b">reviewer corrects SQL</text>
+  <text x="64" y="140" font-size="11" font-weight="600" fill="#eb6834">[human]</text>
+
+  <path d="M244 117 L262 117" stroke="#52514e" stroke-width="2" marker-end="url(#ar)"/>
+
+  <rect x="264" y="78" width="196" height="78" rx="8" fill="#fbf6f2" stroke="#0b0b0b" stroke-width="1.5"/>
+  <text x="280" y="100" font-size="13" font-weight="700" fill="#0b0b0b">DISTILL</text>
+  <text x="280" y="120" font-size="11" fill="#0b0b0b">AST-diff to rules</text>
+  <text x="280" y="140" font-size="11" font-weight="600" fill="#52514e">[sqlglot · no LLM]</text>
+
+  <path d="M460 117 L478 117" stroke="#52514e" stroke-width="2" marker-end="url(#ar)"/>
+
+  <rect x="480" y="78" width="196" height="78" rx="8" fill="#fbf6f2" stroke="#eb6834" stroke-width="2"/>
+  <text x="496" y="100" font-size="13" font-weight="700" fill="#0b0b0b">REMEMBER</text>
+  <text x="496" y="120" font-size="11" fill="#0b0b0b">upsert · embed on write</text>
+  <text x="496" y="140" font-size="11" font-weight="600" fill="#eb6834">[CockroachDB · Titan]</text>
+
+  <path d="M676 117 L694 117" stroke="#52514e" stroke-width="2" marker-end="url(#ar)"/>
+
+  <rect x="696" y="78" width="196" height="78" rx="8" fill="#fbf6f2" stroke="#eb6834" stroke-width="2"/>
+  <text x="712" y="100" font-size="13" font-weight="700" fill="#0b0b0b">RECALL</text>
+  <text x="712" y="120" font-size="11" fill="#0b0b0b">top-k · AS OF HLC</text>
+  <text x="712" y="140" font-size="11" font-weight="600" fill="#eb6834">[CockroachDB]</text>
+
+  <path d="M892 117 L910 117" stroke="#52514e" stroke-width="2" marker-end="url(#ar)"/>
+
+  <rect x="912" y="78" width="196" height="78" rx="8" fill="#eef1f4" stroke="#5c6b7a" stroke-width="2"/>
+  <text x="928" y="100" font-size="13" font-weight="700" fill="#0b0b0b">ANSWER</text>
+  <text x="928" y="120" font-size="11" fill="#0b0b0b">Nova writes one SELECT</text>
+  <text x="928" y="140" font-size="11" font-weight="600" fill="#5c6b7a">[Bedrock Converse]</text>
+
+  <path d="M48 170 L48 180 L1108 180 L1108 170" fill="none" stroke="#2a78d6" stroke-width="2"/>
+  <text x="578" y="202" text-anchor="middle" font-size="12" font-weight="700" fill="#2a78d6">PROVE - frozen exam scores storage / recall / utilization separately</text>
+</svg>

@@ -1,0 +1,45 @@
+[
+  {
+    "account_id": "",
+    "azure_cluster_identity_client_id": "",
+    "cidr_range": "",
+    "cloud_provider": "AWS",
+    "cockroach_version": "v26.2.5",
+    "config": {
+      "serverless": {
+        "routing_id": "solid-unicorn-31664",
+        "upgrade_type": "AUTOMATIC",
+        "usage_limits": {
+          "request_unit_limit": "50000000",
+          "storage_mib_limit": "10240"
+        }
+      }
+    },
+    "created_at": "2026-08-11T14:01:34.942562Z",
+    "creator_id": "384d3bd5-86df-4f81-bc48-df9fc86dc918",
+    "delete_protection": "DISABLED",
+    "egress_traffic_policy": "UNSPECIFIED",
+    "id": "d1b137d8-dcd2-41ff-9d93-c1db6cc884b5",
+    "labels": {},
+    "name": "solid-unicorn",
+    "network_visibility": "PUBLIC",
+    "operation_status": "UNSPECIFIED",
+    "parent_id": "root",
+    "plan": "BASIC",
+    "regions": [
+      {
+        "internal_dns": "solid-unicorn-31664.internal-j77.aws-eu-central-1.cockroachlabs.cloud",
+        "name": "eu-central-1",
+        "node_count": 0,
+        "primary": true,
+        "private_endpoint_dns": "solid-unicorn-31664.internal-j77.aws-eu-central-1.cockroachlabs.cloud",
+        "sql_dns": "solid-unicorn-31664.j77.aws-eu-central-1.cockroachlabs.cloud",
+        "ui_dns": ""
+      }
+    ],
+    "sql_dns": "solid-unicorn-31664.j77.aws-eu-central-1.cockroachlabs.cloud",
+    "state": "CREATED",
+    "updated_at": "2026-08-11T14:01:36.220735Z",
+    "upgrade_status": "FINALIZED"
+  }
+]

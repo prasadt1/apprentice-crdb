@@ -23,11 +23,15 @@ Primary user: the analytics engineer whose house rules live in people’s heads.
 > | **Reproduce the freeze** | `pytest -q` then `python eval/run_exam.py verify` | ~1 min |
 > | **Every generated string** | [`eval/runs-nova-micro/`](eval/runs-nova-micro) · [`eval/runs-nova-lite/`](eval/runs-nova-lite) | — |
 >
-> **TL;DR:** Freeze a 50-question exam → teach into CockroachDB → score each AOST epoch. Oracle rises to 88%. Two Bedrock agents peak before full memory and decline. Retrieval at that last epoch is **44/44**. Storage and recall look perfect. Utilization does not.
+> **TL;DR:** Teach a correction → the agent's memory lives in CockroachDB → replay its education at any timestamp. Freeze a 50-question exam → score each AOST epoch. Oracle rises to 88%. Two Bedrock agents peak before full memory and decline. Retrieval at that last epoch is **44/44**. Storage and recall look perfect. Utilization does not.
 
 **Why it matters.** Most agent-memory demos are a chat that got longer, and a curve that only goes up. If memory cannot be replayed, it is not memory. It is a log. If it cannot get worse, you are not measuring it.
 
 **What I built.** A frozen, execution-graded exam; sqlglot AST-diffs that write semantic rules into CockroachDB; Titan embeddings and `ORDER BY embedding <->` recall inside `BEGIN AS OF SYSTEM TIME`; two answering policies on the same HLCs — an oracle ceiling, and a Bedrock generator that never sees the labels.
+
+**The agent loop.** A human teaches; sqlglot distills; CockroachDB remembers and rewinds; Bedrock answers; the frozen exam decides. Same story as the top band of the architecture diagram:
+
+![Agent loop: Teach → Distill → Remember → Recall → Answer, with Prove as referee](docs/media/agent-loop.png)
 
 **The differentiator.** I measure the third leg. Agent memory is usually scored on storage and retrieval. At full memory both of those are perfect, and accuracy is already falling. The 56-point gap (oracle 88%, best agent 32%) is utilization. It replicated on Nova Lite.
 
@@ -47,13 +51,52 @@ apprentice warehouse-demo
 # 2) sqlglot AST-diff of that pair → candidate house rules
 apprentice distill
 
-# 3) Frozen exam integrity — 18 tests, then VERIFY OK + matching sha256s
+# 3) Frozen exam integrity — 22 tests, then VERIFY OK + matching sha256s
 pytest -q
 python eval/run_exam.py verify
 python eval/run_exam.py questions   # agent-facing view: id + question only
+
+# 4) Re-grade the archived Bedrock outputs and recompute both curves + retrieval
+apprentice report
 ```
 
 If you see `apprentice: command not found`, the venv is not active.
+
+## The product loop (live)
+
+The product is not the chart. It is the loop that produces a falsifiable chart from
+real corrections:
+
+```bash
+export APPRENTICE_CRDB_DSN='postgresql://USER:PASS@HOST:26257/defaultdb?sslmode=verify-full'
+export APPRENTICE_EMBEDDER=bedrock AWS_REGION=us-east-1
+export APPRENTICE_GEN_MODEL=amazon.nova-micro-v1:0
+pip install -e ".[aws]"
+
+# 1) A reviewer corrects attempted SQL. Apprentice distills and stores the lesson.
+apprentice teach \
+  "What were gross billings on live, non-cancelled hardware orders in 2026?" \
+  --attempt examples/demo/gross-hardware-attempt.sql \
+  --correction examples/demo/gross-hardware-correction.sql
+
+# 2) Ask at a CRDB timestamp. The receipt shows retrieved memories, SQL, and execution.
+apprentice answer \
+  "What were gross billings on live, non-cancelled hardware orders in 2026?" \
+  --as-of '<HLC returned after teaching>'
+
+# 3) Rewind the same cluster and inspect what the agent knew earlier.
+apprentice recall --as-of '<earlier HLC>'
+
+# 4) Probe one frozen item at two snapshots. Generation sees only id + question;
+#    grading happens afterwards against the frozen execution signature.
+apprentice probe q31 --as-of '<memory_zero HLC>'
+apprentice probe q31 --as-of '<full_memory HLC>'
+```
+
+In a production integration, the correction pair comes from review or failed execution,
+the exam is the team's regression suite, and the curve is a CI/release signal. This repo
+ships that loop as a CLI around a deliberately tiny warehouse; it is not yet a hosted
+multi-tenant service.
 
 ### Measure the published curves
 
@@ -118,13 +161,13 @@ CockroachDB is the memory plane — rules, episodes, vectors, AOST. The warehous
 
 The cluster is CockroachDB Cloud on AWS (eu-central-1). That satisfies “deployed on AWS.” The AWS service I use is **Amazon Bedrock** — Titan embeddings on write and query, Converse for generation. I will not call the cluster an AWS service I built.
 
-![Layered architecture: CLI and exam in, CockroachDB memory in the middle, Bedrock + SQLite on the edges](docs/media/architecture.png)
+![Agent loop on top; then three doors (CLI, frozen exam, Cloud MCP); CockroachDB memory plane; Bedrock + SQLite edges](docs/media/architecture.png)
 
 | CockroachDB tool | How it is used — not just that it is configured |
 | --- | --- |
 | **Distributed vector indexing** | `CREATE VECTOR INDEX semantic_embedding_idx` exists (`vector_l2_ops`). The answering path still runs `ORDER BY embedding <-> $1` inside `BEGIN AS OF SYSTEM TIME`. Live `EXPLAIN` is `semantic_rules@semantic_rules_pkey` / `FULL SCAN` — five live rows, planner will not pick the index. Receipt in [`eval/RESULTS.md`](eval/RESULTS.md) |
 | **Cloud Managed MCP Server** | Cursor, read-only, to inspect the live schema and row counts while I built. The agent does **not** call MCP at answer time. Writes stay on the CLI |
-| **ccloud CLI** | Same control plane as `ccloud cluster list`. Live listing: [`docs/proof/ccloud.txt`](docs/proof/ccloud.txt) (Cloud API, AWS / Basic / eu-central-1). Stamp the official CLI after `ccloud auth login` if a judge wants the binary’s own JSON |
+| **ccloud CLI** | Official binary: `ccloud cluster list -o json` → [`docs/proof/ccloud-cli.json`](docs/proof/ccloud-cli.json) (`solid-unicorn`, AWS, Basic, eu-central-1). Older Cloud-API dump kept at [`docs/proof/ccloud.txt`](docs/proof/ccloud.txt) for comparison |
 
 | AWS service | How |
 | --- | --- |

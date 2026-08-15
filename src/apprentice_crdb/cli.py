@@ -3,6 +3,7 @@ from __future__ import annotations
 import argparse
 import json
 import sys
+from pathlib import Path
 
 from apprentice_crdb import __version__
 from apprentice_crdb.distill import candidates_as_dicts
@@ -72,9 +73,116 @@ def cmd_recall(args: argparse.Namespace) -> int:
     return _run_crdb(go)
 
 
-def cmd_baseline(_: argparse.Namespace) -> int:
-    from pathlib import Path
+def cmd_reset_memory(args: argparse.Namespace) -> int:
+    if not args.yes:
+        print("Refused: memory-reset requires --yes.", file=sys.stderr)
+        return 2
 
+    def go() -> int:
+        from apprentice_crdb.memory import cluster_now, reset_memory
+
+        reset_memory()
+        print(json.dumps({"memory_zero_as_of": cluster_now()}, indent=2))
+        return 0
+
+    return _run_crdb(go)
+
+
+def cmd_teach(args: argparse.Namespace) -> int:
+    def go() -> int:
+        from apprentice_crdb.educate import teach_correction
+        from apprentice_crdb.memory import cluster_now
+
+        report = teach_correction(
+            args.question,
+            Path(args.attempt).read_text(),
+            Path(args.correction).read_text(),
+        )
+        report["as_of"] = cluster_now()
+        print(json.dumps(report, indent=2))
+        return 0 if report["rules"] else 1
+
+    return _run_crdb(go)
+
+
+def _print_answer_receipt(receipt: dict) -> None:
+    print("APPRENTICE MEMORY RECEIPT")
+    print(f"question: {receipt['question']}")
+    print(f"as_of: {receipt['as_of']}")
+    print(f"model: {receipt['model_id']}")
+    print(f"recall_k: {receipt['recall_k']}")
+    rules = receipt["retrieved_rules"]
+    print(f"retrieved: {len(rules)} rule(s)")
+    for rule in rules:
+        print(f"  - {rule['rule_key']}: {rule['statement']}")
+    print("sql:")
+    print(receipt["sql"] or f"  REJECTED: {receipt['rejected']}")
+    execution = receipt["execution"]
+    if execution["ok"]:
+        print("result:")
+        print(json.dumps({"columns": execution["columns"], "rows": execution["rows"]}, indent=2))
+    else:
+        print(f"result: ERROR — {execution['error']}")
+    if "exam" in receipt:
+        print(f"frozen_exam: {receipt['exam']['id']} — {receipt['exam']['outcome'].upper()}")
+
+
+def cmd_answer(args: argparse.Namespace) -> int:
+    def go() -> int:
+        from apprentice_crdb.agent import answer_with_receipt
+        from apprentice_crdb.memory import cluster_now
+
+        as_of = args.as_of or cluster_now()
+        receipt = answer_with_receipt(args.question, as_of=as_of, k=args.k)
+        if args.json:
+            print(json.dumps(receipt, indent=2, default=str))
+        else:
+            _print_answer_receipt(receipt)
+        return 0 if receipt["execution"]["ok"] else 1
+
+    return _run_crdb(go)
+
+
+def cmd_probe(args: argparse.Namespace) -> int:
+    def go() -> int:
+        from apprentice_crdb.agent import agent_facing_items, answer_with_receipt
+        from apprentice_crdb.paths import REPO_ROOT
+
+        items = {item["id"]: item for item in agent_facing_items()}
+        if args.exam_id not in items:
+            print(f"Unknown frozen exam id: {args.exam_id}", file=sys.stderr)
+            return 2
+        receipt = answer_with_receipt(
+            items[args.exam_id]["question"],
+            as_of=args.as_of,
+            k=args.k,
+        )
+
+        sys.path.insert(0, str(REPO_ROOT / "eval"))
+        import run_exam  # type: ignore
+
+        if receipt["execution"]["ok"]:
+            execution = receipt["execution"]
+            actual = result_signature(
+                execution["columns"],
+                [tuple(row) for row in execution["rows"]],
+            )
+            expected = run_exam.load_labels()[args.exam_id]
+            outcome = "correct" if signatures_match(expected, actual) else "wrong"
+        else:
+            outcome = "wrong"
+        receipt["exam"] = {"id": args.exam_id, "outcome": outcome}
+
+        if args.json:
+            print(json.dumps(receipt, indent=2, default=str))
+        else:
+            _print_answer_receipt(receipt)
+        return 0
+
+    return _run_crdb(go)
+
+
+def cmd_baseline(_: argparse.Namespace) -> int:
     from apprentice_crdb.paths import REPO_ROOT
 
     questions = json.loads((REPO_ROOT / "eval" / "questions.json").read_text())
@@ -87,6 +195,17 @@ def cmd_baseline(_: argparse.Namespace) -> int:
     import run_exam  # type: ignore
 
     return run_exam.cmd_grade(str(out))
+
+
+def cmd_report(args: argparse.Namespace) -> int:
+    from apprentice_crdb.report import format_published_result, published_result
+
+    result = published_result()
+    if args.json:
+        print(json.dumps(result, indent=2))
+    else:
+        print(format_published_result(result))
+    return 0
 
 
 def cmd_educate(args: argparse.Namespace) -> int:
@@ -161,6 +280,49 @@ def build_parser() -> argparse.ArgumentParser:
     r.add_argument("--as-of", dest="as_of", default=None, help="CRDB AS OF SYSTEM TIME literal")
     r.add_argument("--limit", type=int, default=20)
     r.set_defaults(func=cmd_recall)
+
+    reset = sub.add_parser(
+        "memory-reset",
+        help="Delete memory rows for a fresh experiment (requires --yes)",
+    )
+    reset.add_argument("--yes", action="store_true")
+    reset.set_defaults(func=cmd_reset_memory)
+
+    teach = sub.add_parser(
+        "teach",
+        help="Distill one SQL correction into CockroachDB memory",
+    )
+    teach.add_argument("question", help="The user question that produced the attempted SQL")
+    teach.add_argument("--attempt", required=True, help="Path to the attempted SQL")
+    teach.add_argument("--correction", required=True, help="Path to the corrected SQL")
+    teach.set_defaults(func=cmd_teach)
+
+    answer = sub.add_parser(
+        "answer",
+        help="Answer one question with AOST memory and print its memory receipt",
+    )
+    answer.add_argument("question")
+    answer.add_argument("--as-of", dest="as_of", default=None, help="CRDB AS OF SYSTEM TIME literal")
+    answer.add_argument("--k", type=int, default=5)
+    answer.add_argument("--json", action="store_true", help="Emit the full receipt as JSON")
+    answer.set_defaults(func=cmd_answer)
+
+    probe = sub.add_parser(
+        "probe",
+        help="Run one frozen exam item at an AOST snapshot and grade it",
+    )
+    probe.add_argument("exam_id", help="Frozen item id, for example q31")
+    probe.add_argument("--as-of", dest="as_of", required=True, help="CRDB AS OF SYSTEM TIME literal")
+    probe.add_argument("--k", type=int, default=5)
+    probe.add_argument("--json", action="store_true", help="Emit the full receipt as JSON")
+    probe.set_defaults(func=cmd_probe)
+
+    report = sub.add_parser(
+        "report",
+        help="Re-grade the published model artifacts and print their memory curves",
+    )
+    report.add_argument("--json", action="store_true")
+    report.set_defaults(func=cmd_report)
 
     sub.add_parser(
         "baseline",

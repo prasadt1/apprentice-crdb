@@ -36,6 +36,59 @@
     .stat { border: 1px solid var(--line); background: #fff; padding: 0.85rem 0.8rem; }
     .stat .n { font-size: 1.55rem; font-variant-numeric: tabular-nums; line-height: 1; }
     .stat .l { display: block; margin-top: 0.35rem; font-size: 0.78rem; color: var(--muted); }
+    .live {
+      margin: 1.5rem 0 1.75rem;
+      padding: 1rem 1rem 1.1rem;
+      border: 1px solid var(--line);
+      background: #fff;
+    }
+    .live h2 { margin: 0 0 0.35rem; font-size: 1.15rem; }
+    .live .hint { margin: 0 0 0.85rem; font-size: 0.9rem; color: var(--muted); }
+    .live label { display: block; font-size: 0.78rem; color: var(--muted); margin-bottom: 0.25rem; }
+    .live select {
+      width: 100%;
+      max-width: 100%;
+      padding: 0.45rem 0.5rem;
+      border: 1px solid var(--line);
+      background: var(--bg);
+      font: inherit;
+      margin-bottom: 0.75rem;
+    }
+    .live .actions { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 0.75rem; }
+    .live button {
+      font: inherit;
+      font-size: 0.92rem;
+      padding: 0.45rem 0.85rem;
+      border: 1px solid var(--ink);
+      background: var(--ink);
+      color: #fff;
+      cursor: pointer;
+    }
+    .live button.secondary { background: #fff; color: var(--ink); }
+    .live button:disabled { opacity: 0.45; cursor: wait; }
+    .live .note {
+      font-size: 0.85rem;
+      color: var(--muted);
+      margin: 0 0 0.65rem;
+      padding: 0.45rem 0.55rem;
+      border-left: 3px solid var(--accent);
+      background: #fbf6f2;
+    }
+    .live .note[hidden], .live .panel[hidden] { display: none; }
+    .live .verdict {
+      display: inline-block;
+      font-size: 0.78rem;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      padding: 0.15rem 0.45rem;
+      border: 1px solid var(--line);
+    }
+    .live .verdict.correct { color: var(--green); border-color: var(--green); }
+    .live .verdict.wrong, .live .verdict.rejected, .live .verdict.error { color: #b42318; border-color: #b42318; }
+    .live .meta { font-size: 0.82rem; color: var(--muted); margin: 0.35rem 0 0.6rem; }
+    .live ul.rules { margin: 0.35rem 0 0.75rem; padding-left: 1.1rem; font-size: 0.88rem; }
+    .live .foot { margin: 0.75rem 0 0; font-size: 0.8rem; color: var(--muted); }
     table { width: 100%; border-collapse: collapse; font-size: 0.92rem; background: #fff; }
     th, td { border: 1px solid var(--line); padding: 0.45rem 0.55rem; text-align: left; }
     td.n, th.n { text-align: right; font-variant-numeric: tabular-nums; }
@@ -65,11 +118,21 @@
     <h1>Apprentice</h1>
     <p class="tag">memory that helps, then hurts</p>
     <p>
-      A frozen 50-question exam, replayed on CockroachDB
+      Teach a correction → memory lives in CockroachDB → replay that education at any
+      timestamp. A frozen 50-question exam, graded via
       <code>AS OF SYSTEM TIME</code>. Two Bedrock agents peak on partial memory
       and decline at full memory. Retrieval at that last epoch is <strong>44/44</strong>.
       Storage worked. Recall worked. Utilization did not.
     </p>
+
+    <figure>
+      <img src="media/agent-loop.png" width="1200" height="220" alt="Agent loop: Teach (human) → Distill (sqlglot) → Remember (CockroachDB + Titan) → Recall (CockroachDB AS OF) → Answer (Bedrock); Prove is the frozen exam" />
+      <figcaption>
+        The agent loop. A human teaches; CockroachDB remembers and rewinds; Bedrock answers;
+        the frozen exam decides. Wiring detail:
+        <a href="https://github.com/prasadt1/apprentice-crdb/blob/main/docs/media/architecture.png">architecture diagram</a>.
+      </figcaption>
+    </figure>
 
     <nav>
       <a href="https://github.com/prasadt1/apprentice-crdb">Source</a>
@@ -93,10 +156,42 @@
       </div>
     </div>
 
+    <section class="live" id="ask" aria-labelledby="ask-title">
+      <h2 id="ask-title">Ask the agent</h2>
+      <p class="hint">
+        Pick a frozen exam question. Ask without memory, then with memory.
+        Suggested first pick: <strong>q02</strong> — the video beat (20,000 wrong cold → 95,000 correct with rules).
+      </p>
+      <label for="qid">Frozen question</label>
+      <select id="qid"></select>
+      <div class="actions">
+        <button type="button" class="secondary" id="btn-cold">Ask without memory</button>
+        <button type="button" id="btn-mem">Ask with memory</button>
+      </div>
+      <p class="note" id="live-note" hidden></p>
+      <div class="panel" id="live-panel" hidden>
+        <span class="verdict" id="live-verdict"></span>
+        <p class="meta" id="live-meta"></p>
+        <div id="live-rules-wrap">
+          <strong>Retrieved rules</strong>
+          <ul class="rules" id="live-rules"></ul>
+        </div>
+        <strong>Generated SQL</strong>
+        <pre id="live-sql"></pre>
+        <strong>Rows</strong>
+        <pre id="live-rows"></pre>
+      </div>
+      <p class="foot">
+        Live: CockroachDB recall + Amazon Bedrock generation + execution against the prop warehouse,
+        graded against labels frozen at <code>b043aea</code>.
+        The four-epoch curve below is <em>recorded</em> — those HLCs are outside the 75-minute GC window.
+      </p>
+    </section>
+
     <figure>
       <img src="media/learning-curve.png" width="1200" height="800" alt="Three curves: oracle rises to 44/50; Nova Micro 8-21-18-13; Nova Lite 14-19-19-16" />
       <figcaption>
-        Oracle is a selector over frozen SQL — a ceiling, not an agent.
+        <strong>Recorded.</strong> Oracle is a selector over frozen SQL — a ceiling, not an agent.
         Both agents peak <em>before</em> full memory. Source: eval/RESULTS.md, labels frozen at b043aea.
       </figcaption>
     </figure>
@@ -161,8 +256,9 @@
     <figure>
       <img src="media/aost-replay.png" width="1200" height="800" alt="AOST rewind: same cluster, earlier brain, zero rules at memory_zero" />
       <figcaption>
-        Replay is a timestamp, not a backup restore. <code>memory_zero</code> is empty
-        because no rules existed yet.
+        <strong>Recorded.</strong> Replay is a timestamp, not a backup restore. The published
+        epoch HLCs are outside Basic’s 75-minute GC window — they cannot be re-queried live.
+        The ask widget above uses <em>current</em> memory instead.
       </figcaption>
     </figure>
 
@@ -179,8 +275,158 @@ python eval/run_exam.py verify</pre>
     </p>
 
     <footer>
-      Apache-2.0 · CockroachDB × AWS Agentic Memory · I will not call the cluster an AWS service I built. Bedrock is the AWS service.
+      Apache-2.0 · CockroachDB × AWS Agentic Memory · I will not call the cluster an AWS service I built. Bedrock is the AWS service. Lambda serves this ask widget.
     </footer>
   </main>
+  <script>
+    // One line to enable live: set API to the Lambda Function URL.
+    // Leave empty (or point at a dead URL) to force the recorded degradation path.
+    const API = "";
+    const RECORDED_NOTE = "Live endpoint unavailable; showing the recorded run from 2026-08-14.";
+
+    const sel = document.getElementById("qid");
+    const noteEl = document.getElementById("live-note");
+    const panel = document.getElementById("live-panel");
+    const verdictEl = document.getElementById("live-verdict");
+    const metaEl = document.getElementById("live-meta");
+    const rulesEl = document.getElementById("live-rules");
+    const sqlEl = document.getElementById("live-sql");
+    const rowsEl = document.getElementById("live-rows");
+    const btnCold = document.getElementById("btn-cold");
+    const btnMem = document.getElementById("btn-mem");
+
+    let questions = [];
+    let recorded = {};
+
+    function setBusy(busy) {
+      btnCold.disabled = busy;
+      btnMem.disabled = busy;
+    }
+
+    function render(data, { degraded }) {
+      noteEl.hidden = !degraded && data.source !== "recorded";
+      if (!noteEl.hidden) noteEl.textContent = RECORDED_NOTE;
+      panel.hidden = false;
+      const v = data.verdict || "error";
+      verdictEl.textContent = v;
+      verdictEl.className = "verdict " + v;
+      metaEl.textContent =
+        (data.mode === "with_memory" ? "with memory" : "without memory") +
+        " · " + (data.model_id || "—") +
+        (data.elapsed_ms ? " · " + data.elapsed_ms + " ms" : "") +
+        " · source: " + (data.source || "?");
+      rulesEl.innerHTML = "";
+      const rules = data.retrieved || [];
+      if (!rules.length) {
+        const li = document.createElement("li");
+        li.textContent = "no rules retrieved";
+        rulesEl.appendChild(li);
+      } else {
+        rules.forEach((r) => {
+          const li = document.createElement("li");
+          li.textContent = (r.rule_key || "?") + " — " + (r.statement || "");
+          rulesEl.appendChild(li);
+        });
+      }
+      sqlEl.textContent = data.sql || (data.error ? ("/* " + data.error + " */") : "/* no SQL */");
+      rowsEl.textContent = JSON.stringify(
+        { columns: data.columns || [], rows: data.rows || [] },
+        null,
+        2
+      );
+    }
+
+    async function loadRecorded(qid, mode) {
+      if (!Object.keys(recorded).length) {
+        recorded = await (await fetch("demo/recorded.json")).json();
+      }
+      const hit = recorded[qid] && recorded[qid][mode];
+      if (!hit) throw new Error("no recorded answer for " + qid + "/" + mode);
+      return hit;
+    }
+
+    async function ask(mode) {
+      const qid = sel.value;
+      setBusy(true);
+      noteEl.hidden = true;
+      try {
+        let data = null;
+        let degraded = false;
+        if (API) {
+          const ctrl = new AbortController();
+          const timer = setTimeout(() => ctrl.abort(), 25000);
+          try {
+            const res = await fetch(API, {
+              method: "POST",
+              headers: { "content-type": "application/json" },
+              body: JSON.stringify({ question_id: qid, mode }),
+              signal: ctrl.signal,
+            });
+            clearTimeout(timer);
+            if (!res.ok) throw new Error("HTTP " + res.status);
+            data = await res.json();
+            if (data.source === "recorded") degraded = true;
+          } catch (err) {
+            clearTimeout(timer);
+            degraded = true;
+            data = await loadRecorded(qid, mode);
+          }
+        } else {
+          degraded = true;
+          data = await loadRecorded(qid, mode);
+        }
+        render(data, { degraded });
+      } catch (err) {
+        render(
+          {
+            verdict: "error",
+            mode,
+            retrieved: [],
+            sql: null,
+            columns: [],
+            rows: [],
+            error: String(err && err.message ? err.message : err),
+            source: "error",
+          },
+          { degraded: true }
+        );
+        noteEl.hidden = false;
+        noteEl.textContent = RECORDED_NOTE + " (" + (err && err.message ? err.message : err) + ")";
+      } finally {
+        setBusy(false);
+      }
+    }
+
+    async function boot() {
+      questions = await (await fetch("demo/questions.json")).json();
+      const byStratum = {};
+      questions.forEach((q) => {
+        (byStratum[q.stratum] || (byStratum[q.stratum] = [])).push(q);
+      });
+      Object.keys(byStratum)
+        .sort()
+        .forEach((stratum) => {
+          const og = document.createElement("optgroup");
+          og.label = stratum;
+          byStratum[stratum]
+            .sort((a, b) => a.id.localeCompare(b.id))
+            .forEach((q) => {
+              const opt = document.createElement("option");
+              opt.value = q.id;
+              opt.textContent = q.id + " — " + q.question;
+              og.appendChild(opt);
+            });
+          sel.appendChild(og);
+        });
+      sel.value = "q02";
+      btnCold.addEventListener("click", () => ask("no_memory"));
+      btnMem.addEventListener("click", () => ask("with_memory"));
+    }
+
+    boot().catch((err) => {
+      noteEl.hidden = false;
+      noteEl.textContent = "Could not load demo/questions.json: " + err;
+    });
+  </script>
 </body>
 </html>

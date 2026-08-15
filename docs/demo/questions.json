@@ -1,0 +1,252 @@
+[
+  {
+    "id": "q01",
+    "question": "What was fiscal Q3 2026 net revenue by region? Include only regions with revenue. Return columns: region, revenue_cents.",
+    "stratum": "metric_revenue"
+  },
+  {
+    "id": "q02",
+    "question": "What was total net revenue for fiscal Q2 2026? Return columns: revenue_cents.",
+    "stratum": "fiscal_calendar"
+  },
+  {
+    "id": "q03",
+    "question": "How many orders were cancelled in calendar 2026? Return columns: cancelled_count.",
+    "stratum": "unaffected"
+  },
+  {
+    "id": "q04",
+    "question": "What was total net revenue for fiscal Q4 2026 (Nov 2026 - Jan 2027)? Return 0 if none. Return columns: revenue_cents.",
+    "stratum": "fiscal_calendar"
+  },
+  {
+    "id": "q05",
+    "question": "Which product category earned more net revenue in fiscal Q3 2026, and how much? Return one row. Return columns: category, revenue_cents.",
+    "stratum": "composition"
+  },
+  {
+    "id": "q06",
+    "question": "Which region does our services-category revenue come from in fiscal 2026, and how much net? Return columns: region, services_revenue_cents.",
+    "stratum": "join_path"
+  },
+  {
+    "id": "q07",
+    "question": "How many orders are currently soft-deleted in the warehouse? Return columns: soft_deleted_count.",
+    "stratum": "unaffected"
+  },
+  {
+    "id": "q08",
+    "question": "What was net revenue for the APAC region in calendar 2026? Return columns: region, net_revenue_cents.",
+    "stratum": "soft_delete"
+  },
+  {
+    "id": "q09",
+    "question": "Our EMEA lead asked for the total August 2026 order value. Per our definitions, what is the right number across all regions? Return columns: order_value_cents.",
+    "stratum": "trap"
+  },
+  {
+    "id": "q10",
+    "question": "What was total net revenue for fiscal year 2026 (all regions)? Return columns: revenue_cents.",
+    "stratum": "metric_revenue"
+  },
+  {
+    "id": "q11",
+    "question": "What were gross billings (before refunds) on live, non-cancelled hardware order lines in calendar 2026? Return columns: gross_cents.",
+    "stratum": "soft_delete"
+  },
+  {
+    "id": "q12",
+    "question": "Which customer generated the most net revenue in fiscal 2026, and how much? Return one row. Return columns: customer, revenue_cents.",
+    "stratum": "composition"
+  },
+  {
+    "id": "q13",
+    "question": "Compare fiscal Q2 2026 and fiscal Q3 2026 net revenue. Return two rows labeled FQ2 and FQ3. Return columns: fiscal_quarter, revenue_cents.",
+    "stratum": "composition"
+  },
+  {
+    "id": "q14",
+    "question": "What was the average net revenue per live, non-cancelled order in fiscal 2026? Net per order = its line total minus its refunds. Return columns: avg_revenue_cents.",
+    "stratum": "metric_revenue"
+  },
+  {
+    "id": "q15",
+    "question": "What was net revenue from customer Rhine Goods in fiscal 2026? Return columns: customer, revenue_cents.",
+    "stratum": "metric_revenue"
+  },
+  {
+    "id": "q16",
+    "question": "How many distinct customers had live, non-cancelled orders in calendar Q3 2026 (Jul-Sep)? Return columns: customer_count.",
+    "stratum": "soft_delete"
+  },
+  {
+    "id": "q17",
+    "question": "Q3 2026 revenue - total, please. Return columns: q3_revenue_cents.",
+    "stratum": "trap"
+  },
+  {
+    "id": "q18",
+    "question": "What was net revenue for the EMEA region in fiscal Q3 2026? Return columns: revenue_cents.",
+    "stratum": "composition"
+  },
+  {
+    "id": "q19",
+    "question": "What were total units (qty) on live, non-cancelled orders per region in calendar 2026? Include only regions with units. Return columns: region, units.",
+    "stratum": "join_path"
+  },
+  {
+    "id": "q20",
+    "question": "What was fiscal-year-to-date net revenue as of 2026-09-01 (orders placed 1 Feb through 31 Aug 2026)? Return columns: revenue_cents.",
+    "stratum": "fiscal_calendar"
+  },
+  {
+    "id": "q21",
+    "question": "What was total net revenue from customer Harbor Pacific in fiscal 2026? Return columns: customer, revenue_cents.",
+    "stratum": "soft_delete"
+  },
+  {
+    "id": "q22",
+    "question": "What was net revenue from the Gadget product (SKU GAD-200) in calendar 2026? Return columns: gadget_revenue_cents.",
+    "stratum": "metric_revenue"
+  },
+  {
+    "id": "q23",
+    "question": "What was the single largest live, non-cancelled order of fiscal 2026 by billed line total? Return one row. Return columns: order_id, amount_cents.",
+    "stratum": "soft_delete"
+  },
+  {
+    "id": "q24",
+    "question": "What was the total refund amount issued during fiscal Q2 2026? Return 0 if none. Return columns: refund_cents.",
+    "stratum": "fiscal_calendar"
+  },
+  {
+    "id": "q25",
+    "question": "Rank the regions by net revenue for fiscal Q3 2026 (1 = highest). Include only regions with revenue. Return columns: region, rank_no.",
+    "stratum": "composition"
+  },
+  {
+    "id": "q26",
+    "question": "What was total net revenue in September 2026? Return 0 if none. Return columns: september_revenue_cents.",
+    "stratum": "soft_delete"
+  },
+  {
+    "id": "q27",
+    "question": "What was net revenue in calendar 2026 for the region where customer Harbor Pacific is based? Return columns: revenue_cents.",
+    "stratum": "join_path"
+  },
+  {
+    "id": "q28",
+    "question": "What was net revenue from customer Northwind Retail in fiscal 2026? Return columns: revenue_cents.",
+    "stratum": "metric_revenue"
+  },
+  {
+    "id": "q29",
+    "question": "How many products are in the catalog? Return columns: product_count.",
+    "stratum": "unaffected"
+  },
+  {
+    "id": "q30",
+    "question": "What was the average net order value of live, non-cancelled orders in fiscal Q3 2026, by region? Net per order = line total minus refunds on that order. Include only regions with orders. Return columns: region, avg_order_value_cents.",
+    "stratum": "composition"
+  },
+  {
+    "id": "q31",
+    "question": "What were gross billings (before any refunds) on live, non-cancelled orders in fiscal Q2 2026? Return columns: gross_cents.",
+    "stratum": "fiscal_calendar"
+  },
+  {
+    "id": "q32",
+    "question": "What was net revenue by region for fiscal 2026? Include only regions with revenue. Return columns: region, revenue_cents.",
+    "stratum": "join_path"
+  },
+  {
+    "id": "q33",
+    "question": "What was net revenue by month for fiscal Q3 2026? Report only months with revenue. Return columns: month (as YYYY-MM), revenue_cents.",
+    "stratum": "fiscal_calendar"
+  },
+  {
+    "id": "q34",
+    "question": "List all product SKUs with their category. Return columns: sku, category.",
+    "stratum": "unaffected"
+  },
+  {
+    "id": "q35",
+    "question": "How many customers are based in each region? Return columns: region, customer_count.",
+    "stratum": "unaffected"
+  },
+  {
+    "id": "q36",
+    "question": "What was net revenue for calendar Q3 2026 - the July-through-September calendar window, explicitly NOT the fiscal quarter? Return columns: revenue_cents.",
+    "stratum": "metric_revenue"
+  },
+  {
+    "id": "q37",
+    "question": "How many live, non-cancelled orders were placed in fiscal Q3 2026? Return columns: order_count.",
+    "stratum": "fiscal_calendar"
+  },
+  {
+    "id": "q38",
+    "question": "For the board deck: FY2026 revenue so far, as of 2026-11-05 - one number. Return columns: fytd_revenue_cents.",
+    "stratum": "trap"
+  },
+  {
+    "id": "q39",
+    "question": "What amount did we make from Rhine Goods in Q3 2026, net of everything? Return columns: amount_cents.",
+    "stratum": "trap"
+  },
+  {
+    "id": "q40",
+    "question": "What was net revenue by region for May 2026? Include only regions with revenue. Return columns: region, revenue_cents.",
+    "stratum": "join_path"
+  },
+  {
+    "id": "q41",
+    "question": "What share of fiscal Q2 2026 gross billings (live, non-cancelled orders) was refunded? Report a ratio between 0 and 1. Return columns: refund_share.",
+    "stratum": "composition"
+  },
+  {
+    "id": "q42",
+    "question": "What was net revenue for the AMER region in fiscal Q2 2026? Return 0 if none. Return columns: revenue_cents.",
+    "stratum": "metric_revenue"
+  },
+  {
+    "id": "q43",
+    "question": "How many Widget units (SKU WID-100) were sold on live, non-cancelled orders in calendar 2026? Return columns: widget_units.",
+    "stratum": "soft_delete"
+  },
+  {
+    "id": "q44",
+    "question": "Which single region generated the most net revenue in fiscal 2026, and how much? Return one row. Return columns: region, revenue_cents.",
+    "stratum": "metric_revenue"
+  },
+  {
+    "id": "q45",
+    "question": "What was net revenue from the Widget product (SKU WID-100) in fiscal 2026? Return columns: widget_revenue_cents.",
+    "stratum": "metric_revenue"
+  },
+  {
+    "id": "q46",
+    "question": "Which region is credited with our October 2026 revenue, and how much net? Return columns: region, october_revenue_cents.",
+    "stratum": "join_path"
+  },
+  {
+    "id": "q47",
+    "question": "For the audit: what is the total amount originally billed on soft-deleted orders? Return 0 if none. Return columns: billed_cents.",
+    "stratum": "unaffected"
+  },
+  {
+    "id": "q48",
+    "question": "How many total units (qty) shipped on live, non-cancelled orders in fiscal Q3 2026? Return columns: units.",
+    "stratum": "composition"
+  },
+  {
+    "id": "q49",
+    "question": "What was total net revenue for fiscal Q3 2026? Return columns: revenue_cents.",
+    "stratum": "fiscal_calendar"
+  },
+  {
+    "id": "q50",
+    "question": "How many orders were placed in calendar 2026? Soft-deleted records are not live facts; a cancelled order was still placed. Return columns: placed_order_count.",
+    "stratum": "soft_delete"
+  }
+]

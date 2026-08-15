@@ -7,6 +7,7 @@ from __future__ import annotations
 
 import json
 import os
+import sqlite3
 import sys
 from typing import Any
 
@@ -14,6 +15,7 @@ from apprentice_crdb.generate import Completion, Generator, get_generator
 from apprentice_crdb.memory import recall_similar
 from apprentice_crdb.paths import REPO_ROOT, WAREHOUSE_SCHEMA
 from apprentice_crdb.sql_guard import extract_sql, extract_used_rules, reject_reason
+from apprentice_crdb.warehouse_db import bootstrap, connect, execute_sql
 
 RECALL_K = int(os.environ.get("APPRENTICE_RECALL_K", "5"))
 
@@ -56,9 +58,11 @@ def answer_one(
     as_of: str,
     generator: Generator | None = None,
     k: int = RECALL_K,
+    recall: bool = True,
 ) -> dict[str, Any]:
+    """Answer one question. Set recall=False for a cold (no-memory) ask — skip CRDB."""
     gen = generator or get_generator()
-    retrieved = recall_similar(question, as_of=as_of, k=k)
+    retrieved = recall_similar(question, as_of=as_of, k=k) if recall else []
     user = question
     mem = _memory_block(retrieved)
     if mem:
@@ -73,9 +77,54 @@ def answer_one(
         "used_rules": extract_used_rules(raw),
         "retrieved_rule_ids": [str(r["id"]) for r in retrieved],
         "retrieved_rule_keys": [r["rule_key"] for r in retrieved],
+        "retrieved_rules": [
+            {
+                "id": str(r["id"]),
+                "rule_key": r["rule_key"],
+                "statement": r["statement"],
+            }
+            for r in retrieved
+        ],
         "rejected": reason,
         "model_id": completion.model_id,
     }
+
+
+def answer_with_receipt(
+    question: str,
+    *,
+    as_of: str,
+    generator: Generator | None = None,
+    k: int = RECALL_K,
+    recall: bool = True,
+) -> dict[str, Any]:
+    """Answer one question and execute accepted SQL on the prop warehouse."""
+    row = answer_one(question, as_of=as_of, generator=generator, k=k, recall=recall)
+    receipt: dict[str, Any] = {
+        "question": question,
+        "as_of": as_of,
+        "recall_k": k,
+        **row,
+    }
+    if row["rejected"]:
+        receipt["execution"] = {"ok": False, "error": f"rejected: {row['rejected']}"}
+        return receipt
+
+    conn = connect()
+    bootstrap(conn)
+    try:
+        columns, rows = execute_sql(conn, row["sql"])
+    except sqlite3.Error as exc:  # SQLite is the execution grader; failures stay visible.
+        receipt["execution"] = {"ok": False, "error": str(exc)}
+    else:
+        receipt["execution"] = {
+            "ok": True,
+            "columns": columns,
+            "rows": [list(result_row) for result_row in rows],
+        }
+    finally:
+        conn.close()
+    return receipt
 
 
 def answer_exam(

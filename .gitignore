@@ -21,5 +21,14 @@ docs/CLAUDE-EXAM-BRIEF.md
 docs/devpost-article-draft.md
 docs/superpowers/
 scripts/ccloud-provision.sh
+/ccloud
 eval/runs/
 eval/answers_memory_zero_naive.json
+
+# Demo video working files (large)
+docs/video/out/
+docs/video/live/
+
+# Lambda build artifact
+lambda/demo_ask/demo_ask.zip
+

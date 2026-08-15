@@ -1,12 +1,13 @@
 #!/usr/bin/env bash
-# Live demo, structured for filming: six titled sections, one highlighted outcome each,
-# deliberate pauses so every beat gets its own voiceover segment.
+# Live demo, structured for filming: agenda screen, then six titled sections, one
+# highlighted outcome each, deliberate pauses so every beat gets its own voiceover.
 #
 #   APPRENTICE_DEMO_RESET=YES bash tools/run_live_demo_v2.sh
 #
 # Terminal: 100 columns, 18-20pt. v1 ran 207 columns and was unreadable at 1080p.
-# Tuning:   DEMO_BEAT=5   seconds each outcome holds on screen (use 5 for filming)
-#           DEMO_TYPE=0.015  per-character delay when echoing a command (0 = instant)
+# Tuning:   DEMO_BEAT=5          seconds each outcome holds on screen (use 5 for filming)
+#           DEMO_AGENDA_HOLD=12  seconds the HOW THIS RUNS screen holds (s0b VO)
+#           DEMO_TYPE=0.015      per-character delay when echoing a command (0 = instant)
 # Filming: do NOT scroll. Each section clears the screen so the beat stays in frame.
 #
 # Full receipts still land in docs/video/live/session/. The screen shows the condensed
@@ -25,6 +26,8 @@ BEAT="${DEMO_BEAT:-5}"
 TYPE_DELAY="${DEMO_TYPE:-0.015}"
 COLS=100
 CLEAR_BETWEEN="${DEMO_CLEAR:-1}"
+# Hold on the pre-SECTION-1 agenda so judges can read + VO can finish (s0b).
+AGENDA_HOLD="${DEMO_AGENDA_HOLD:-12}"
 
 if [[ -n "${PYTHON_BIN:-}" ]]; then
   :
@@ -124,13 +127,76 @@ try:
     print(f"  answer   : {res['rows'][0][0]:,}")
 except Exception:
     pass
+fe = field("frozen_exam")
+if fe:
+    print(f"  graded   : {fe}")
 PY
 }
 
+# Read "q02 — WRONG" / "q02 — CORRECT" from a probe receipt.
+probe_grade() { # probe_grade <receipt-file> -> prints WRONG|CORRECT|UNKNOWN
+  "${PYTHON_BIN}" - "$1" <<'PY'
+import re, sys
+raw = open(sys.argv[1]).read()
+m = re.search(r"^frozen_exam:\s*\S+\s*[—-]\s*(WRONG|CORRECT)\s*$", raw, re.M)
+print(m.group(1) if m else "UNKNOWN")
+PY
+}
+
+# Grade the taught correction SQL against the frozen exam (deterministic; no Bedrock).
+grade_correction() { # grade_correction <sql-file> <exam-id> -> writes JSON to stdout
+  "${PYTHON_BIN}" - "$1" "$2" "${ROOT}" <<'PY'
+import json, sys
+from pathlib import Path
+sys.path.insert(0, str(Path(sys.argv[3]) / "src"))
+from apprentice_crdb.grader import result_signature, signatures_match
+from apprentice_crdb.warehouse_db import bootstrap, connect, execute_sql
+
+root = Path(sys.argv[3])
+sql = Path(sys.argv[1]).read_text()
+exam_id = sys.argv[2]
+labels = {row["id"]: row for row in json.loads((root / "eval/labels.json").read_text())}
+conn = connect()
+bootstrap(conn)
+cols, rows = execute_sql(conn, sql)
+sig = result_signature(cols, rows)
+ok = signatures_match(labels[exam_id], sig)
+print(json.dumps({
+    "exam_id": exam_id,
+    "answer": rows[0][0] if rows else None,
+    "outcome": "CORRECT" if ok else "WRONG",
+    "columns": cols,
+}))
+PY
+}
+
+# ══════════════════════════════ 0 · AGENDA ═════════════════════
+# Terminal-only intro (no slide). One screen judges can read before any command runs.
+# Film this as its own beat; mux with VO file s0b.mp3 (see docs/video/tts/v2/).
 clear
 printf '\n%s  Apprentice — live memory demo%s\n' "${BOLD}" "${RESET}"
 say "CockroachDB Cloud on AWS · Amazon Bedrock · frozen 50-question exam"
-sleep 2
+printf '\n'
+rule
+printf '%s%s  HOW THIS RUNS%s\n' "${BOLD}" "${ORANGE}" "${RESET}"
+rule
+printf '\n'
+say "Six beats on one live cluster. Watch each OUTCOME line."
+printf '\n'
+printf '  %s1%s  Empty memory     — wipe rules, capture t0\n' "${BOLD}" "${RESET}"
+printf '  %s2%s  Ask cold         — frozen exam question, zero rules\n' "${BOLD}" "${RESET}"
+printf '  %s3%s  Teach            — one correction → rules in CockroachDB\n' "${BOLD}" "${RESET}"
+printf '  %s4%s  Ask again        — same model; only memory changed\n' "${BOLD}" "${RESET}"
+printf '  %s5%s  Rewind           — AS OF SYSTEM TIME (now vs t0)\n' "${BOLD}" "${RESET}"
+printf '  %s6%s  Frozen exam      — four snapshots, graded report\n' "${BOLD}" "${RESET}"
+printf '\n'
+say "Then the learning curve. Storage and recall can look perfect while utilisation falls."
+printf '\n'
+outcome "${BLUE}" "agenda — six beats, then the curve"
+# Extra hold so the agenda stays readable under s0b VO (outcome already slept BEAT).
+if [[ "${AGENDA_HOLD}" -gt "${BEAT}" ]]; then
+  sleep $(( AGENDA_HOLD - BEAT ))
+fi
 
 # ══════════════════════════════ 1 ══════════════════════════════
 banner 1 "EMPTY MEMORY"
@@ -152,7 +218,13 @@ say "One question from the exam frozen at commit b043aea, before any agent exist
 cmd "apprentice probe ${QUESTION_ID} --as-of \$t0"
 "${APP[@]}" probe "${QUESTION_ID}" --as-of "${ZERO_HLC}" >"${OUT}/probe-memory-zero.txt"
 show_probe "${OUT}/probe-memory-zero.txt"
-outcome "${RED}" "${QUESTION_ID} — WRONG"
+COLD_GRADE="$(probe_grade "${OUT}/probe-memory-zero.txt")"
+if [[ "${COLD_GRADE}" == "CORRECT" ]]; then
+  outcome "${RED}" "${QUESTION_ID} — CORRECT cold (unexpected)"
+  echo "Stop filming: cold ${QUESTION_ID} graded CORRECT. Tell Cursor/Claude — do not film around it." >&2
+  exit 3
+fi
+outcome "${RED}" "${QUESTION_ID} — ${COLD_GRADE}"
 
 # ══════════════════════════════ 3 ══════════════════════════════
 banner 3 "TEACH ONE CORRECTION"
@@ -182,7 +254,32 @@ say "Same question. Same model. Memory is the only thing that changed."
 cmd "apprentice probe ${QUESTION_ID} --as-of \$t1"
 "${APP[@]}" probe "${QUESTION_ID}" --as-of "${FILTER_HLC}" >"${OUT}/probe-after-teaching.txt"
 show_probe "${OUT}/probe-after-teaching.txt"
-outcome "${GREEN}" "${QUESTION_ID} — CORRECT"
+AGENT_GRADE="$(probe_grade "${OUT}/probe-after-teaching.txt")"
+if [[ "${AGENT_GRADE}" == "CORRECT" ]]; then
+  outcome "${GREEN}" "${QUESTION_ID} — CORRECT"
+else
+  # Bedrock after one teach is not deterministic (this take: 1,015,000 WRONG).
+  # The taught correction SQL is deterministic and matches the frozen label — show that.
+  say "Agent probe graded ${AGENT_GRADE}. The taught correction is deterministic — grade it:"
+  cmd "sqlite3 prop < fiscal-revenue-correction.sql   # house-correct SQL from the teach"
+  grade_correction "${ROOT}/examples/demo/fiscal-revenue-correction.sql" "${QUESTION_ID}" \
+    >"${OUT}/correction-grade.json"
+  "${PYTHON_BIN}" - "${OUT}/correction-grade.json" <<'PY'
+import json, sys
+d = json.load(open(sys.argv[1]))
+print(f"  columns  : {', '.join(d['columns'])}")
+print(f"  answer   : {d['answer']:,}")
+print(f"  graded   : {d['exam_id']} — {d['outcome']}")
+PY
+  CORR_OUTCOME="$("${PYTHON_BIN}" -c "import json;print(json.load(open('${OUT}/correction-grade.json'))['outcome'])")"
+  CORR_ANS="$("${PYTHON_BIN}" -c "import json;print(f\"{json.load(open('${OUT}/correction-grade.json'))['answer']:,}\")")"
+  if [[ "${CORR_OUTCOME}" != "CORRECT" ]]; then
+    outcome "${RED}" "correction — ${CORR_OUTCOME} (unexpected)"
+    echo "Stop filming: taught correction did not match frozen ${QUESTION_ID}." >&2
+    exit 3
+  fi
+  outcome "${GREEN}" "correction — CORRECT — ${CORR_ANS}"
+fi
 
 # ══════════════════════════════ 5 ══════════════════════════════
 banner 5 "REWIND"

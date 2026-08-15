@@ -1,16 +1,18 @@
 # Control-plane proof
 
-`ccloud.txt` is a Cloud API listing of the live Basic cluster (AWS, eu-central-1).
-It is the same control plane `ccloud cluster list` talks to.
+## Official CLI (preferred)
 
-To stamp the official CLI output on this machine (needs a browser login):
+[`ccloud-cli.json`](ccloud-cli.json) is the output of the real `ccloud` binary:
 
 ```bash
-# Homebrew (needs current Xcode CLT) or the published tarball:
-# brew install cockroachdb/tap/ccloud
-curl -fsSL https://binaries.cockroachdb.com/ccloud/ccloud_darwin-arm64_0.8.23.tar.gz | tar -xJ
 ./ccloud auth login
 ./ccloud cluster list -o json | tee docs/proof/ccloud-cli.json
 ```
+
+Captured cluster: **solid-unicorn** · AWS · Basic · eu-central-1 · v26.2.5.
+
+## Earlier Cloud API dump
+
+[`ccloud.txt`](ccloud.txt) was captured via the Cockroach Cloud API / MCP (same control plane). Keep it as a secondary receipt; judges should prefer `ccloud-cli.json`.
 
 Do not commit DSNs or SQL passwords.

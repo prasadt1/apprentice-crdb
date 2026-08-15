@@ -1,0 +1,3162 @@
+{
+  "q01": {
+    "no_memory": {
+      "question": "What was fiscal Q3 2026 net revenue by region? Include only regions with revenue. Return columns: region, revenue_cents.",
+      "mode": "no_memory",
+      "retrieved": [],
+      "sql": "WITH region_revenue AS (\n    SELECT\n        r.name AS region,\n        SUM(ol.amount_cents) AS revenue_cents\n    FROM\n        orders o\n    JOIN\n        customers c ON o.customer_id = c.customer_id\n    JOIN\n        regions r ON c.region_id = r.region_id\n    JOIN\n        order_lines ol ON o.order_id = ol.order_id\n    LEFT JOIN\n        refunds r ON o.order_id = r.order_id\n    WHERE\n        o.status ='shipped'\n        AND o.ordered_at BETWEEN '2026-07-01' AND '2026-09-30'\n    GROUP BY\n        r.name\n    HAVING\n        SUM(ol.amount_cents) - COALESCE(SUM(r.amount_cents), 0) > 0\n)\nSELECT\n    region,\n    SUM(revenue_cents) AS revenue_cents\nFROM\n    region_revenue\nGROUP BY\n    region\nORDER BY\n    revenue_cents DESC",
+      "columns": [
+        "region",
+        "revenue_cents"
+      ],
+      "rows": [
+        [
+          "APAC",
+          500000
+        ],
+        [
+          "AMER",
+          100000
+        ],
+        [
+          "EMEA",
+          40000
+        ]
+      ],
+      "verdict": "wrong",
+      "expected_row_count": 2,
+      "model_id": "amazon.nova-lite-v1:0",
+      "elapsed_ms": 0,
+      "source": "recorded",
+      "error": null
+    },
+    "with_memory": {
+      "question": "What was fiscal Q3 2026 net revenue by region? Include only regions with revenue. Return columns: region, revenue_cents.",
+      "mode": "with_memory",
+      "retrieved": [
+        {
+          "rule_key": "metric:revenue",
+          "statement": "(recorded run \u2014 statement not archived)"
+        },
+        {
+          "rule_key": "join:orders_customers_regions",
+          "statement": "(recorded run \u2014 statement not archived)"
+        },
+        {
+          "rule_key": "calendar:fiscal",
+          "statement": "(recorded run \u2014 statement not archived)"
+        },
+        {
+          "rule_key": "filter:orders_not_cancelled",
+          "statement": "(recorded run \u2014 statement not archived)"
+        },
+        {
+          "rule_key": "filter:orders_soft_delete",
+          "statement": "(recorded run \u2014 statement not archived)"
+        }
+      ],
+      "sql": "WITH orders_filtered AS (\n    SELECT\n        o.order_id,\n        o.customer_id,\n        o.ordered_at,\n        ol.product_id,\n        ol.qty,\n        ol.amount_cents,\n        r.amount_cents AS refund_amount_cents\n    FROM orders o\n    JOIN order_lines ol ON o.order_id = ol.order_id\n    LEFT JOIN refunds r ON o.order_id = r.order_id\n    WHERE o.status <> 'cancelled'\n      AND o.deleted_at IS NULL\n      AND o.ordered_at BETWEEN '2026-05-01' AND '2026-08-01'\n), net_revenue AS (\n    SELECT\n        c.region_id,\n        SUM(ol.amount_cents - COALESCE(r.refund_amount_cents, 0)) AS revenue_cents\n    FROM orders_filtered ol\n    JOIN customers c ON ol.customer_id = c.customer_id\n    LEFT JOIN refunds r ON ol.order_id = r.order_id\n    GROUP BY c.region_id\n)\nSELECT\n    r.name AS region,\n    SUM(nr.revenue_cents) AS revenue_cents\nFROM net_revenue nr\nJOIN regions r ON nr.region_id = r.region_id\nGROUP BY r.name\nHAVING SUM(nr.revenue_cents) > 0",
+      "columns": [],
+      "rows": [],
+      "verdict": "error",
+      "expected_row_count": 2,
+      "model_id": "amazon.nova-lite-v1:0",
+      "elapsed_ms": 0,
+      "source": "recorded",
+      "error": "no such column: r.refund_amount_cents"
+    }
+  },
+  "q02": {
+    "no_memory": {
+      "question": "What was total net revenue for fiscal Q2 2026? Return columns: revenue_cents.",
+      "mode": "no_memory",
+      "retrieved": [],
+      "sql": "WITH orders_q2 AS (\n    SELECT o.order_id\n    FROM orders o\n    WHERE o.ordered_at BETWEEN '2026-04-01' AND '2026-06-30'\n        AND o.status ='shipped'\n        AND o.deleted_at IS NULL\n), order_lines_q2 AS (\n    SELECT ol.order_id, SUM(ol.amount_cents) AS total_order_amount\n    FROM order_lines ol\n    JOIN orders_q2 oq ON ol.order_id = oq.order_id\n    GROUP BY ol.order_id\n), refunds_q2 AS (\n    SELECT o.order_id, SUM(r.amount_cents) AS total_refund_amount\n    FROM refunds r\n    JOIN orders o ON r.order_id = o.order_id\n    WHERE r.refunded_at BETWEEN '2026-04-01' AND '2026-06-30'\n    GROUP BY o.order_id\n), net_revenue_q2 AS (\n    SELECT ool.order_id, ool.total_order_amount - COALESCE(rr.total_refund_amount, 0) AS net_revenue_cents\n    FROM order_lines_q2 ool\n    LEFT JOIN refunds_q2 rr ON ool.order_id = rr.order_id\n)\nSELECT SUM(net_revenue_cents) AS revenue_cents\nFROM net_revenue_q2",
+      "columns": [
+        "revenue_cents"
+      ],
+      "rows": [
+        [
+          20000
+        ]
+      ],
+      "verdict": "wrong",
+      "expected_row_count": 1,
+      "model_id": "amazon.nova-lite-v1:0",
+      "elapsed_ms": 0,
+      "source": "recorded",
+      "error": null
+    },
+    "with_memory": {
+      "question": "What was total net revenue for fiscal Q2 2026? Return columns: revenue_cents.",
+      "mode": "with_memory",
+      "retrieved": [
+        {
+          "rule_key": "metric:revenue",
+          "statement": "(recorded run \u2014 statement not archived)"
+        },
+        {
+          "rule_key": "calendar:fiscal",
+          "statement": "(recorded run \u2014 statement not archived)"
+        },
+        {
+          "rule_key": "join:orders_customers_regions",
+          "statement": "(recorded run \u2014 statement not archived)"
+        },
+        {
+          "rule_key": "filter:orders_not_cancelled",
+          "statement": "(recorded run \u2014 statement not archived)"
+        },
+        {
+          "rule_key": "filter:orders_soft_delete",
+          "statement": "(recorded run \u2014 statement not archived)"
+        }
+      ],
+      "sql": "WITH revenue_data AS (\n    SELECT \n        ol.order_id,\n        SUM(ol.amount_cents) AS order_total,\n        SUM(r.amount_cents) AS refunds_total\n    FROM \n        order_lines ol\n    LEFT JOIN \n        refunds r ON ol.order_id = r.order_id\n    WHERE \n        ol.order_id IN (\n            SELECT \n                o.order_id \n            FROM \n                orders o \n            WHERE \n                o.status <> 'cancelled' \n                AND o.deleted_at IS NULL\n                AND o.ordered_at BETWEEN '2026-05-01' AND '2026-08-01'\n        )\n    GROUP BY \n        ol.order_id\n)\nSELECT \n    SUM(order_total - COALESCE(refunds_total, 0)) AS revenue_cents\nFROM \n    revenue_data",
+      "columns": [
+        "revenue_cents"
+      ],
+      "rows": [
+        [
+          95000
+        ]
+      ],
+      "verdict": "correct",
+      "expected_row_count": 1,
+      "model_id": "amazon.nova-lite-v1:0",
+      "elapsed_ms": 0,
+      "source": "recorded",
+      "error": null
+    }
+  },
+  "q03": {
+    "no_memory": {
+      "question": "How many orders were cancelled in calendar 2026? Return columns: cancelled_count.",
+      "mode": "no_memory",
+      "retrieved": [],
+      "sql": "SELECT COUNT(*) AS cancelled_count\nFROM orders\nWHERE status = 'cancelled' AND ordered_at BETWEEN '2026-01-01' AND '2026-12-31'",
+      "columns": [
+        "cancelled_count"
+      ],
+      "rows": [
+        [
+          1
+        ]
+      ],
+      "verdict": "correct",
+      "expected_row_count": 1,
+      "model_id": "amazon.nova-lite-v1:0",
+      "elapsed_ms": 0,
+      "source": "recorded",
+      "error": null
+    },
+    "with_memory": {
+      "question": "How many orders were cancelled in calendar 2026? Return columns: cancelled_count.",
+      "mode": "with_memory",
+      "retrieved": [
+        {
+          "rule_key": "filter:orders_not_cancelled",
+          "statement": "(recorded run \u2014 statement not archived)"
+        },
+        {
+          "rule_key": "calendar:fiscal",
+          "statement": "(recorded run \u2014 statement not archived)"
+        },
+        {
+          "rule_key": "filter:orders_soft_delete",
+          "statement": "(recorded run \u2014 statement not archived)"
+        },
+        {
+          "rule_key": "metric:revenue",
+          "statement": "(recorded run \u2014 statement not archived)"
+        },
+        {
+          "rule_key": "join:orders_customers_regions",
+          "statement": "(recorded run \u2014 statement not archived)"
+        }
+      ],
+      "sql": "WITH filtered_orders AS (\n    SELECT\n        od.order_id\n    FROM\n        orders od\n    WHERE\n        od.status = 'cancelled'\n        AND od.ordered_at BETWEEN '2026-01-01' AND '2026-12-31'\n        AND od.deleted_at IS NULL\n)\nSELECT\n    COUNT(fo.order_id) AS cancelled_count\nFROM\n    filtered_orders fo",
+      "columns": [
+        "cancelled_count"
+      ],
+      "rows": [
+        [
+          1
+        ]
+      ],
+      "verdict": "correct",
+      "expected_row_count": 1,
+      "model_id": "amazon.nova-lite-v1:0",
+      "elapsed_ms": 0,
+      "source": "recorded",
+      "error": null
+    }
+  },
+  "q04": {
+    "no_memory": {
+      "question": "What was total net revenue for fiscal Q4 2026 (Nov 2026 - Jan 2027)? Return 0 if none. Return columns: revenue_cents.",
+      "mode": "no_memory",
+      "retrieved": [],
+      "sql": "WITH order_revenue AS (\n    SELECT\n        o.order_id,\n        SUM(ol.amount_cents) AS order_total_cents\n    FROM\n        orders o\n    JOIN\n        order_lines ol ON o.order_id = ol.order_id\n    WHERE\n        o.ordered_at BETWEEN '2026-11-01' AND '2027-01-31'\n        AND o.status ='shipped'\n    GROUP BY\n        o.order_id\n),\nrefund_totals AS (\n    SELECT\n        r.order_id,\n        SUM(r.amount_cents) AS refund_total_cents\n    FROM\n        refunds r\n    WHERE\n        r.refunded_at BETWEEN '2026-11-01' AND '2027-01-31'\n    GROUP BY\n        r.order_id\n)\nSELECT\n    SUM(orev.order_total_cents - IFNULL(rrev.refund_total_cents, 0)) AS revenue_cents\nFROM\n    order_revenue orev\nLEFT JOIN\n    refund_totals rrev ON orev.order_id = rrev.order_id",
+      "columns": [
+        "revenue_cents"
+      ],
+      "rows": [
+        [
+          null
+        ]
+      ],
+      "verdict": "wrong",
+      "expected_row_count": 1,
+      "model_id": "amazon.nova-lite-v1:0",
+      "elapsed_ms": 0,
+      "source": "recorded",
+      "error": null
+    },
+    "with_memory": {
+      "question": "What was total net revenue for fiscal Q4 2026 (Nov 2026 - Jan 2027)? Return 0 if none. Return columns: revenue_cents.",
+      "mode": "with_memory",
+      "retrieved": [
+        {
+          "rule_key": "metric:revenue",
+          "statement": "(recorded run \u2014 statement not archived)"
+        },
+        {
+          "rule_key": "calendar:fiscal",
+          "statement": "(recorded run \u2014 statement not archived)"
+        },
+        {
+          "rule_key": "join:orders_customers_regions",
+          "statement": "(recorded run \u2014 statement not archived)"
+        },
+        {
+          "rule_key": "filter:orders_not_cancelled",
+          "statement": "(recorded run \u2014 statement not archived)"
+        },
+        {
+          "rule_key": "filter:orders_soft_delete",
+          "statement": "(recorded run \u2014 statement not archived)"
+        }
+      ],
+      "sql": "WITH revenue_data AS (\n    SELECT\n        ol.order_id,\n        SUM(ol.amount_cents) AS order_revenue,\n        SUM(r.amount_cents) AS refund_revenue\n    FROM\n        order_lines ol\n    LEFT JOIN\n        refunds r ON ol.order_id = r.order_id\n    GROUP BY\n        ol.order_id\n),\nfiltered_orders AS (\n    SELECT\n        od.order_id,\n        rd.order_revenue - rd.refund_revenue AS net_revenue\n    FROM\n        orders od\n    JOIN\n        revenue_data rd ON od.order_id = rd.order_id\n    WHERE\n        od.ordered_at BETWEEN '2026-11-01' AND '2027-01-31'\n        AND od.status <> 'cancelled'\n        AND od.deleted_at IS NULL\n)\nSELECT\n    SUM(net_revenue) AS revenue_cents\nFROM\n    filtered_orders",
+      "columns": [
+        "revenue_cents"
+      ],
+      "rows": [
+        [
+          null
+        ]
+      ],
+      "verdict": "wrong",
+      "expected_row_count": 1,
+      "model_id": "amazon.nova-lite-v1:0",
+      "elapsed_ms": 0,
+      "source": "recorded",
+      "error": null
+    }
+  },
+  "q05": {
+    "no_memory": {
+      "question": "Which product category earned more net revenue in fiscal Q3 2026, and how much? Return one row. Return columns: category, revenue_cents.",
+      "mode": "no_memory",
+      "retrieved": [],
+      "sql": "WITH revenue AS (\n    SELECT\n        p.category,\n        SUM(ol.qty * ol.amount_cents) AS revenue_cents\n    FROM\n        order_lines ol\n    JOIN\n        orders o ON ol.order_id = o.order_id\n    JOIN\n        products p ON ol.product_id = p.product_id\n    WHERE\n        o.ordered_at BETWEEN '2026-07-01' AND '2026-09-30'\n        AND o.status ='shipped'\n),\nrefunds_total AS (\n    SELECT\n        p.category,\n        SUM(r.amount_cents) AS refund_cents\n    FROM\n        refunds r\n    JOIN\n        orders o ON r.order_id = o.order_id\n    JOIN\n        order_lines ol ON o.order_id = ol.order_id\n    JOIN\n        products p ON ol.product_id = p.product_id\n    WHERE\n        r.refunded_at BETWEEN '2026-07-01' AND '2026-09-30'\n)\nSELECT\n    r.category,\n    COALESCE(revenue.revenue_cents, 0) - COALESCE(refunds.refund_cents, 0) AS revenue_cents\nFROM\n    (SELECT DISTINCT category FROM products) p\nLEFT JOIN\n    revenue ON p.category = revenue.category\nLEFT JOIN\n    refunds_total refunds ON p.category = refunds.category\nGROUP BY\n    r.category\nORDER BY\n    revenue_cents DESC\nLIMIT 1",
+      "columns": [],
+      "rows": [],
+      "verdict": "error",
+      "expected_row_count": 1,
+      "model_id": "amazon.nova-lite-v1:0",
+      "elapsed_ms": 0,
+      "source": "recorded",
+      "error": "no such column: r.category"
+    },
+    "with_memory": {
+      "question": "Which product category earned more net revenue in fiscal Q3 2026, and how much? Return one row. Return columns: category, revenue_cents.",
+      "mode": "with_memory",
+      "retrieved": [
+        {
+          "rule_key": "metric:revenue",
+          "statement": "(recorded run \u2014 statement not archived)"
+        },
+        {
+          "rule_key": "join:orders_customers_regions",
+          "statement": "(recorded run \u2014 statement not archived)"
+        },
+        {
+          "rule_key": "calendar:fiscal",
+          "statement": "(recorded run \u2014 statement not archived)"
+        },
+        {
+          "rule_key": "filter:orders_not_cancelled",
+          "statement": "(recorded run \u2014 statement not archived)"
+        },
+        {
+          "rule_key": "filter:orders_soft_delete",
+          "statement": "(recorded run \u2014 statement not archived)"
+        }
+      ],
+      "sql": "WITH revenue_data AS (\n    SELECT\n        p.category,\n        SUM(ol.qty * ol.amount_cents) AS revenue_cents,\n        SUM(r.amount_cents) AS refund_cents\n    FROM\n        orders od\n    JOIN\n        order_lines ol ON od.order_id = ol.order_id\n    JOIN\n        products p ON ol.product_id = p.product_id\n    LEFT JOIN\n        refunds r ON od.order_id = r.order_id\n    JOIN\n        customers c ON od.customer_id = c.customer_id\n    JOIN\n        regions rgn ON c.region_id = rgn.region_id\n    WHERE\n        od.ordered_at BETWEEN '2026-05-01' AND '2026-08-01'\n        AND od.status <> 'cancelled'\n        AND od.deleted_at IS NULL\n    GROUP BY\n        p.category\n),\nnet_revenue AS (\n    SELECT\n        category,\n        (revenue_cents - COALESCE(SUM(refund_cents), 0)) AS revenue_cents\n    FROM\n        revenue_data\n    GROUP BY\n        category\n)\nSELECT\n    category,\n    SUM(revenue_cents) AS revenue_cents\nFROM\n    net_revenue\nGROUP BY\n    category\nORDER BY\n    revenue_cents DESC\nLIMIT 1",
+      "columns": [
+        "category",
+        "revenue_cents"
+      ],
+      "rows": [
+        [
+          "hardware",
+          1015000
+        ]
+      ],
+      "verdict": "wrong",
+      "expected_row_count": 1,
+      "model_id": "amazon.nova-lite-v1:0",
+      "elapsed_ms": 0,
+      "source": "recorded",
+      "error": null
+    }
+  },
+  "q06": {
+    "no_memory": {
+      "question": "Which region does our services-category revenue come from in fiscal 2026, and how much net? Return columns: region, services_revenue_cents.",
+      "mode": "no_memory",
+      "retrieved": [],
+      "sql": "WITH services_orders AS (\n    SELECT\n        o.order_id,\n        o.customer_id,\n        ol.product_id,\n        ol.qty,\n        ol.amount_cents\n    FROM\n        orders o\n    JOIN\n        order_lines ol ON o.order_id = ol.order_id\n    JOIN\n        products p ON ol.product_id = p.product_id\n    WHERE\n        p.category ='services'\n        AND o.status ='shipped'\n        AND o.ordered_at BETWEEN '2026-01-01' AND '2026-12-31'\n), services_refunds AS (\n    SELECT\n        r.order_id,\n        SUM(r.amount_cents) AS refunded_cents\n    FROM\n        refunds r\n    WHERE\n        r.refund_id IN (\n            SELECT\n                r.refund_id\n            FROM\n                refunds r\n            JOIN\n                orders o ON r.order_id = o.order_id\n            WHERE\n                o.status ='shipped'\n                AND o.ordered_at BETWEEN '2026-01-01' AND '2026-12-31'\n        )\n    GROUP BY\n        r.order_id\n), net_services_orders AS (\n    SELECT\n        so.order_id,\n        so.customer_id,\n        so.product_id,\n        so.qty,\n        so.amount_cents - COALESCE(sr.refunded_cents, 0) AS net_amount_cents\n    FROM\n        services_orders so\n    LEFT JOIN\n        services_refunds sr ON so.order_id = sr.order_id\n)\nSELECT\n    r.name AS region,\n    SUM(nso.net_amount_cents) AS services_revenue_cents\nFROM\n    net_services_orders nso\nJOIN\n    customers c ON nso.customer_id = c.customer_id\nJOIN\n    regions r ON c.region_id = r.region_id\nGROUP BY\n    r.name",
+      "columns": [
+        "region",
+        "services_revenue_cents"
+      ],
+      "rows": [
+        [
+          "AMER",
+          250000
+        ]
+      ],
+      "verdict": "correct",
+      "expected_row_count": 1,
+      "model_id": "amazon.nova-lite-v1:0",
+      "elapsed_ms": 0,
+      "source": "recorded",
+      "error": null
+    },
+    "with_memory": {
+      "question": "Which region does our services-category revenue come from in fiscal 2026, and how much net? Return columns: region, services_revenue_cents.",
+      "mode": "with_memory",
+      "retrieved": [
+        {
+          "rule_key": "join:orders_customers_regions",
+          "statement": "(recorded run \u2014 statement not archived)"
+        },
+        {
+          "rule_key": "metric:revenue",
+          "statement": "(recorded run \u2014 statement not archived)"
+        },
+        {
+          "rule_key": "calendar:fiscal",
+          "statement": "(recorded run \u2014 statement not archived)"
+        },
+        {
+          "rule_key": "filter:orders_not_cancelled",
+          "statement": "(recorded run \u2014 statement not archived)"
+        },
+        {
+          "rule_key": "filter:orders_soft_delete",
+          "statement": "(recorded run \u2014 statement not archived)"
+        }
+      ],
+      "sql": "WITH region_revenue AS (\n    SELECT\n        r.name AS region,\n        SUM(ol.amount_cents - COALESCE(rf.amount_cents, 0)) AS services_revenue_cents\n    FROM\n        orders od\n    JOIN\n        customers c ON od.customer_id = c.customer_id\n    JOIN\n        regions r ON c.region_id = r.region_id\n    JOIN\n        order_lines ol ON od.order_id = ol.order_id\n    LEFT JOIN\n        refunds rf ON od.order_id = rf.order_id\n    JOIN\n        products p ON ol.product_id = p.product_id\n    WHERE\n        p.category ='services'\n        AND od.status <> 'cancelled'\n        AND od.deleted_at IS NULL\n        AND od.ordered_at BETWEEN '2026-05-01' AND '2026-08-01'\n    GROUP BY\n        r.name\n)\nSELECT\n    region,\n    SUM(services_revenue_cents) AS services_revenue_cents\nFROM\n    region_revenue\nGROUP BY\n    region",
+      "columns": [
+        "region",
+        "services_revenue_cents"
+      ],
+      "rows": [],
+      "verdict": "wrong",
+      "expected_row_count": 1,
+      "model_id": "amazon.nova-lite-v1:0",
+      "elapsed_ms": 0,
+      "source": "recorded",
+      "error": null
+    }
+  },
+  "q07": {
+    "no_memory": {
+      "question": "How many orders are currently soft-deleted in the warehouse? Return columns: soft_deleted_count.",
+      "mode": "no_memory",
+      "retrieved": [],
+      "sql": "SELECT COUNT(*) AS soft_deleted_count\nFROM orders\nWHERE deleted_at IS NOT NULL",
+      "columns": [
+        "soft_deleted_count"
+      ],
+      "rows": [
+        [
+          1
+        ]
+      ],
+      "verdict": "correct",
+      "expected_row_count": 1,
+      "model_id": "amazon.nova-lite-v1:0",
+      "elapsed_ms": 0,
+      "source": "recorded",
+      "error": null
+    },
+    "with_memory": {
+      "question": "How many orders are currently soft-deleted in the warehouse? Return columns: soft_deleted_count.",
+      "mode": "with_memory",
+      "retrieved": [
+        {
+          "rule_key": "metric:revenue",
+          "statement": "(recorded run \u2014 statement not archived)"
+        },
+        {
+          "rule_key": "filter:orders_soft_delete",
+          "statement": "(recorded run \u2014 statement not archived)"
+        },
+        {
+          "rule_key": "join:orders_customers_regions",
+          "statement": "(recorded run \u2014 statement not archived)"
+        },
+        {
+          "rule_key": "filter:orders_not_cancelled",
+          "statement": "(recorded run \u2014 statement not archived)"
+        },
+        {
+          "rule_key": "calendar:fiscal",
+          "statement": "(recorded run \u2014 statement not archived)"
+        }
+      ],
+      "sql": "WITH soft_deleted_orders AS (\n    SELECT COUNT(*) AS soft_deleted_count\n    FROM orders\n    WHERE deleted_at IS NOT NULL\n)\nSELECT soft_deleted_count\nFROM soft_deleted_orders",
+      "columns": [
+        "soft_deleted_count"
+      ],
+      "rows": [
+        [
+          1
+        ]
+      ],
+      "verdict": "correct",
+      "expected_row_count": 1,
+      "model_id": "amazon.nova-lite-v1:0",
+      "elapsed_ms": 0,
+      "source": "recorded",
+      "error": null
+    }
+  },
+  "q08": {
+    "no_memory": {
+      "question": "What was net revenue for the APAC region in calendar 2026? Return columns: region, net_revenue_cents.",
+      "mode": "no_memory",
+      "retrieved": [],
+      "sql": "WITH region_orders AS (\n    SELECT o.order_id, o.amount_cents\n    FROM orders o\n    JOIN customers c ON o.customer_id = c.customer_id\n    JOIN regions r ON c.region_id = r.region_id\n    WHERE r.name = 'APAC' AND strftime('%Y', o.ordered_at) = '2026' AND o.status ='shipped'\n), refunds_summary AS (\n    SELECT order_id, SUM(amount_cents) AS refund_amount_cents\n    FROM refunds\n    GROUP BY order_id\n)\nSELECT \n    'APAC' AS region,\n    SUM(ro.amount_cents - COALESCE(rs.refund_amount_cents, 0)) AS net_revenue_cents\nFROM region_orders ro\nLEFT JOIN refunds_summary rs ON ro.order_id = rs.order_id",
+      "columns": [],
+      "rows": [],
+      "verdict": "error",
+      "expected_row_count": 1,
+      "model_id": "amazon.nova-lite-v1:0",
+      "elapsed_ms": 0,
+      "source": "recorded",
+      "error": "no such column: o.amount_cents"
+    },
+    "with_memory": {
+      "question": "What was net revenue for the APAC region in calendar 2026? Return columns: region, net_revenue_cents.",
+      "mode": "with_memory",
+      "retrieved": [
+        {
+          "rule_key": "metric:revenue",
+          "statement": "(recorded run \u2014 statement not archived)"
+        },
+        {
+          "rule_key": "join:orders_customers_regions",
+          "statement": "(recorded run \u2014 statement not archived)"
+        },
+        {
+          "rule_key": "calendar:fiscal",
+          "statement": "(recorded run \u2014 statement not archived)"
+        },
+        {
+          "rule_key": "filter:orders_not_cancelled",
+          "statement": "(recorded run \u2014 statement not archived)"
+        },
+        {
+          "rule_key": "filter:orders_soft_delete",
+          "statement": "(recorded run \u2014 statement not archived)"
+        }
+      ],
+      "sql": "WITH orders_filtered AS (\n    SELECT\n        o.order_id,\n        o.customer_id,\n        o.ordered_at,\n        o.status,\n        SUM(ol.qty * ol.amount_cents) AS order_total_cents,\n        SUM(r.amount_cents) AS refund_total_cents\n    FROM orders o\n    LEFT JOIN order_lines ol ON o.order_id = ol.order_id\n    LEFT JOIN refunds r ON o.order_id = r.order_id\n    WHERE o.status <> 'cancelled'\n        AND o.deleted_at IS NULL\n        AND o.ordered_at BETWEEN '2026-05-01' AND '2026-08-01'\n    GROUP BY o.order_id\n),\nregion_revenue AS (\n    SELECT\n        r.name AS region,\n        SUM(ol.order_total_cents - COALESCE(r.refund_total_cents, 0)) AS net_revenue_cents\n    FROM orders_filtered ol\n    JOIN customers c ON ol.customer_id = c.customer_id\n    JOIN regions r ON c.region_id = r.region_id\n    WHERE r.name = 'APAC'\n    GROUP BY r.name\n)\nSELECT\n    region,\n    SUM(net_revenue_cents) AS net_revenue_cents\nFROM region_revenue\nGROUP BY region",
+      "columns": [],
+      "rows": [],
+      "verdict": "error",
+      "expected_row_count": 1,
+      "model_id": "amazon.nova-lite-v1:0",
+      "elapsed_ms": 0,
+      "source": "recorded",
+      "error": "no such column: r.refund_total_cents"
+    }
+  },
+  "q09": {
+    "no_memory": {
+      "question": "Our EMEA lead asked for the total August 2026 order value. Per our definitions, what is the right number across all regions? Return columns: order_value_cents.",
+      "mode": "no_memory",
+      "retrieved": [],
+      "sql": "WITH august_orders AS (\n    SELECT\n        o.order_id,\n        ol.line_id,\n        ol.qty,\n        ol.amount_cents\n    FROM\n        orders o\n    JOIN\n        order_lines ol ON o.order_id = ol.order_id\n    WHERE\n        strftime('%Y', o.ordered_at) = '2026'\n        AND strftime('%m', o.ordered_at) = '08'\n        AND o.status ='shipped'\n        AND o.deleted_at IS NULL\n)\nSELECT\n    SUM(ol.qty * ol.amount_cents) AS order_value_cents\nFROM\n    august_orders ao\nJOIN\n    order_lines ol ON ao.line_id = ol.line_id",
+      "columns": [
+        "order_value_cents"
+      ],
+      "rows": [
+        [
+          160000
+        ]
+      ],
+      "verdict": "wrong",
+      "expected_row_count": 1,
+      "model_id": "amazon.nova-lite-v1:0",
+      "elapsed_ms": 0,
+      "source": "recorded",
+      "error": null
+    },
+    "with_memory": {
+      "question": "Our EMEA lead asked for the total August 2026 order value. Per our definitions, what is the right number across all regions? Return columns: order_value_cents.",
+      "mode": "with_memory",
+      "retrieved": [
+        {
+          "rule_key": "join:orders_customers_regions",
+          "statement": "(recorded run \u2014 statement not archived)"
+        },
+        {
+          "rule_key": "metric:revenue",
+          "statement": "(recorded run \u2014 statement not archived)"
+        },
+        {
+          "rule_key": "filter:orders_not_cancelled",
+          "statement": "(recorded run \u2014 statement not archived)"
+        },
+        {
+          "rule_key": "calendar:fiscal",
+          "statement": "(recorded run \u2014 statement not archived)"
+        },
+        {
+          "rule_key": "filter:orders_soft_delete",
+          "statement": "(recorded run \u2014 statement not archived)"
+        }
+      ],
+      "sql": "WITH filtered_orders AS (\n    SELECT\n        ol.order_id,\n        SUM(ol.amount_cents) AS order_value_cents\n    FROM\n        order_lines ol\n    JOIN\n        orders od ON ol.order_id = od.order_id\n    WHERE\n        od.ordered_at BETWEEN '2026-08-01' AND '2026-08-31'\n        AND od.status <> 'cancelled'\n        AND od.deleted_at IS NULL\n    GROUP BY\n        ol.order_id\n),\nnet_orders AS (\n    SELECT\n        fo.order_id,\n        fo.order_value_cents - COALESCE(SUM(r.amount_cents), 0) AS net_order_value_cents\n    FROM\n        filtered_orders fo\n    LEFT JOIN\n        refunds r ON fo.order_id = r.order_id\n    GROUP BY\n        fo.order_id, fo.order_value_cents\n)\nSELECT\n    SUM(net_order_value_cents) AS order_value_cents\nFROM\n    net_orders",
+      "columns": [
+        "order_value_cents"
+      ],
+      "rows": [
+        [
+          40000
+        ]
+      ],
+      "verdict": "correct",
+      "expected_row_count": 1,
+      "model_id": "amazon.nova-lite-v1:0",
+      "elapsed_ms": 0,
+      "source": "recorded",
+      "error": null
+    }
+  },
+  "q10": {
+    "no_memory": {
+      "question": "What was total net revenue for fiscal year 2026 (all regions)? Return columns: revenue_cents.",
+      "mode": "no_memory",
+      "retrieved": [],
+      "sql": "WITH order_revenue AS (\n    SELECT \n        o.order_id,\n        SUM(ol.qty * ol.amount_cents) AS order_total_cents\n    FROM \n        orders o\n    JOIN \n        order_lines ol ON o.order_id = ol.order_id\n    WHERE \n        strftime('%Y', o.ordered_at) = '2026' \n        AND o.status ='shipped'\n    GROUP BY \n        o.order_id\n),\nrefund_totals AS (\n    SELECT \n        r.order_id,\n        SUM(r.amount_cents) AS refund_total_cents\n    FROM \n        refunds r\n    WHERE \n        strftime('%Y', r.refunded_at) = '2026'\n    GROUP BY \n        r.order_id\n),\nnet_revenue AS (\n    SELECT \n        o.order_id,\n        o.order_total_cents - COALESCE(r.refund_total_cents, 0) AS net_revenue_cents\n    FROM \n        order_revenue o\n    LEFT JOIN \n        refund_totals r ON o.order_id = r.order_id\n)\nSELECT \n    SUM(net_revenue_cents) AS revenue_cents\nFROM \n    net_revenue",
+      "columns": [
+        "revenue_cents"
+      ],
+      "rows": [
+        [
+          26425000
+        ]
+      ],
+      "verdict": "wrong",
+      "expected_row_count": 1,
+      "model_id": "amazon.nova-lite-v1:0",
+      "elapsed_ms": 0,
+      "source": "recorded",
+      "error": null
+    },
+    "with_memory": {
+      "question": "What was total net revenue for fiscal year 2026 (all regions)? Return columns: revenue_cents.",
+      "mode": "with_memory",
+      "retrieved": [
+        {
+          "rule_key": "metric:revenue",
+          "statement": "(recorded run \u2014 statement not archived)"
+        },
+        {
+          "rule_key": "calendar:fiscal",
+          "statement": "(recorded run \u2014 statement not archived)"
+        },
+        {
+          "rule_key": "join:orders_customers_regions",
+          "statement": "(recorded run \u2014 statement not archived)"
+        },
+        {
+          "rule_key": "filter:orders_not_cancelled",
+          "statement": "(recorded run \u2014 statement not archived)"
+        },
+        {
+          "rule_key": "filter:orders_soft_delete",
+          "statement": "(recorded run \u2014 statement not archived)"
+        }
+      ],
+      "sql": "WITH revenue_data AS (\n    SELECT \n        ol.order_id,\n        SUM(ol.amount_cents) AS order_revenue,\n        SUM(r.amount_cents) AS refund_revenue\n    FROM \n        order_lines ol\n    LEFT JOIN \n        refunds r ON ol.order_id = r.order_id\n    WHERE \n        ol.order_id IN (\n            SELECT \n                order_id \n            FROM \n                orders \n            WHERE \n                status <> 'cancelled' \n                AND deleted_at IS NULL \n                AND strftime('%Y', ordered_at) = '2026'\n        )\n    GROUP BY \n        ol.order_id\n),\nnet_revenue AS (\n    SELECT \n        order_id, \n        (order_revenue - COALESCE(refund_revenue, 0)) AS net_revenue\n    FROM \n        revenue_data\n)\nSELECT \n    SUM(net_revenue) AS revenue_cents\nFROM \n    net_revenue",
+      "columns": [
+        "revenue_cents"
+      ],
+      "rows": [
+        [
+          385000
+        ]
+      ],
+      "verdict": "correct",
+      "expected_row_count": 1,
+      "model_id": "amazon.nova-lite-v1:0",
+      "elapsed_ms": 0,
+      "source": "recorded",
+      "error": null
+    }
+  },
+  "q11": {
+    "no_memory": {
+      "question": "What were gross billings (before refunds) on live, non-cancelled hardware order lines in calendar 2026? Return columns: gross_cents.",
+      "mode": "no_memory",
+      "retrieved": [],
+      "sql": "WITH hardware_orders AS (\n    SELECT o.order_id\n    FROM orders o\n    JOIN order_lines ol ON o.order_id = ol.order_id\n    JOIN products p ON ol.product_id = p.product_id\n    WHERE o.ordered_at BETWEEN '2026-01-01' AND '2026-12-31'\n        AND o.status!= 'cancelled'\n        AND p.category = 'hardware'\n),\ngross_billings AS (\n    SELECT SUM(ol.amount_cents) AS gross_cents\n    FROM order_lines ol\n    JOIN hardware_orders ho ON ol.order_id = ho.order_id\n)\nSELECT gross_cents\nFROM gross_billings",
+      "columns": [
+        "gross_cents"
+      ],
+      "rows": [
+        [
+          660000
+        ]
+      ],
+      "verdict": "wrong",
+      "expected_row_count": 1,
+      "model_id": "amazon.nova-lite-v1:0",
+      "elapsed_ms": 0,
+      "source": "recorded",
+      "error": null
+    },
+    "with_memory": {
+      "question": "What were gross billings (before refunds) on live, non-cancelled hardware order lines in calendar 2026? Return columns: gross_cents.",
+      "mode": "with_memory",
+      "retrieved": [
+        {
+          "rule_key": "metric:revenue",
+          "statement": "(recorded run \u2014 statement not archived)"
+        },
+        {
+          "rule_key": "filter:orders_not_cancelled",
+          "statement": "(recorded run \u2014 statement not archived)"
+        },
+        {
+          "rule_key": "calendar:fiscal",
+          "statement": "(recorded run \u2014 statement not archived)"
+        },
+        {
+          "rule_key": "join:orders_customers_regions",
+          "statement": "(recorded run \u2014 statement not archived)"
+        },
+        {
+          "rule_key": "filter:orders_soft_delete",
+          "statement": "(recorded run \u2014 statement not archived)"
+        }
+      ],
+      "sql": "WITH order_lines_gross AS (\n    SELECT\n        ol.line_id,\n        ol.order_id,\n        ol.product_id,\n        ol.qty,\n        ol.amount_cents\n    FROM\n        order_lines ol\n    JOIN\n        orders od ON ol.order_id = od.order_id\n    JOIN\n        products p ON ol.product_id = p.product_id\n    WHERE\n        od.status <> 'cancelled'\n        AND od.deleted_at IS NULL\n        AND p.category = 'hardware'\n        AND od.ordered_at BETWEEN '2026-05-01' AND '2026-08-01'\n)\nSELECT\n    SUM(ol.amount_cents) AS gross_cents\nFROM\n    order_lines_gross ol",
+      "columns": [
+        "gross_cents"
+      ],
+      "rows": [
+        [
+          120000
+        ]
+      ],
+      "verdict": "wrong",
+      "expected_row_count": 1,
+      "model_id": "amazon.nova-lite-v1:0",
+      "elapsed_ms": 0,
+      "source": "recorded",
+      "error": null
+    }
+  },
+  "q12": {
+    "no_memory": {
+      "question": "Which customer generated the most net revenue in fiscal 2026, and how much? Return one row. Return columns: customer, revenue_cents.",
+      "mode": "no_memory",
+      "retrieved": [],
+      "sql": "WITH order_revenue AS (\n    SELECT\n        o.customer_id,\n        SUM(ol.qty * ol.amount_cents) AS revenue_cents\n    FROM\n        orders o\n    JOIN\n        order_lines ol ON o.order_id = ol.order_id\n    WHERE\n        o.ordered_at BETWEEN '2026-01-01' AND '2026-12-31'\n    GROUP BY\n        o.customer_id\n),\norder_refunds AS (\n    SELECT\n        o.customer_id,\n        SUM(r.amount_cents) AS refund_cents\n    FROM\n        orders o\n    JOIN\n        refunds r ON o.order_id = r.order_id\n    WHERE\n        o.ordered_at BETWEEN '2026-01-01' AND '2026-12-31'\n    GROUP BY\n        o.customer_id\n),\ncustomer_net_revenue AS (\n    SELECT\n        c.name AS customer,\n        o.customer_id,\n        COALESCE(orev.revenue_cents, 0) - COALESCE(oref.refund_cents, 0) AS net_revenue_cents\n    FROM\n        customers c\n    LEFT JOIN\n        order_revenue o ON c.customer_id = o.customer_id\n    LEFT JOIN\n        order_refunds oref ON c.customer_id = oref.customer_id\n)\nSELECT\n    c.customer,\n    MAX(cnr.net_revenue_cents) AS revenue_cents\nFROM\n    customer_net_revenue cnr\nJOIN\n    customers c ON cnr.customer_id = c.customer_id\nGROUP BY\n    c.customer\nORDER BY\n    revenue_cents DESC\nLIMIT 1",
+      "columns": [],
+      "rows": [],
+      "verdict": "error",
+      "expected_row_count": 1,
+      "model_id": "amazon.nova-lite-v1:0",
+      "elapsed_ms": 0,
+      "source": "recorded",
+      "error": "no such column: orev.revenue_cents"
+    },
+    "with_memory": {
+      "question": "Which customer generated the most net revenue in fiscal 2026, and how much? Return one row. Return columns: customer, revenue_cents.",
+      "mode": "with_memory",
+      "retrieved": [
+        {
+          "rule_key": "metric:revenue",
+          "statement": "(recorded run \u2014 statement not archived)"
+        },
+        {
+          "rule_key": "join:orders_customers_regions",
+          "statement": "(recorded run \u2014 statement not archived)"
+        },
+        {
+          "rule_key": "calendar:fiscal",
+          "statement": "(recorded run \u2014 statement not archived)"
+        },
+        {
+          "rule_key": "filter:orders_not_cancelled",
+          "statement": "(recorded run \u2014 statement not archived)"
+        },
+        {
+          "rule_key": "filter:orders_soft_delete",
+          "statement": "(recorded run \u2014 statement not archived)"
+        }
+      ],
+      "sql": "WITH revenue_data AS (\n    SELECT\n        c.customer_id,\n        c.name AS customer,\n        SUM(ol.qty * ol.amount_cents) AS gross_revenue,\n        SUM(r.amount_cents) AS refunds\n    FROM\n        orders od\n    JOIN\n        customers c ON od.customer_id = c.customer_id\n    LEFT JOIN\n        order_lines ol ON od.order_id = ol.order_id\n    LEFT JOIN\n        refunds r ON od.order_id = r.order_id\n    WHERE\n        od.ordered_at BETWEEN '2026-05-01' AND '2026-08-01'\n        AND od.status <> 'cancelled'\n        AND od.deleted_at IS NULL\n    GROUP BY\n        c.customer_id\n),\nnet_revenue AS (\n    SELECT\n        customer_id,\n        (gross_revenue - refunds) AS revenue_cents\n    FROM\n        revenue_data\n)\nSELECT\n    customer,\n    SUM(revenue_cents) AS revenue_cents\nFROM\n    net_revenue\nGROUP BY\n    customer_id\nORDER BY\n    revenue_cents DESC\nLIMIT 1",
+      "columns": [],
+      "rows": [],
+      "verdict": "error",
+      "expected_row_count": 1,
+      "model_id": "amazon.nova-lite-v1:0",
+      "elapsed_ms": 0,
+      "source": "recorded",
+      "error": "no such column: customer"
+    }
+  },
+  "q13": {
+    "no_memory": {
+      "question": "Compare fiscal Q2 2026 and fiscal Q3 2026 net revenue. Return two rows labeled FQ2 and FQ3. Return columns: fiscal_quarter, revenue_cents.",
+      "mode": "no_memory",
+      "retrieved": [],
+      "sql": "WITH fq2_orders AS (\n    SELECT o.order_id, SUM(ol.qty * ol.amount_cents) AS revenue_cents\n    FROM orders o\n    JOIN order_lines ol ON o.order_id = ol.order_id\n    WHERE o.status ='shipped' AND o.ordered_at BETWEEN '2026-04-01' AND '2026-06-30'\n    GROUP BY o.order_id\n),\nfq3_orders AS (\n    SELECT o.order_id, SUM(ol.qty * ol.amount_cents) AS revenue_cents\n    FROM orders o\n    JOIN order_lines ol ON o.order_id = ol.order_id\n    WHERE o.status ='shipped' AND o.ordered_at BETWEEN '2026-07-01' AND '2026-09-30'\n    GROUP BY o.order_id\n),\nfq2_refunds AS (\n    SELECT r.order_id, SUM(r.amount_cents) AS refund_cents\n    FROM refunds r\n    WHERE r.refunded_at BETWEEN '2026-04-01' AND '2026-06-30'\n    GROUP BY r.order_id\n),\nfq3_refunds AS (\n    SELECT r.order_id, SUM(r.amount_cents) AS refund_cents\n    FROM refunds r\n    WHERE r.refunded_at BETWEEN '2026-07-01' AND '2026-09-30'\n    GROUP BY r.order_id\n)\nSELECT 'FQ2' AS fiscal_quarter, SUM(fq2_orders.revenue_cents - COALESCE(fq2_refunds.refund_cents, 0)) AS revenue_cents\nFROM fq2_orders\nLEFT JOIN fq2_refunds ON fq2_orders.order_id = fq2_refunds.order_id\nUNION ALL\nSELECT 'FQ3' AS fiscal_quarter, SUM(fq3_orders.revenue_cents - COALESCE(fq3_refunds.refund_cents, 0)) AS revenue_cents\nFROM fq3_orders\nLEFT JOIN fq3_refunds ON fq3_orders.order_id = fq3_refunds.order_id",
+      "columns": [
+        "fiscal_quarter",
+        "revenue_cents"
+      ],
+      "rows": [
+        [
+          "FQ2",
+          40000
+        ],
+        [
+          "FQ3",
+          26135000
+        ]
+      ],
+      "verdict": "wrong",
+      "expected_row_count": 2,
+      "model_id": "amazon.nova-lite-v1:0",
+      "elapsed_ms": 0,
+      "source": "recorded",
+      "error": null
+    },
+    "with_memory": {
+      "question": "Compare fiscal Q2 2026 and fiscal Q3 2026 net revenue. Return two rows labeled FQ2 and FQ3. Return columns: fiscal_quarter, revenue_cents.",
+      "mode": "with_memory",
+      "retrieved": [
+        {
+          "rule_key": "metric:revenue",
+          "statement": "(recorded run \u2014 statement not archived)"
+        },
+        {
+          "rule_key": "calendar:fiscal",
+          "statement": "(recorded run \u2014 statement not archived)"
+        },
+        {
+          "rule_key": "join:orders_customers_regions",
+          "statement": "(recorded run \u2014 statement not archived)"
+        },
+        {
+          "rule_key": "filter:orders_not_cancelled",
+          "statement": "(recorded run \u2014 statement not archived)"
+        },
+        {
+          "rule_key": "filter:orders_soft_delete",
+          "statement": "(recorded run \u2014 statement not archived)"
+        }
+      ],
+      "sql": "WITH orders_filtered AS (\n    SELECT\n        o.order_id,\n        o.ordered_at,\n        ol.amount_cents,\n        o.status,\n        o.deleted_at\n    FROM orders o\n    JOIN order_lines ol ON o.order_id = ol.order_id\n    WHERE o.status <> 'cancelled'\n        AND o.deleted_at IS NULL\n        AND o.ordered_at BETWEEN '2026-05-01' AND '2026-08-31'\n),\nrefunds_filtered AS (\n    SELECT\n        r.order_id,\n        SUM(r.amount_cents) AS refund_cents\n    FROM refunds r\n    JOIN orders o ON r.order_id = o.order_id\n    WHERE o.ordered_at BETWEEN '2026-05-01' AND '2026-08-31'\n    GROUP BY r.order_id\n),\nnet_revenue AS (\n    SELECT\n        o.order_id,\n        o.ordered_at,\n        ol.amount_cents - COALESCE(rf.refund_cents, 0) AS net_revenue_cents\n    FROM orders_filtered o\n    JOIN order_lines ol ON o.order_id = ol.order_id\n    LEFT JOIN refunds_filtered rf ON o.order_id = rf.order_id\n),\nfiscal_quarters AS (\n    SELECT\n        CASE\n            WHEN o.ordered_at BETWEEN '2026-05-01' AND '2026-07-31' THEN 'FQ2'\n            WHEN o.ordered_at BETWEEN '2026-08-01' AND '2026-08-31' THEN 'FQ3'\n        END AS fiscal_quarter,\n        SUM(nr.net_revenue_cents) AS revenue_cents\n    FROM net_revenue nr\n    JOIN orders_filtered o ON nr.order_id = o.order_id\n    GROUP BY fiscal_quarter\n)\nSELECT * FROM fiscal_quarters",
+      "columns": [
+        "fiscal_quarter",
+        "revenue_cents"
+      ],
+      "rows": [
+        [
+          "FQ2",
+          95000
+        ],
+        [
+          "FQ3",
+          40000
+        ]
+      ],
+      "verdict": "wrong",
+      "expected_row_count": 2,
+      "model_id": "amazon.nova-lite-v1:0",
+      "elapsed_ms": 0,
+      "source": "recorded",
+      "error": null
+    }
+  },
+  "q14": {
+    "no_memory": {
+      "question": "What was the average net revenue per live, non-cancelled order in fiscal 2026? Net per order = its line total minus its refunds. Return columns: avg_revenue_cents.",
+      "mode": "no_memory",
+      "retrieved": [],
+      "sql": "WITH order_totals AS (\n    SELECT\n        o.order_id,\n        SUM(ol.qty * ol.amount_cents) AS total_cents\n    FROM\n        orders o\n    JOIN\n        order_lines ol ON o.order_id = ol.order_id\n    WHERE\n        o.deleted_at IS NULL\n        AND o.status ='shipped'\n        AND o.ordered_at BETWEEN '2026-01-01' AND '2026-12-31'\n    GROUP BY\n        o.order_id\n),\nrefund_totals AS (\n    SELECT\n        r.order_id,\n        SUM(r.amount_cents) AS refund_cents\n    FROM\n        refunds r\n    JOIN\n        orders o ON r.order_id = o.order_id\n    WHERE\n        o.deleted_at IS NULL\n    GROUP BY\n        r.order_id\n),\nnet_revenues AS (\n    SELECT\n        ot.order_id,\n        ot.total_cents - COALESCE(rt.refund_cents, 0) AS net_revenue_cents\n    FROM\n        order_totals ot\n    LEFT JOIN\n        refund_totals rt ON ot.order_id = rt.order_id\n)\nSELECT\n    AVG(net_revenue_cents) AS avg_revenue_cents\nFROM\n    net_revenues",
+      "columns": [
+        "avg_revenue_cents"
+      ],
+      "rows": [
+        [
+          356250.0
+        ]
+      ],
+      "verdict": "wrong",
+      "expected_row_count": 1,
+      "model_id": "amazon.nova-lite-v1:0",
+      "elapsed_ms": 0,
+      "source": "recorded",
+      "error": null
+    },
+    "with_memory": {
+      "question": "What was the average net revenue per live, non-cancelled order in fiscal 2026? Net per order = its line total minus its refunds. Return columns: avg_revenue_cents.",
+      "mode": "with_memory",
+      "retrieved": [
+        {
+          "rule_key": "metric:revenue",
+          "statement": "(recorded run \u2014 statement not archived)"
+        },
+        {
+          "rule_key": "filter:orders_not_cancelled",
+          "statement": "(recorded run \u2014 statement not archived)"
+        },
+        {
+          "rule_key": "filter:orders_soft_delete",
+          "statement": "(recorded run \u2014 statement not archived)"
+        },
+        {
+          "rule_key": "join:orders_customers_regions",
+          "statement": "(recorded run \u2014 statement not archived)"
+        },
+        {
+          "rule_key": "calendar:fiscal",
+          "statement": "(recorded run \u2014 statement not archived)"
+        }
+      ],
+      "sql": "WITH order_revenues AS (\n    SELECT\n        o.order_id,\n        SUM(ol.amount_cents) AS order_total,\n        SUM(r.amount_cents) AS refunds_total\n    FROM\n        orders o\n    LEFT JOIN\n        order_lines ol ON o.order_id = ol.order_id\n    LEFT JOIN\n        refunds r ON o.order_id = r.order_id\n    WHERE\n        o.status <> 'cancelled' AND\n        o.deleted_at IS NULL AND\n        o.ordered_at BETWEEN '2026-05-01' AND '2026-08-01'\n    GROUP BY\n        o.order_id\n),\nnet_order_revenues AS (\n    SELECT\n        order_id,\n        (order_total - refunds_total) AS net_revenue_cents\n    FROM\n        order_revenues\n)\nSELECT\n    AVG(net_revenue_cents) AS avg_revenue_cents\nFROM\n    net_order_revenues",
+      "columns": [
+        "avg_revenue_cents"
+      ],
+      "rows": [
+        [
+          75000.0
+        ]
+      ],
+      "verdict": "wrong",
+      "expected_row_count": 1,
+      "model_id": "amazon.nova-lite-v1:0",
+      "elapsed_ms": 0,
+      "source": "recorded",
+      "error": null
+    }
+  },
+  "q15": {
+    "no_memory": {
+      "question": "What was net revenue from customer Rhine Goods in fiscal 2026? Return columns: customer, revenue_cents.",
+      "mode": "no_memory",
+      "retrieved": [],
+      "sql": "WITH customer_orders AS (\n    SELECT o.order_id, o.customer_id, ol.amount_cents\n    FROM orders o\n    JOIN order_lines ol ON o.order_id = ol.order_id\n    WHERE o.customer_id = (SELECT customer_id FROM customers WHERE name = 'Rhine Goods')\n    AND o.status ='shipped'\n    AND o.ordered_at BETWEEN '2026-01-01' AND '2026-12-31'\n), customer_refunds AS (\n    SELECT o.order_id, SUM(r.amount_cents) AS refund_cents\n    FROM orders o\n    JOIN refunds r ON o.order_id = r.order_id\n    WHERE o.customer_id = (SELECT customer_id FROM customers WHERE name = 'Rhine Goods')\n    AND o.ordered_at BETWEEN '2026-01-01' AND '2026-12-31'\n    GROUP BY o.order_id\n), net_revenue AS (\n    SELECT co.customer_id, SUM(co.amount_cents - IFNULL(cr.refund_cents, 0)) AS revenue_cents\n    FROM customer_orders co\n    LEFT JOIN customer_refunds cr ON co.order_id = cr.order_id\n    GROUP BY co.customer_id\n)\nSELECT c.name AS customer, nr.revenue_cents\nFROM net_revenue nr\nJOIN customers c ON nr.customer_id = c.customer_id\nWHERE c.name = 'Rhine Goods'",
+      "columns": [
+        "customer",
+        "revenue_cents"
+      ],
+      "rows": [
+        [
+          "Rhine Goods",
+          40000
+        ]
+      ],
+      "verdict": "correct",
+      "expected_row_count": 1,
+      "model_id": "amazon.nova-lite-v1:0",
+      "elapsed_ms": 0,
+      "source": "recorded",
+      "error": null
+    },
+    "with_memory": {
+      "question": "What was net revenue from customer Rhine Goods in fiscal 2026? Return columns: customer, revenue_cents.",
+      "mode": "with_memory",
+      "retrieved": [
+        {
+          "rule_key": "metric:revenue",
+          "statement": "(recorded run \u2014 statement not archived)"
+        },
+        {
+          "rule_key": "join:orders_customers_regions",
+          "statement": "(recorded run \u2014 statement not archived)"
+        },
+        {
+          "rule_key": "calendar:fiscal",
+          "statement": "(recorded run \u2014 statement not archived)"
+        },
+        {
+          "rule_key": "filter:orders_not_cancelled",
+          "statement": "(recorded run \u2014 statement not archived)"
+        },
+        {
+          "rule_key": "filter:orders_soft_delete",
+          "statement": "(recorded run \u2014 statement not archived)"
+        }
+      ],
+      "sql": "WITH orders_data AS (\n    SELECT\n        o.order_id,\n        o.customer_id,\n        SUM(ol.amount_cents) AS total_order_amount,\n        SUM(r.amount_cents) AS total_refund_amount\n    FROM orders o\n    LEFT JOIN order_lines ol ON o.order_id = ol.order_id\n    LEFT JOIN refunds r ON o.order_id = r.order_id\n    WHERE o.status <> 'cancelled'\n        AND o.deleted_at IS NULL\n        AND o.ordered_at BETWEEN '2026-05-01' AND '2026-08-01'\n    GROUP BY o.order_id, o.customer_id\n),\ncustomer_revenue AS (\n    SELECT\n        c.customer_id,\n        c.name AS customer,\n        SUM(od.total_order_amount - od.total_refund_amount) AS revenue_cents\n    FROM orders_data od\n    JOIN customers c ON od.customer_id = c.customer_id\n    WHERE c.name = 'Rhine Goods'\n    GROUP BY c.customer_id\n)\nSELECT\n    customer,\n    revenue_cents\nFROM customer_revenue",
+      "columns": [
+        "customer",
+        "revenue_cents"
+      ],
+      "rows": [],
+      "verdict": "wrong",
+      "expected_row_count": 1,
+      "model_id": "amazon.nova-lite-v1:0",
+      "elapsed_ms": 0,
+      "source": "recorded",
+      "error": null
+    }
+  },
+  "q16": {
+    "no_memory": {
+      "question": "How many distinct customers had live, non-cancelled orders in calendar Q3 2026 (Jul-Sep)? Return columns: customer_count.",
+      "mode": "no_memory",
+      "retrieved": [],
+      "sql": "WITH live_orders AS (\n    SELECT o.customer_id\n    FROM orders o\n    WHERE o.status ='shipped'\n        AND o.ordered_at >= '2026-07-01'\n        AND o.ordered_at < '2026-10-01'\n        AND o.deleted_at IS NULL\n),\ncancelled_orders AS (\n    SELECT o.customer_id\n    FROM orders o\n    WHERE o.status = 'cancelled'\n        AND o.ordered_at >= '2026-07-01'\n        AND o.ordered_at < '2026-10-01'\n        AND o.deleted_at IS NULL\n)\nSELECT COUNT(DISTINCT lo.customer_id) AS customer_count\nFROM live_orders lo\nLEFT JOIN cancelled_orders co ON lo.customer_id = co.customer_id\nWHERE co.customer_id IS NULL",
+      "columns": [
+        "customer_count"
+      ],
+      "rows": [
+        [
+          1
+        ]
+      ],
+      "verdict": "wrong",
+      "expected_row_count": 1,
+      "model_id": "amazon.nova-lite-v1:0",
+      "elapsed_ms": 0,
+      "source": "recorded",
+      "error": null
+    },
+    "with_memory": {
+      "question": "How many distinct customers had live, non-cancelled orders in calendar Q3 2026 (Jul-Sep)? Return columns: customer_count.",
+      "mode": "with_memory",
+      "retrieved": [
+        {
+          "rule_key": "join:orders_customers_regions",
+          "statement": "(recorded run \u2014 statement not archived)"
+        },
+        {
+          "rule_key": "filter:orders_not_cancelled",
+          "statement": "(recorded run \u2014 statement not archived)"
+        },
+        {
+          "rule_key": "calendar:fiscal",
+          "statement": "(recorded run \u2014 statement not archived)"
+        },
+        {
+          "rule_key": "metric:revenue",
+          "statement": "(recorded run \u2014 statement not archived)"
+        },
+        {
+          "rule_key": "filter:orders_soft_delete",
+          "statement": "(recorded run \u2014 statement not archived)"
+        }
+      ],
+      "sql": "WITH live_orders AS (\n    SELECT\n        od.customer_id\n    FROM\n        orders od\n    WHERE\n        od.status <> 'cancelled' AND\n        od.deleted_at IS NULL AND\n        od.ordered_at BETWEEN '2026-07-01' AND '2026-09-30'\n)\nSELECT\n    COUNT(DISTINCT lo.customer_id) AS customer_count\nFROM\n    live_orders lo",
+      "columns": [
+        "customer_count"
+      ],
+      "rows": [
+        [
+          2
+        ]
+      ],
+      "verdict": "correct",
+      "expected_row_count": 1,
+      "model_id": "amazon.nova-lite-v1:0",
+      "elapsed_ms": 0,
+      "source": "recorded",
+      "error": null
+    }
+  },
+  "q17": {
+    "no_memory": {
+      "question": "Q3 2026 revenue - total, please. Return columns: q3_revenue_cents.",
+      "mode": "no_memory",
+      "retrieved": [],
+      "sql": "WITH q3_orders AS (\n    SELECT o.order_id\n    FROM orders o\n    WHERE o.ordered_at BETWEEN '2026-07-01' AND '2026-09-30'\n        AND o.status ='shipped'\n),\nq3_order_lines AS (\n    SELECT ol.order_id, SUM(ol.amount_cents) AS total_amount_cents\n    FROM order_lines ol\n    JOIN q3_orders qo ON ol.order_id = qo.order_id\n    GROUP BY ol.order_id\n),\nq3_refunds AS (\n    SELECT r.order_id, SUM(r.amount_cents) AS total_refund_cents\n    FROM refunds r\n    JOIN q3_orders qo ON r.order_id = qo.order_id\n    GROUP BY r.order_id\n)\nSELECT COALESCE(SUM(qol.total_amount_cents - COALESCE(qr.total_refund_cents, 0)), 0) AS q3_revenue_cents\nFROM q3_order_lines qol\nLEFT JOIN q3_refunds qr ON qol.order_id = qr.order_id",
+      "columns": [
+        "q3_revenue_cents"
+      ],
+      "rows": [
+        [
+          615000
+        ]
+      ],
+      "verdict": "wrong",
+      "expected_row_count": 1,
+      "model_id": "amazon.nova-lite-v1:0",
+      "elapsed_ms": 0,
+      "source": "recorded",
+      "error": null
+    },
+    "with_memory": {
+      "question": "Q3 2026 revenue - total, please. Return columns: q3_revenue_cents.",
+      "mode": "with_memory",
+      "retrieved": [
+        {
+          "rule_key": "metric:revenue",
+          "statement": "(recorded run \u2014 statement not archived)"
+        },
+        {
+          "rule_key": "calendar:fiscal",
+          "statement": "(recorded run \u2014 statement not archived)"
+        },
+        {
+          "rule_key": "join:orders_customers_regions",
+          "statement": "(recorded run \u2014 statement not archived)"
+        },
+        {
+          "rule_key": "filter:orders_not_cancelled",
+          "statement": "(recorded run \u2014 statement not archived)"
+        },
+        {
+          "rule_key": "filter:orders_soft_delete",
+          "statement": "(recorded run \u2014 statement not archived)"
+        }
+      ],
+      "sql": "WITH relevant_orders AS (\n    SELECT\n        ol.order_id,\n        SUM(ol.amount_cents) AS order_total_cents,\n        SUM(r.amount_cents) AS refunds_total_cents\n    FROM\n        order_lines ol\n    LEFT JOIN\n        refunds r ON ol.order_id = r.order_id\n    JOIN\n        orders od ON ol.order_id = od.order_id\n    WHERE\n        od.status <> 'cancelled'\n        AND od.deleted_at IS NULL\n        AND od.ordered_at BETWEEN '2026-05-01' AND '2026-08-01'\n    GROUP BY\n        ol.order_id\n)\nSELECT\n    SUM(order_total_cents - refunds_total_cents) AS q3_revenue_cents\nFROM\n    relevant_orders",
+      "columns": [
+        "q3_revenue_cents"
+      ],
+      "rows": [
+        [
+          75000
+        ]
+      ],
+      "verdict": "wrong",
+      "expected_row_count": 1,
+      "model_id": "amazon.nova-lite-v1:0",
+      "elapsed_ms": 0,
+      "source": "recorded",
+      "error": null
+    }
+  },
+  "q18": {
+    "no_memory": {
+      "question": "What was net revenue for the EMEA region in fiscal Q3 2026? Return columns: revenue_cents.",
+      "mode": "no_memory",
+      "retrieved": [],
+      "sql": "WITH region_orders AS (\n    SELECT o.order_id, ol.amount_cents\n    FROM orders o\n    JOIN customers c ON o.customer_id = c.customer_id\n    JOIN regions r ON c.region_id = r.region_id\n    JOIN order_lines ol ON o.order_id = ol.order_id\n    WHERE r.name = 'EMEA'\n    AND o.status ='shipped'\n    AND o.ordered_at BETWEEN '2026-07-01' AND '2026-09-30'\n), refunds_summary AS (\n    SELECT ro.order_id, SUM(r.amount_cents) AS refunded_cents\n    FROM region_orders ro\n    JOIN refunds r ON ro.order_id = r.order_id\n    GROUP BY ro.order_id\n)\nSELECT SUM(ro.amount_cents - COALESCE(rs.refunded_cents, 0)) AS revenue_cents\nFROM region_orders ro\nLEFT JOIN refunds_summary rs ON ro.order_id = rs.order_id",
+      "columns": [
+        "revenue_cents"
+      ],
+      "rows": [
+        [
+          40000
+        ]
+      ],
+      "verdict": "correct",
+      "expected_row_count": 1,
+      "model_id": "amazon.nova-lite-v1:0",
+      "elapsed_ms": 0,
+      "source": "recorded",
+      "error": null
+    },
+    "with_memory": {
+      "question": "What was net revenue for the EMEA region in fiscal Q3 2026? Return columns: revenue_cents.",
+      "mode": "with_memory",
+      "retrieved": [
+        {
+          "rule_key": "metric:revenue",
+          "statement": "(recorded run \u2014 statement not archived)"
+        },
+        {
+          "rule_key": "join:orders_customers_regions",
+          "statement": "(recorded run \u2014 statement not archived)"
+        },
+        {
+          "rule_key": "calendar:fiscal",
+          "statement": "(recorded run \u2014 statement not archived)"
+        },
+        {
+          "rule_key": "filter:orders_not_cancelled",
+          "statement": "(recorded run \u2014 statement not archived)"
+        },
+        {
+          "rule_key": "filter:orders_soft_delete",
+          "statement": "(recorded run \u2014 statement not archived)"
+        }
+      ],
+      "sql": "WITH orders_filtered AS (\n    SELECT\n        o.order_id,\n        o.customer_id,\n        ol.product_id,\n        ol.qty,\n        ol.amount_cents,\n        r.amount_cents AS refund_amount_cents\n    FROM orders o\n    JOIN order_lines ol ON o.order_id = ol.order_id\n    LEFT JOIN refunds r ON o.order_id = r.order_id\n    WHERE o.status <> 'cancelled'\n    AND o.deleted_at IS NULL\n    AND o.ordered_at BETWEEN '2026-05-01' AND '2026-08-01'\n),\nrevenue_calculation AS (\n    SELECT\n        SUM(ol.qty * ol.amount_cents) AS total_order_amount_cents,\n        SUM(r.refund_amount_cents) AS total_refund_amount_cents\n    FROM orders_filtered\n    WHERE o.customer_id IN (\n        SELECT c.customer_id\n        FROM customers c\n        JOIN regions r ON c.region_id = r.region_id\n        WHERE r.name = 'EMEA'\n    )\n)\nSELECT\n    (total_order_amount_cents - total_refund_amount_cents) AS revenue_cents\nFROM revenue_calculation",
+      "columns": [],
+      "rows": [],
+      "verdict": "error",
+      "expected_row_count": 1,
+      "model_id": "amazon.nova-lite-v1:0",
+      "elapsed_ms": 0,
+      "source": "recorded",
+      "error": "no such column: ol.qty"
+    }
+  },
+  "q19": {
+    "no_memory": {
+      "question": "What were total units (qty) on live, non-cancelled orders per region in calendar 2026? Include only regions with units. Return columns: region, units.",
+      "mode": "no_memory",
+      "retrieved": [],
+      "sql": "WITH live_orders AS (\n    SELECT o.order_id, o.customer_id, o.ordered_at, o.status, ol.line_id, ol.product_id, ol.qty\n    FROM orders o\n    JOIN order_lines ol ON o.order_id = ol.order_id\n    WHERE o.status!= 'cancelled' AND o.ordered_at BETWEEN '2026-01-01' AND '2026-12-31'\n), region_units AS (\n    SELECT r.name AS region, SUM(ol.qty) AS units\n    FROM live_orders lo\n    JOIN customers c ON lo.customer_id = c.customer_id\n    JOIN regions r ON c.region_id = r.region_id\n    JOIN order_lines ol ON lo.order_id = ol.order_id\n    GROUP BY r.name\n    HAVING SUM(ol.qty) > 0\n)\nSELECT region, units\nFROM region_units",
+      "columns": [
+        "region",
+        "units"
+      ],
+      "rows": [
+        [
+          "AMER",
+          11
+        ],
+        [
+          "APAC",
+          52
+        ],
+        [
+          "EMEA",
+          4
+        ]
+      ],
+      "verdict": "wrong",
+      "expected_row_count": 3,
+      "model_id": "amazon.nova-lite-v1:0",
+      "elapsed_ms": 0,
+      "source": "recorded",
+      "error": null
+    },
+    "with_memory": {
+      "question": "What were total units (qty) on live, non-cancelled orders per region in calendar 2026? Include only regions with units. Return columns: region, units.",
+      "mode": "with_memory",
+      "retrieved": [
+        {
+          "rule_key": "join:orders_customers_regions",
+          "statement": "(recorded run \u2014 statement not archived)"
+        },
+        {
+          "rule_key": "filter:orders_not_cancelled",
+          "statement": "(recorded run \u2014 statement not archived)"
+        },
+        {
+          "rule_key": "calendar:fiscal",
+          "statement": "(recorded run \u2014 statement not archived)"
+        },
+        {
+          "rule_key": "filter:orders_soft_delete",
+          "statement": "(recorded run \u2014 statement not archived)"
+        },
+        {
+          "rule_key": "metric:revenue",
+          "statement": "(recorded run \u2014 statement not archived)"
+        }
+      ],
+      "sql": "WITH live_orders AS (\n    SELECT\n        od.order_id,\n        od.customer_id,\n        od.ordered_at,\n        c.region_id\n    FROM orders od\n    JOIN customers c ON od.customer_id = c.customer_id\n    WHERE od.status <> 'cancelled'\n        AND od.deleted_at IS NULL\n        AND od.ordered_at BETWEEN '2026-05-01' AND '2026-08-01'\n), order_units AS (\n    SELECT\n        ol.order_id,\n        SUM(ol.qty) AS units\n    FROM order_lines ol\n    GROUP BY ol.order_id\n), total_units_per_region AS (\n    SELECT\n        c.region_id,\n        SUM(ou.units) AS units\n    FROM order_units ou\n    JOIN live_orders lo ON ou.order_id = lo.order_id\n    JOIN customers c ON lo.customer_id = c.customer_id\n    GROUP BY c.region_id\n)\nSELECT\n    r.name AS region,\n    SUM(tu.units) AS units\nFROM total_units_per_region tu\nJOIN regions r ON tu.region_id = r.region_id\nGROUP BY r.name\nHAVING SUM(tu.units) > 0",
+      "columns": [
+        "region",
+        "units"
+      ],
+      "rows": [
+        [
+          "AMER",
+          10
+        ],
+        [
+          "APAC",
+          2
+        ]
+      ],
+      "verdict": "wrong",
+      "expected_row_count": 3,
+      "model_id": "amazon.nova-lite-v1:0",
+      "elapsed_ms": 0,
+      "source": "recorded",
+      "error": null
+    }
+  },
+  "q20": {
+    "no_memory": {
+      "question": "What was fiscal-year-to-date net revenue as of 2026-09-01 (orders placed 1 Feb through 31 Aug 2026)? Return columns: revenue_cents.",
+      "mode": "no_memory",
+      "retrieved": [],
+      "sql": "WITH revenue AS (\n    SELECT\n        SUM(ol.amount_cents) AS revenue_cents\n    FROM\n        orders o\n    JOIN\n        order_lines ol ON o.order_id = ol.order_id\n    WHERE\n        o.ordered_at >= '2026-02-01' AND\n        o.ordered_at <= '2026-08-31' AND\n        o.status ='shipped'\n),\nrefunds_total AS (\n    SELECT\n        SUM(r.amount_cents) AS refund_cents\n    FROM\n        refunds r\n    JOIN\n        orders o ON r.order_id = o.order_id\n    WHERE\n        r.refunded_at >= '2026-02-01' AND\n        r.refunded_at <= '2026-08-31'\n)\nSELECT\n    COALESCE(revenue.revenue_cents, 0) - COALESCE(refunds_total.refund_cents, 0) AS revenue_cents\nFROM\n    revenue,\n    refunds_total",
+      "columns": [
+        "revenue_cents"
+      ],
+      "rows": [
+        [
+          135000
+        ]
+      ],
+      "verdict": "correct",
+      "expected_row_count": 1,
+      "model_id": "amazon.nova-lite-v1:0",
+      "elapsed_ms": 0,
+      "source": "recorded",
+      "error": null
+    },
+    "with_memory": {
+      "question": "What was fiscal-year-to-date net revenue as of 2026-09-01 (orders placed 1 Feb through 31 Aug 2026)? Return columns: revenue_cents.",
+      "mode": "with_memory",
+      "retrieved": [
+        {
+          "rule_key": "metric:revenue",
+          "statement": "(recorded run \u2014 statement not archived)"
+        },
+        {
+          "rule_key": "calendar:fiscal",
+          "statement": "(recorded run \u2014 statement not archived)"
+        },
+        {
+          "rule_key": "join:orders_customers_regions",
+          "statement": "(recorded run \u2014 statement not archived)"
+        },
+        {
+          "rule_key": "filter:orders_not_cancelled",
+          "statement": "(recorded run \u2014 statement not archived)"
+        },
+        {
+          "rule_key": "filter:orders_soft_delete",
+          "statement": "(recorded run \u2014 statement not archived)"
+        }
+      ],
+      "sql": "WITH revenue_data AS (\n    SELECT\n        ol.order_id,\n        SUM(ol.amount_cents) AS order_revenue,\n        SUM(r.amount_cents) AS refund_revenue\n    FROM\n        order_lines ol\n    LEFT JOIN\n        refunds r ON ol.order_id = r.order_id\n    WHERE\n        ol.order_id IN (\n            SELECT\n                o.order_id\n            FROM\n                orders o\n            WHERE\n                o.ordered_at BETWEEN '2026-02-01' AND '2026-08-31'\n                AND o.status <> 'cancelled'\n                AND o.deleted_at IS NULL\n        )\n    GROUP BY\n        ol.order_id\n),\nnet_revenue AS (\n    SELECT\n        order_id,\n        (order_revenue - COALESCE(refund_revenue, 0)) AS net_revenue_cents\n    FROM\n        revenue_data\n)\nSELECT\n    SUM(net_revenue_cents) AS revenue_cents\nFROM\n    net_revenue",
+      "columns": [
+        "revenue_cents"
+      ],
+      "rows": [
+        [
+          135000
+        ]
+      ],
+      "verdict": "correct",
+      "expected_row_count": 1,
+      "model_id": "amazon.nova-lite-v1:0",
+      "elapsed_ms": 0,
+      "source": "recorded",
+      "error": null
+    }
+  },
+  "q21": {
+    "no_memory": {
+      "question": "What was total net revenue from customer Harbor Pacific in fiscal 2026? Return columns: customer, revenue_cents.",
+      "mode": "no_memory",
+      "retrieved": [],
+      "sql": "WITH customer_orders AS (\n    SELECT o.order_id, o.customer_id, SUM(ol.amount_cents) AS order_revenue_cents\n    FROM orders o\n    JOIN order_lines ol ON o.order_id = ol.order_id\n    WHERE o.customer_id = (SELECT customer_id FROM customers WHERE name = 'Harbor Pacific')\n    AND o.ordered_at BETWEEN '2026-01-01' AND '2026-12-31'\n    GROUP BY o.order_id, o.customer_id\n),\ncustomer_refunds AS (\n    SELECT o.customer_id, SUM(r.amount_cents) AS refund_cents\n    FROM orders o\n    JOIN refunds r ON o.order_id = r.order_id\n    WHERE o.customer_id = (SELECT customer_id FROM customers WHERE name = 'Harbor Pacific')\n    AND r.refunded_at BETWEEN '2026-01-01' AND '2026-12-31'\n    GROUP BY o.customer_id\n)\nSELECT c.name AS customer, COALESCE(SUM(co.order_revenue_cents), 0) - COALESCE(SUM(cr.refund_cents), 0) AS revenue_cents\nFROM customers c\nLEFT JOIN customer_orders co ON c.customer_id = co.customer_id\nLEFT JOIN customer_refunds cr ON c.customer_id = cr.customer_id\nWHERE c.name = 'Harbor Pacific'\nGROUP BY c.name",
+      "columns": [
+        "customer",
+        "revenue_cents"
+      ],
+      "rows": [
+        [
+          "Harbor Pacific",
+          520000
+        ]
+      ],
+      "verdict": "wrong",
+      "expected_row_count": 1,
+      "model_id": "amazon.nova-lite-v1:0",
+      "elapsed_ms": 0,
+      "source": "recorded",
+      "error": null
+    },
+    "with_memory": {
+      "question": "What was total net revenue from customer Harbor Pacific in fiscal 2026? Return columns: customer, revenue_cents.",
+      "mode": "with_memory",
+      "retrieved": [
+        {
+          "rule_key": "metric:revenue",
+          "statement": "(recorded run \u2014 statement not archived)"
+        },
+        {
+          "rule_key": "calendar:fiscal",
+          "statement": "(recorded run \u2014 statement not archived)"
+        },
+        {
+          "rule_key": "join:orders_customers_regions",
+          "statement": "(recorded run \u2014 statement not archived)"
+        },
+        {
+          "rule_key": "filter:orders_not_cancelled",
+          "statement": "(recorded run \u2014 statement not archived)"
+        },
+        {
+          "rule_key": "filter:orders_soft_delete",
+          "statement": "(recorded run \u2014 statement not archived)"
+        }
+      ],
+      "sql": "WITH revenue_data AS (\n    SELECT\n        c.name AS customer,\n        SUM(ol.amount_cents) AS revenue_cents\n    FROM\n        orders od\n    JOIN\n        customers c ON od.customer_id = c.customer_id\n    JOIN\n        order_lines ol ON od.order_id = ol.order_id\n    LEFT JOIN\n        refunds r ON od.order_id = r.order_id\n    WHERE\n        c.name = 'Harbor Pacific'\n        AND od.ordered_at BETWEEN '2026-05-01' AND '2026-08-01'\n        AND od.status <> 'cancelled'\n        AND od.deleted_at IS NULL\n    GROUP BY\n        c.name\n),\nrefund_data AS (\n    SELECT\n        c.name AS customer,\n        SUM(r.amount_cents) AS refund_cents\n    FROM\n        orders od\n    JOIN\n        customers c ON od.customer_id = c.customer_id\n    LEFT JOIN\n        refunds r ON od.order_id = r.order_id\n    WHERE\n        c.name = 'Harbor Pacific'\n        AND od.ordered_at BETWEEN '2026-05-01' AND '2026-08-01'\n        AND od.status <> 'cancelled'\n        AND od.deleted_at IS NULL\n    GROUP BY\n        c.name\n)\nSELECT\n    rd.customer,\n    COALESCE(SUM(rd.revenue_cents), 0) - COALESCE(SUM(rd.refund_cents), 0) AS revenue_cents\nFROM\n    revenue_data rd\nLEFT JOIN\n    refund_data rd2 ON rd.customer = rd2.customer\nGROUP BY\n    rd.customer",
+      "columns": [],
+      "rows": [],
+      "verdict": "error",
+      "expected_row_count": 1,
+      "model_id": "amazon.nova-lite-v1:0",
+      "elapsed_ms": 0,
+      "source": "recorded",
+      "error": "no such column: rd.refund_cents"
+    }
+  },
+  "q22": {
+    "no_memory": {
+      "question": "What was net revenue from the Gadget product (SKU GAD-200) in calendar 2026? Return columns: gadget_revenue_cents.",
+      "mode": "no_memory",
+      "retrieved": [],
+      "sql": "WITH gadget_orders AS (\n    SELECT\n        ol.line_id,\n        ol.order_id,\n        ol.qty,\n        ol.amount_cents\n    FROM\n        order_lines ol\n    JOIN\n        products p ON ol.product_id = p.product_id\n    WHERE\n        p.sku = 'GAD-200'\n        AND ol.order_id IN (\n            SELECT\n                o.order_id\n            FROM\n                orders o\n            WHERE\n                o.status ='shipped'\n                AND o.ordered_at >= '2026-01-01'\n                AND o.ordered_at < '2027-01-01'\n        )\n),\ngadget_refunds AS (\n    SELECT\n        r.order_id,\n        SUM(r.amount_cents) AS refunded_cents\n    FROM\n        refunds r\n    WHERE\n        r.order_id IN (\n            SELECT\n                o.order_id\n            FROM\n                orders o\n            WHERE\n                o.status ='shipped'\n                AND o.ordered_at >= '2026-01-01'\n                AND o.ordered_at < '2027-01-01'\n        )\n    GROUP BY\n        r.order_id\n)\nSELECT\n    SUM(ol.amount_cents - COALESCE(gr.refunded_cents, 0)) AS gadget_revenue_cents\nFROM\n    gadget_orders ol\nLEFT JOIN\n    gadget_refunds gr ON ol.order_id = gr.order_id",
+      "columns": [
+        "gadget_revenue_cents"
+      ],
+      "rows": [
+        [
+          40000
+        ]
+      ],
+      "verdict": "correct",
+      "expected_row_count": 1,
+      "model_id": "amazon.nova-lite-v1:0",
+      "elapsed_ms": 0,
+      "source": "recorded",
+      "error": null
+    },
+    "with_memory": {
+      "question": "What was net revenue from the Gadget product (SKU GAD-200) in calendar 2026? Return columns: gadget_revenue_cents.",
+      "mode": "with_memory",
+      "retrieved": [
+        {
+          "rule_key": "metric:revenue",
+          "statement": "(recorded run \u2014 statement not archived)"
+        },
+        {
+          "rule_key": "join:orders_customers_regions",
+          "statement": "(recorded run \u2014 statement not archived)"
+        },
+        {
+          "rule_key": "calendar:fiscal",
+          "statement": "(recorded run \u2014 statement not archived)"
+        },
+        {
+          "rule_key": "filter:orders_not_cancelled",
+          "statement": "(recorded run \u2014 statement not archived)"
+        },
+        {
+          "rule_key": "filter:orders_soft_delete",
+          "statement": "(recorded run \u2014 statement not archived)"
+        }
+      ],
+      "sql": "WITH gadget_orders AS (\n    SELECT\n        ol.order_id,\n        ol.amount_cents,\n        r.amount_cents AS refund_cents\n    FROM\n        order_lines ol\n    JOIN\n        products p ON ol.product_id = p.product_id\n    LEFT JOIN\n        refunds r ON ol.order_id = r.order_id\n    WHERE\n        p.sku = 'GAD-200'\n        AND ol.order_id NOT IN (SELECT order_id FROM orders WHERE deleted_at IS NOT NULL)\n        AND ol.order_id NOT IN (SELECT order_id FROM orders WHERE status = 'cancelled')\n        AND ol.ordered_at BETWEEN '2026-01-01' AND '2026-12-31'\n),\ngadget_revenue AS (\n    SELECT\n        SUM(amount_cents - COALESCE(refund_cents, 0)) AS gadget_revenue_cents\n    FROM\n        gadget_orders\n)\nSELECT\n    gadget_revenue_cents\nFROM\n    gadget_revenue",
+      "columns": [],
+      "rows": [],
+      "verdict": "error",
+      "expected_row_count": 1,
+      "model_id": "amazon.nova-lite-v1:0",
+      "elapsed_ms": 0,
+      "source": "recorded",
+      "error": "no such column: ol.ordered_at"
+    }
+  },
+  "q23": {
+    "no_memory": {
+      "question": "What was the single largest live, non-cancelled order of fiscal 2026 by billed line total? Return one row. Return columns: order_id, amount_cents.",
+      "mode": "no_memory",
+      "retrieved": [],
+      "sql": "WITH live_orders AS (\n    SELECT order_id, SUM(amount_cents) AS amount_cents\n    FROM order_lines\n    JOIN orders ON order_lines.order_id = orders.order_id\n    WHERE orders.deleted_at IS NULL\n        AND orders.status!= 'cancelled'\n        AND orders.ordered_at BETWEEN '2026-01-01' AND '2026-12-31'\n    GROUP BY order_id\n)\nSELECT order_id, amount_cents\nFROM live_orders\nORDER BY amount_cents DESC\nLIMIT 1",
+      "columns": [],
+      "rows": [],
+      "verdict": "error",
+      "expected_row_count": 1,
+      "model_id": "amazon.nova-lite-v1:0",
+      "elapsed_ms": 0,
+      "source": "recorded",
+      "error": "ambiguous column name: order_id"
+    },
+    "with_memory": {
+      "question": "What was the single largest live, non-cancelled order of fiscal 2026 by billed line total? Return one row. Return columns: order_id, amount_cents.",
+      "mode": "with_memory",
+      "retrieved": [
+        {
+          "rule_key": "filter:orders_not_cancelled",
+          "statement": "(recorded run \u2014 statement not archived)"
+        },
+        {
+          "rule_key": "filter:orders_soft_delete",
+          "statement": "(recorded run \u2014 statement not archived)"
+        },
+        {
+          "rule_key": "join:orders_customers_regions",
+          "statement": "(recorded run \u2014 statement not archived)"
+        },
+        {
+          "rule_key": "calendar:fiscal",
+          "statement": "(recorded run \u2014 statement not archived)"
+        },
+        {
+          "rule_key": "metric:revenue",
+          "statement": "(recorded run \u2014 statement not archived)"
+        }
+      ],
+      "sql": "WITH live_orders AS (\n    SELECT \n        o.order_id, \n        SUM(ol.amount_cents) AS amount_cents\n    FROM \n        orders o\n    JOIN \n        order_lines ol ON o.order_id = ol.order_id\n    LEFT JOIN \n        refunds r ON o.order_id = r.order_id\n    WHERE \n        o.status <> 'cancelled' \n        AND o.deleted_at IS NULL\n        AND o.ordered_at BETWEEN '2026-05-01' AND '2026-08-01'\n    GROUP BY \n        o.order_id\n    HAVING \n        SUM(ol.amount_cents) - COALESCE(SUM(r.amount_cents), 0) > 0\n)\nSELECT \n    order_id, \n    MAX(amount_cents) AS amount_cents\nFROM \n    live_orders\nGROUP BY \n    order_id\nORDER BY \n    amount_cents DESC\nLIMIT 1",
+      "columns": [
+        "order_id",
+        "amount_cents"
+      ],
+      "rows": [
+        [
+          10,
+          100000
+        ]
+      ],
+      "verdict": "wrong",
+      "expected_row_count": 1,
+      "model_id": "amazon.nova-lite-v1:0",
+      "elapsed_ms": 0,
+      "source": "recorded",
+      "error": null
+    }
+  },
+  "q24": {
+    "no_memory": {
+      "question": "What was the total refund amount issued during fiscal Q2 2026? Return 0 if none. Return columns: refund_cents.",
+      "mode": "no_memory",
+      "retrieved": [],
+      "sql": "WITH fiscal_q2 AS (\n    SELECT '2026-04-01' AS start_date, '2026-06-30' AS end_date\n)\nSELECT COALESCE(SUM(amount_cents), 0) AS refund_cents\nFROM refunds\nWHERE refunded_at BETWEEN (SELECT start_date FROM fiscal_q2) AND (SELECT end_date FROM fiscal_q2)",
+      "columns": [
+        "refund_cents"
+      ],
+      "rows": [
+        [
+          0
+        ]
+      ],
+      "verdict": "wrong",
+      "expected_row_count": 1,
+      "model_id": "amazon.nova-lite-v1:0",
+      "elapsed_ms": 0,
+      "source": "recorded",
+      "error": null
+    },
+    "with_memory": {
+      "question": "What was the total refund amount issued during fiscal Q2 2026? Return 0 if none. Return columns: refund_cents.",
+      "mode": "with_memory",
+      "retrieved": [
+        {
+          "rule_key": "metric:revenue",
+          "statement": "(recorded run \u2014 statement not archived)"
+        },
+        {
+          "rule_key": "join:orders_customers_regions",
+          "statement": "(recorded run \u2014 statement not archived)"
+        },
+        {
+          "rule_key": "calendar:fiscal",
+          "statement": "(recorded run \u2014 statement not archived)"
+        },
+        {
+          "rule_key": "filter:orders_not_cancelled",
+          "statement": "(recorded run \u2014 statement not archived)"
+        },
+        {
+          "rule_key": "filter:orders_soft_delete",
+          "statement": "(recorded run \u2014 statement not archived)"
+        }
+      ],
+      "sql": "WITH fiscal_q2_orders AS (\n    SELECT\n        od.order_id\n    FROM\n        orders od\n    WHERE\n        od.ordered_at >= '2026-05-01'\n        AND od.ordered_at < '2026-08-01'\n        AND od.status <> 'cancelled'\n        AND od.deleted_at IS NULL\n)\nSELECT\n    SUM(r.amount_cents) AS refund_cents\nFROM\n    refunds r\nJOIN\n    fiscal_q2_orders fq2o ON r.order_id = fq2o.order_id",
+      "columns": [
+        "refund_cents"
+      ],
+      "rows": [
+        [
+          25000
+        ]
+      ],
+      "verdict": "correct",
+      "expected_row_count": 1,
+      "model_id": "amazon.nova-lite-v1:0",
+      "elapsed_ms": 0,
+      "source": "recorded",
+      "error": null
+    }
+  },
+  "q25": {
+    "no_memory": {
+      "question": "Rank the regions by net revenue for fiscal Q3 2026 (1 = highest). Include only regions with revenue. Return columns: region, rank_no.",
+      "mode": "no_memory",
+      "retrieved": [],
+      "sql": "WITH region_revenue AS (\n    SELECT\n        r.name AS region,\n        SUM(ol.qty * ol.amount_cents) AS revenue\n    FROM\n        orders o\n    JOIN\n        customers c ON o.customer_id = c.customer_id\n    JOIN\n        regions r ON c.region_id = r.region_id\n    JOIN\n        order_lines ol ON o.order_id = ol.order_id\n    WHERE\n        o.ordered_at BETWEEN '2026-07-01' AND '2026-09-30'\n        AND o.status ='shipped'\n    GROUP BY\n        r.name\n    HAVING\n        SUM(ol.qty * ol.amount_cents) > 0\n),\nranked_regions AS (\n    SELECT\n        region,\n        RANK() OVER (ORDER BY revenue DESC) AS rank_no\n    FROM\n        region_revenue\n)\nSELECT\n    region,\n    rank_no\nFROM\n    ranked_regions\nORDER BY\n    rank_no",
+      "columns": [
+        "region",
+        "rank_no"
+      ],
+      "rows": [
+        [
+          "APAC",
+          1
+        ],
+        [
+          "AMER",
+          2
+        ],
+        [
+          "EMEA",
+          3
+        ]
+      ],
+      "verdict": "wrong",
+      "expected_row_count": 2,
+      "model_id": "amazon.nova-lite-v1:0",
+      "elapsed_ms": 0,
+      "source": "recorded",
+      "error": null
+    },
+    "with_memory": {
+      "question": "Rank the regions by net revenue for fiscal Q3 2026 (1 = highest). Include only regions with revenue. Return columns: region, rank_no.",
+      "mode": "with_memory",
+      "retrieved": [
+        {
+          "rule_key": "metric:revenue",
+          "statement": "(recorded run \u2014 statement not archived)"
+        },
+        {
+          "rule_key": "join:orders_customers_regions",
+          "statement": "(recorded run \u2014 statement not archived)"
+        },
+        {
+          "rule_key": "calendar:fiscal",
+          "statement": "(recorded run \u2014 statement not archived)"
+        },
+        {
+          "rule_key": "filter:orders_not_cancelled",
+          "statement": "(recorded run \u2014 statement not archived)"
+        },
+        {
+          "rule_key": "filter:orders_soft_delete",
+          "statement": "(recorded run \u2014 statement not archived)"
+        }
+      ],
+      "sql": "WITH ranked_regions AS (\n    SELECT\n        r.name AS region,\n        SUM(ol.amount_cents) - COALESCE(SUM(re.amount_cents), 0) AS net_revenue\n    FROM\n        orders od\n    JOIN\n        customers c ON od.customer_id = c.customer_id\n    JOIN\n        regions r ON c.region_id = r.region_id\n    JOIN\n        order_lines ol ON od.order_id = ol.order_id\n    LEFT JOIN\n        refunds re ON od.order_id = re.order_id\n    WHERE\n        od.ordered_at BETWEEN '2026-05-01' AND '2026-08-01'\n        AND od.status <> 'cancelled'\n        AND od.deleted_at IS NULL\n    GROUP BY\n        r.name\n    HAVING\n        SUM(ol.amount_cents) - COALESCE(SUM(re.amount_cents), 0) > 0\n), ranked_regions_cte AS (\n    SELECT\n        region,\n        net_revenue,\n        RANK() OVER (ORDER BY net_revenue DESC) AS rank_no\n    FROM\n        ranked_regions\n)\nSELECT\n    region,\n    rank_no\nFROM\n    ranked_regions_cte",
+      "columns": [
+        "region",
+        "rank_no"
+      ],
+      "rows": [
+        [
+          "AMER",
+          1
+        ],
+        [
+          "APAC",
+          2
+        ]
+      ],
+      "verdict": "wrong",
+      "expected_row_count": 2,
+      "model_id": "amazon.nova-lite-v1:0",
+      "elapsed_ms": 0,
+      "source": "recorded",
+      "error": null
+    }
+  },
+  "q26": {
+    "no_memory": {
+      "question": "What was total net revenue in September 2026? Return 0 if none. Return columns: september_revenue_cents.",
+      "mode": "no_memory",
+      "retrieved": [],
+      "sql": "WITH\n  -- Get all orders placed in September 2026\n  september_orders AS (\n    SELECT\n      order_id\n    FROM\n      orders\n    WHERE\n      strftime('%Y-%m', ordered_at) = '2026-09'\n      AND status ='shipped'\n  ),\n  -- Get all order lines for the orders placed in September 2026\n  september_order_lines AS (\n    SELECT\n      order_id,\n      SUM(amount_cents) AS total_order_amount_cents\n    FROM\n      order_lines\n    WHERE\n      order_id IN (SELECT order_id FROM september_orders)\n    GROUP BY\n      order_id\n  ),\n  -- Get all refunds for the orders placed in September 2026\n  september_refunds AS (\n    SELECT\n      order_id,\n      SUM(amount_cents) AS total_refund_amount_cents\n    FROM\n      refunds\n    WHERE\n      order_id IN (SELECT order_id FROM september_orders)\n    GROUP BY\n      order_id\n  ),\n  -- Calculate net revenue for each order\n  net_revenue AS (\n    SELECT\n      so.order_id,\n      so.total_order_amount_cents - COALESCE(sr.total_refund_amount_cents, 0) AS net_revenue_cents\n    FROM\n      september_order_lines so\n      LEFT JOIN september_refunds sr ON so.order_id = sr.order_id\n  )\nSELECT\n  SUM(net_revenue_cents) AS september_revenue_cents\nFROM\n  net_revenue",
+      "columns": [
+        "september_revenue_cents"
+      ],
+      "rows": [
+        [
+          500000
+        ]
+      ],
+      "verdict": "wrong",
+      "expected_row_count": 1,
+      "model_id": "amazon.nova-lite-v1:0",
+      "elapsed_ms": 0,
+      "source": "recorded",
+      "error": null
+    },
+    "with_memory": {
+      "question": "What was total net revenue in September 2026? Return 0 if none. Return columns: september_revenue_cents.",
+      "mode": "with_memory",
+      "retrieved": [
+        {
+          "rule_key": "metric:revenue",
+          "statement": "(recorded run \u2014 statement not archived)"
+        },
+        {
+          "rule_key": "join:orders_customers_regions",
+          "statement": "(recorded run \u2014 statement not archived)"
+        },
+        {
+          "rule_key": "filter:orders_soft_delete",
+          "statement": "(recorded run \u2014 statement not archived)"
+        },
+        {
+          "rule_key": "filter:orders_not_cancelled",
+          "statement": "(recorded run \u2014 statement not archived)"
+        },
+        {
+          "rule_key": "calendar:fiscal",
+          "statement": "(recorded run \u2014 statement not archived)"
+        }
+      ],
+      "sql": "WITH order_revenue AS (\n    SELECT\n        ol.order_id,\n        SUM(ol.amount_cents) AS order_total_cents\n    FROM\n        order_lines ol\n    JOIN\n        orders od ON ol.order_id = od.order_id\n    WHERE\n        od.deleted_at IS NULL\n        AND od.status <> 'cancelled'\n        AND od.ordered_at BETWEEN '2026-09-01' AND '2026-09-30'\n    GROUP BY\n        ol.order_id\n),\norder_refunds AS (\n    SELECT\n        r.order_id,\n        SUM(r.amount_cents) AS order_refund_total_cents\n    FROM\n        refunds r\n    JOIN\n        orders od ON r.order_id = od.order_id\n    WHERE\n        od.deleted_at IS NULL\n        AND od.status <> 'cancelled'\n        AND r.refunded_at BETWEEN '2026-09-01' AND '2026-09-30'\n    GROUP BY\n        r.order_id\n),\nnet_order_revenue AS (\n    SELECT\n        oor.order_id,\n        oor.order_total_cents - COALESCE(orf.order_refund_total_cents, 0) AS net_order_revenue_cents\n    FROM\n        order_revenue oor\n    LEFT JOIN\n        order_refunds orf ON oor.order_id = orf.order_id\n)\nSELECT\n    SUM(nor.net_order_revenue_cents) AS september_revenue_cents\nFROM\n    net_order_revenue nor",
+      "columns": [
+        "september_revenue_cents"
+      ],
+      "rows": [
+        [
+          null
+        ]
+      ],
+      "verdict": "wrong",
+      "expected_row_count": 1,
+      "model_id": "amazon.nova-lite-v1:0",
+      "elapsed_ms": 0,
+      "source": "recorded",
+      "error": null
+    }
+  },
+  "q27": {
+    "no_memory": {
+      "question": "What was net revenue in calendar 2026 for the region where customer Harbor Pacific is based? Return columns: revenue_cents.",
+      "mode": "no_memory",
+      "retrieved": [],
+      "sql": "WITH region_revenue AS (\n    SELECT\n        SUM(ol.amount_cents) AS revenue_cents\n    FROM\n        order_lines ol\n    JOIN\n        orders o ON ol.order_id = o.order_id\n    JOIN\n        customers c ON o.customer_id = c.customer_id\n    JOIN\n        regions r ON c.region_id = r.region_id\n    WHERE\n        c.name = 'Harbor Pacific'\n        AND o.status ='shipped'\n        AND o.ordered_at >= '2026-01-01'\n        AND o.ordered_at < '2027-01-01'\n), region_refunds AS (\n    SELECT\n        SUM(r.amount_cents) AS refund_cents\n    FROM\n        refunds r\n    JOIN\n        orders o ON r.order_id = o.order_id\n    JOIN\n        customers c ON o.customer_id = c.customer_id\n    JOIN\n        regions r ON c.region_id = r.region_id\n    WHERE\n        c.name = 'Harbor Pacific'\n        AND r.refunded_at >= '2026-01-01'\n        AND r.refunded_at < '2027-01-01'\n)\nSELECT\n    COALESCE(rr.revenue_cents, 0) - COALESCE(rf.refund_cents, 0) AS revenue_cents\nFROM\n    region_revenue rr\nCROSS JOIN\n    region_refunds rf",
+      "columns": [
+        "revenue_cents"
+      ],
+      "rows": [
+        [
+          520000
+        ]
+      ],
+      "verdict": "wrong",
+      "expected_row_count": 1,
+      "model_id": "amazon.nova-lite-v1:0",
+      "elapsed_ms": 0,
+      "source": "recorded",
+      "error": null
+    },
+    "with_memory": {
+      "question": "What was net revenue in calendar 2026 for the region where customer Harbor Pacific is based? Return columns: revenue_cents.",
+      "mode": "with_memory",
+      "retrieved": [
+        {
+          "rule_key": "metric:revenue",
+          "statement": "(recorded run \u2014 statement not archived)"
+        },
+        {
+          "rule_key": "join:orders_customers_regions",
+          "statement": "(recorded run \u2014 statement not archived)"
+        },
+        {
+          "rule_key": "calendar:fiscal",
+          "statement": "(recorded run \u2014 statement not archived)"
+        },
+        {
+          "rule_key": "filter:orders_not_cancelled",
+          "statement": "(recorded run \u2014 statement not archived)"
+        },
+        {
+          "rule_key": "filter:orders_soft_delete",
+          "statement": "(recorded run \u2014 statement not archived)"
+        }
+      ],
+      "sql": "WITH orders_filtered AS (\n    SELECT\n        o.order_id,\n        o.customer_id,\n        ol.line_id,\n        ol.qty,\n        ol.amount_cents,\n        r.amount_cents AS refund_amount_cents\n    FROM orders o\n    JOIN order_lines ol ON o.order_id = ol.order_id\n    LEFT JOIN refunds r ON o.order_id = r.order_id\n    WHERE o.status <> 'cancelled'\n      AND o.deleted_at IS NULL\n      AND o.ordered_at BETWEEN '2026-01-01' AND '2026-12-31'\n), net_revenue AS (\n    SELECT\n        c.region_id,\n        SUM(ol.amount_cents - COALESCE(r.refund_amount_cents, 0)) AS revenue_cents\n    FROM orders_filtered ol\n    JOIN customers c ON ol.customer_id = c.customer_id\n    LEFT JOIN refunds r ON ol.order_id = r.order_id\n    WHERE c.name = 'Harbor Pacific'\n    GROUP BY c.region_id\n)\nSELECT\n    revenue_cents\nFROM net_revenue",
+      "columns": [],
+      "rows": [],
+      "verdict": "error",
+      "expected_row_count": 1,
+      "model_id": "amazon.nova-lite-v1:0",
+      "elapsed_ms": 0,
+      "source": "recorded",
+      "error": "no such column: r.refund_amount_cents"
+    }
+  },
+  "q28": {
+    "no_memory": {
+      "question": "What was net revenue from customer Northwind Retail in fiscal 2026? Return columns: revenue_cents.",
+      "mode": "no_memory",
+      "retrieved": [],
+      "sql": "WITH customer_orders AS (\n    SELECT o.order_id\n    FROM orders o\n    JOIN customers c ON o.customer_id = c.customer_id\n    WHERE c.name = 'Northwind Retail' AND o.ordered_at BETWEEN '2026-01-01' AND '2026-12-31'\n), order_revenue AS (\n    SELECT ol.order_id, SUM(ol.amount_cents) AS revenue_cents\n    FROM order_lines ol\n    JOIN customer_orders co ON ol.order_id = co.order_id\n    GROUP BY ol.order_id\n), refunds_deducted AS (\n    SELECT ord.order_id, SUM(r.amount_cents) AS refund_cents\n    FROM order_revenue ord\n    JOIN refunds r ON ord.order_id = r.order_id\n    GROUP BY ord.order_id\n), net_revenue AS (\n    SELECT ord.revenue_cents - COALESCE(ref.refund_cents, 0) AS net_revenue_cents\n    FROM order_revenue ord\n    LEFT JOIN refunds_deducted ref ON ord.order_id = ref.order_id\n)\nSELECT SUM(net_revenue_cents) AS revenue_cents\nFROM net_revenue",
+      "columns": [
+        "revenue_cents"
+      ],
+      "rows": [
+        [
+          325000
+        ]
+      ],
+      "verdict": "correct",
+      "expected_row_count": 1,
+      "model_id": "amazon.nova-lite-v1:0",
+      "elapsed_ms": 0,
+      "source": "recorded",
+      "error": null
+    },
+    "with_memory": {
+      "question": "What was net revenue from customer Northwind Retail in fiscal 2026? Return columns: revenue_cents.",
+      "mode": "with_memory",
+      "retrieved": [
+        {
+          "rule_key": "metric:revenue",
+          "statement": "(recorded run \u2014 statement not archived)"
+        },
+        {
+          "rule_key": "join:orders_customers_regions",
+          "statement": "(recorded run \u2014 statement not archived)"
+        },
+        {
+          "rule_key": "calendar:fiscal",
+          "statement": "(recorded run \u2014 statement not archived)"
+        },
+        {
+          "rule_key": "filter:orders_not_cancelled",
+          "statement": "(recorded run \u2014 statement not archived)"
+        },
+        {
+          "rule_key": "filter:orders_soft_delete",
+          "statement": "(recorded run \u2014 statement not archived)"
+        }
+      ],
+      "sql": "WITH relevant_orders AS (\n    SELECT o.order_id\n    FROM orders o\n    JOIN customers c ON o.customer_id = c.customer_id\n    JOIN regions r ON c.region_id = r.region_id\n    WHERE r.name = 'Northwind Retail'\n    AND o.status <> 'cancelled'\n    AND o.deleted_at IS NULL\n    AND o.ordered_at BETWEEN '2026-05-01' AND '2026-08-01'\n),\norder_revenue AS (\n    SELECT ol.order_id, SUM(ol.amount_cents) AS order_total_cents\n    FROM order_lines ol\n    JOIN relevant_orders ro ON ol.order_id = ro.order_id\n    GROUP BY ol.order_id\n),\norder_refunds AS (\n    SELECT r.order_id, SUM(r.amount_cents) AS refund_total_cents\n    FROM refunds r\n    JOIN relevant_orders ro ON r.order_id = ro.order_id\n    GROUP BY r.order_id\n),\nnet_order_revenue AS (\n    SELECT\n        o.order_id,\n        o.order_total_cents - COALESCE(re.refund_total_cents, 0) AS net_order_revenue_cents\n    FROM order_revenue o\n    LEFT JOIN order_refunds re ON o.order_id = re.order_id\n)\nSELECT SUM(net_order_revenue_cents) AS revenue_cents\nFROM net_order_revenue",
+      "columns": [
+        "revenue_cents"
+      ],
+      "rows": [
+        [
+          null
+        ]
+      ],
+      "verdict": "wrong",
+      "expected_row_count": 1,
+      "model_id": "amazon.nova-lite-v1:0",
+      "elapsed_ms": 0,
+      "source": "recorded",
+      "error": null
+    }
+  },
+  "q29": {
+    "no_memory": {
+      "question": "How many products are in the catalog? Return columns: product_count.",
+      "mode": "no_memory",
+      "retrieved": [],
+      "sql": "SELECT COUNT(*) AS product_count\nFROM products",
+      "columns": [
+        "product_count"
+      ],
+      "rows": [
+        [
+          3
+        ]
+      ],
+      "verdict": "correct",
+      "expected_row_count": 1,
+      "model_id": "amazon.nova-lite-v1:0",
+      "elapsed_ms": 0,
+      "source": "recorded",
+      "error": null
+    },
+    "with_memory": {
+      "question": "How many products are in the catalog? Return columns: product_count.",
+      "mode": "with_memory",
+      "retrieved": [
+        {
+          "rule_key": "join:orders_customers_regions",
+          "statement": "(recorded run \u2014 statement not archived)"
+        },
+        {
+          "rule_key": "calendar:fiscal",
+          "statement": "(recorded run \u2014 statement not archived)"
+        },
+        {
+          "rule_key": "filter:orders_soft_delete",
+          "statement": "(recorded run \u2014 statement not archived)"
+        },
+        {
+          "rule_key": "filter:orders_not_cancelled",
+          "statement": "(recorded run \u2014 statement not archived)"
+        },
+        {
+          "rule_key": "metric:revenue",
+          "statement": "(recorded run \u2014 statement not archived)"
+        }
+      ],
+      "sql": "SELECT COUNT(DISTINCT p.product_id) AS product_count\nFROM products p",
+      "columns": [
+        "product_count"
+      ],
+      "rows": [
+        [
+          3
+        ]
+      ],
+      "verdict": "correct",
+      "expected_row_count": 1,
+      "model_id": "amazon.nova-lite-v1:0",
+      "elapsed_ms": 0,
+      "source": "recorded",
+      "error": null
+    }
+  },
+  "q30": {
+    "no_memory": {
+      "question": "What was the average net order value of live, non-cancelled orders in fiscal Q3 2026, by region? Net per order = line total minus refunds on that order. Include only regions with orders. Return columns: region, avg_order_value_cents.",
+      "mode": "no_memory",
+      "retrieved": [],
+      "sql": "WITH order_values AS (\n    SELECT\n        o.order_id,\n        SUM(ol.qty * ol.amount_cents) AS order_total_cents,\n        SUM(r.amount_cents) AS refund_total_cents\n    FROM\n        orders o\n    LEFT JOIN\n        order_lines ol ON o.order_id = ol.order_id\n    LEFT JOIN\n        refunds r ON o.order_id = r.order_id\n    WHERE\n        o.status ='shipped' AND\n        o.ordered_at BETWEEN '2026-07-01' AND '2026-09-30'\n    GROUP BY\n        o.order_id\n),\nregion_orders AS (\n    SELECT\n        r.name AS region,\n        ov.order_id,\n        (ov.order_total_cents - ov.refund_total_cents) AS net_order_value_cents\n    FROM\n        order_values ov\n    JOIN\n        orders o ON ov.order_id = o.order_id\n    JOIN\n        customers c ON o.customer_id = c.customer_id\n    JOIN\n        regions r ON c.region_id = r.region_id\n)\nSELECT\n    region,\n    AVG(net_order_value_cents) AS avg_order_value_cents\nFROM\n    region_orders\nGROUP BY\n    region\nORDER BY\n    avg_order_value_cents DESC",
+      "columns": [
+        "region",
+        "avg_order_value_cents"
+      ],
+      "rows": [
+        [
+          "AMER",
+          975000.0
+        ],
+        [
+          "EMEA",
+          null
+        ],
+        [
+          "APAC",
+          null
+        ]
+      ],
+      "verdict": "wrong",
+      "expected_row_count": 2,
+      "model_id": "amazon.nova-lite-v1:0",
+      "elapsed_ms": 0,
+      "source": "recorded",
+      "error": null
+    },
+    "with_memory": {
+      "question": "What was the average net order value of live, non-cancelled orders in fiscal Q3 2026, by region? Net per order = line total minus refunds on that order. Include only regions with orders. Return columns: region, avg_order_value_cents.",
+      "mode": "with_memory",
+      "retrieved": [
+        {
+          "rule_key": "metric:revenue",
+          "statement": "(recorded run \u2014 statement not archived)"
+        },
+        {
+          "rule_key": "filter:orders_not_cancelled",
+          "statement": "(recorded run \u2014 statement not archived)"
+        },
+        {
+          "rule_key": "join:orders_customers_regions",
+          "statement": "(recorded run \u2014 statement not archived)"
+        },
+        {
+          "rule_key": "filter:orders_soft_delete",
+          "statement": "(recorded run \u2014 statement not archived)"
+        },
+        {
+          "rule_key": "calendar:fiscal",
+          "statement": "(recorded run \u2014 statement not archived)"
+        }
+      ],
+      "sql": "WITH order_values AS (\n    SELECT\n        c.region_id,\n        o.order_id,\n        SUM(ol.qty * ol.amount_cents) - COALESCE(SUM(r.amount_cents), 0) AS net_order_value_cents\n    FROM\n        orders o\n    JOIN\n        order_lines ol ON o.order_id = ol.order_id\n    LEFT JOIN\n        refunds r ON o.order_id = r.order_id\n    JOIN\n        customers c ON o.customer_id = c.customer_id\n    WHERE\n        o.status <> 'cancelled'\n        AND o.deleted_at IS NULL\n        AND o.ordered_at BETWEEN '2026-05-01' AND '2026-08-01'\n    GROUP BY\n        c.region_id,\n        o.order_id\n)\nSELECT\n    r.name AS region,\n    AVG(ov.net_order_value_cents) AS avg_order_value_cents\nFROM\n    order_values ov\nJOIN\n    regions r ON ov.region_id = r.region_id\nGROUP BY\n    r.name\nHAVING\n    COUNT(ov.order_id) > 0\n",
+      "columns": [
+        "region",
+        "avg_order_value_cents"
+      ],
+      "rows": [
+        [
+          "AMER",
+          975000.0
+        ],
+        [
+          "APAC",
+          40000.0
+        ]
+      ],
+      "verdict": "wrong",
+      "expected_row_count": 2,
+      "model_id": "amazon.nova-lite-v1:0",
+      "elapsed_ms": 0,
+      "source": "recorded",
+      "error": null
+    }
+  },
+  "q31": {
+    "no_memory": {
+      "question": "What were gross billings (before any refunds) on live, non-cancelled orders in fiscal Q2 2026? Return columns: gross_cents.",
+      "mode": "no_memory",
+      "retrieved": [],
+      "sql": "WITH live_orders AS (\n    SELECT o.order_id\n    FROM orders o\n    WHERE o.status ='shipped'\n    AND o.ordered_at BETWEEN '2026-04-01' AND '2026-06-30'\n    AND o.deleted_at IS NULL\n),\ngross_billings AS (\n    SELECT SUM(ol.amount_cents) AS gross_cents\n    FROM order_lines ol\n    JOIN live_orders lo ON ol.order_id = lo.order_id\n)\nSELECT gross_cents\nFROM gross_billings",
+      "columns": [
+        "gross_cents"
+      ],
+      "rows": [
+        [
+          20000
+        ]
+      ],
+      "verdict": "wrong",
+      "expected_row_count": 1,
+      "model_id": "amazon.nova-lite-v1:0",
+      "elapsed_ms": 0,
+      "source": "recorded",
+      "error": null
+    },
+    "with_memory": {
+      "question": "What were gross billings (before any refunds) on live, non-cancelled orders in fiscal Q2 2026? Return columns: gross_cents.",
+      "mode": "with_memory",
+      "retrieved": [
+        {
+          "rule_key": "metric:revenue",
+          "statement": "(recorded run \u2014 statement not archived)"
+        },
+        {
+          "rule_key": "filter:orders_not_cancelled",
+          "statement": "(recorded run \u2014 statement not archived)"
+        },
+        {
+          "rule_key": "join:orders_customers_regions",
+          "statement": "(recorded run \u2014 statement not archived)"
+        },
+        {
+          "rule_key": "calendar:fiscal",
+          "statement": "(recorded run \u2014 statement not archived)"
+        },
+        {
+          "rule_key": "filter:orders_soft_delete",
+          "statement": "(recorded run \u2014 statement not archived)"
+        }
+      ],
+      "sql": "WITH live_orders AS (\n    SELECT\n        ol.line_id,\n        ol.order_id,\n        ol.amount_cents\n    FROM\n        order_lines ol\n    JOIN\n        orders od ON ol.order_id = od.order_id\n    WHERE\n        od.status <> 'cancelled'\n        AND od.deleted_at IS NULL\n        AND od.ordered_at BETWEEN '2026-05-01' AND '2026-08-01'\n)\nSELECT\n    SUM(ol.amount_cents) AS gross_cents\nFROM\n    live_orders ol",
+      "columns": [
+        "gross_cents"
+      ],
+      "rows": [
+        [
+          120000
+        ]
+      ],
+      "verdict": "correct",
+      "expected_row_count": 1,
+      "model_id": "amazon.nova-lite-v1:0",
+      "elapsed_ms": 0,
+      "source": "recorded",
+      "error": null
+    }
+  },
+  "q32": {
+    "no_memory": {
+      "question": "What was net revenue by region for fiscal 2026? Include only regions with revenue. Return columns: region, revenue_cents.",
+      "mode": "no_memory",
+      "retrieved": [],
+      "sql": "WITH order_revenue AS (\n    SELECT\n        r.name AS region,\n        SUM(ol.amount_cents) AS revenue_cents\n    FROM\n        orders o\n    JOIN\n        customers c ON o.customer_id = c.customer_id\n    JOIN\n        regions r ON c.region_id = r.region_id\n    JOIN\n        order_lines ol ON o.order_id = ol.order_id\n    WHERE\n        o.ordered_at BETWEEN '2026-01-01' AND '2026-12-31'\n        AND o.status ='shipped'\n        AND o.deleted_at IS NULL\n    GROUP BY\n        r.name\n)\nSELECT\n    region,\n    SUM(revenue_cents) AS revenue_cents\nFROM\n    order_revenue\nGROUP BY\n    region\nHAVING\n    SUM(revenue_cents) > 0",
+      "columns": [
+        "region",
+        "revenue_cents"
+      ],
+      "rows": [
+        [
+          "AMER",
+          350000
+        ],
+        [
+          "APAC",
+          20000
+        ],
+        [
+          "EMEA",
+          40000
+        ]
+      ],
+      "verdict": "wrong",
+      "expected_row_count": 3,
+      "model_id": "amazon.nova-lite-v1:0",
+      "elapsed_ms": 0,
+      "source": "recorded",
+      "error": null
+    },
+    "with_memory": {
+      "question": "What was net revenue by region for fiscal 2026? Include only regions with revenue. Return columns: region, revenue_cents.",
+      "mode": "with_memory",
+      "retrieved": [
+        {
+          "rule_key": "metric:revenue",
+          "statement": "(recorded run \u2014 statement not archived)"
+        },
+        {
+          "rule_key": "join:orders_customers_regions",
+          "statement": "(recorded run \u2014 statement not archived)"
+        },
+        {
+          "rule_key": "calendar:fiscal",
+          "statement": "(recorded run \u2014 statement not archived)"
+        },
+        {
+          "rule_key": "filter:orders_not_cancelled",
+          "statement": "(recorded run \u2014 statement not archived)"
+        },
+        {
+          "rule_key": "filter:orders_soft_delete",
+          "statement": "(recorded run \u2014 statement not archived)"
+        }
+      ],
+      "sql": "WITH orders_filtered AS (\n    SELECT\n        o.order_id,\n        o.customer_id,\n        o.ordered_at,\n        ol.product_id,\n        ol.qty,\n        ol.amount_cents,\n        r.amount_cents AS refund_cents\n    FROM orders o\n    JOIN order_lines ol ON o.order_id = ol.order_id\n    LEFT JOIN refunds r ON o.order_id = r.order_id\n    WHERE o.status <> 'cancelled'\n    AND o.deleted_at IS NULL\n    AND o.ordered_at BETWEEN '2026-05-01' AND '2026-08-01'\n),\norder_revenue AS (\n    SELECT\n        c.region_id,\n        SUM(ol.amount_cents - COALESCE(r.refund_cents, 0)) AS revenue_cents\n    FROM orders_filtered ol\n    JOIN customers c ON ol.customer_id = c.customer_id\n    LEFT JOIN refunds r ON ol.order_id = r.order_id\n    GROUP BY c.region_id\n)\nSELECT\n    r.name AS region,\n    SUM(or.revenue_cents) AS revenue_cents\nFROM order_revenue or\nJOIN regions r ON or.region_id = r.region_id\nGROUP BY r.name\nHAVING SUM(or.revenue_cents) > 0",
+      "columns": [],
+      "rows": [],
+      "verdict": "error",
+      "expected_row_count": 3,
+      "model_id": "amazon.nova-lite-v1:0",
+      "elapsed_ms": 0,
+      "source": "recorded",
+      "error": "near \"or\": syntax error"
+    }
+  },
+  "q33": {
+    "no_memory": {
+      "question": "What was net revenue by month for fiscal Q3 2026? Report only months with revenue. Return columns: month (as YYYY-MM), revenue_cents.",
+      "mode": "no_memory",
+      "retrieved": [],
+      "sql": "WITH orders_q3 AS (\n    SELECT\n        order_id,\n        ordered_at,\n        SUM(amount_cents) AS order_total_cents\n    FROM\n        order_lines\n    JOIN\n        orders ON order_lines.order_id = orders.order_id\n    WHERE\n        orders.status ='shipped'\n        AND orders.ordered_at BETWEEN '2026-07-01' AND '2026-09-30'\n    GROUP BY\n        order_id\n), refunds_q3 AS (\n    SELECT\n        order_id,\n        SUM(amount_cents) AS refund_total_cents\n    FROM\n        refunds\n    WHERE\n        refunded_at BETWEEN '2026-07-01' AND '2026-09-30'\n    GROUP BY\n        order_id\n), net_revenue AS (\n    SELECT\n        orders_q3.order_id,\n        orders_q3.ordered_at,\n        orders_q3.order_total_cents - COALESCE(refunds_q3.refund_total_cents, 0) AS net_revenue_cents\n    FROM\n        orders_q3\n    LEFT JOIN\n        refunds_q3 ON orders_q3.order_id = refunds_q3.order_id\n    WHERE\n        orders_q3.order_total_cents - COALESCE(refunds_q3.refund_total_cents, 0) > 0\n)\nSELECT\n    DATE(ordered_at, 'start of month') AS month,\n    SUM(net_revenue_cents) AS revenue_cents\nFROM\n    net_revenue\nGROUP BY\n    month\nORDER BY\n    month",
+      "columns": [],
+      "rows": [],
+      "verdict": "error",
+      "expected_row_count": 2,
+      "model_id": "amazon.nova-lite-v1:0",
+      "elapsed_ms": 0,
+      "source": "recorded",
+      "error": "ambiguous column name: order_id"
+    },
+    "with_memory": {
+      "question": "What was net revenue by month for fiscal Q3 2026? Report only months with revenue. Return columns: month (as YYYY-MM), revenue_cents.",
+      "mode": "with_memory",
+      "retrieved": [
+        {
+          "rule_key": "metric:revenue",
+          "statement": "(recorded run \u2014 statement not archived)"
+        },
+        {
+          "rule_key": "calendar:fiscal",
+          "statement": "(recorded run \u2014 statement not archived)"
+        },
+        {
+          "rule_key": "join:orders_customers_regions",
+          "statement": "(recorded run \u2014 statement not archived)"
+        },
+        {
+          "rule_key": "filter:orders_not_cancelled",
+          "statement": "(recorded run \u2014 statement not archived)"
+        },
+        {
+          "rule_key": "filter:orders_soft_delete",
+          "statement": "(recorded run \u2014 statement not archived)"
+        }
+      ],
+      "sql": "WITH orders_filtered AS (\n    SELECT\n        o.order_id,\n        o.ordered_at,\n        ol.amount_cents,\n        c.region_id\n    FROM orders o\n    JOIN order_lines ol ON o.order_id = ol.order_id\n    JOIN customers c ON o.customer_id = c.customer_id\n    WHERE o.ordered_at BETWEEN '2026-05-01' AND '2026-08-01'\n        AND o.status <> 'cancelled'\n        AND o.deleted_at IS NULL\n),\nrefunds_filtered AS (\n    SELECT\n        r.order_id,\n        SUM(r.amount_cents) AS refund_cents\n    FROM refunds r\n    WHERE r.refunded_at BETWEEN '2026-05-01' AND '2026-08-01'\n    GROUP BY r.order_id\n)\nSELECT\n    DATE(of.ordered_at, 'start of month') AS month,\n    SUM(of.amount_cents - COALESCE(rf.refund_cents, 0)) AS revenue_cents\nFROM orders_filtered of\nLEFT JOIN refunds_filtered rf ON of.order_id = rf.order_id\nGROUP BY month\nHAVING revenue_cents > 0\nORDER BY month",
+      "columns": [
+        "month",
+        "revenue_cents"
+      ],
+      "rows": [
+        [
+          "2026-05-01",
+          20000
+        ],
+        [
+          "2026-07-01",
+          75000
+        ]
+      ],
+      "verdict": "wrong",
+      "expected_row_count": 2,
+      "model_id": "amazon.nova-lite-v1:0",
+      "elapsed_ms": 0,
+      "source": "recorded",
+      "error": null
+    }
+  },
+  "q34": {
+    "no_memory": {
+      "question": "List all product SKUs with their category. Return columns: sku, category.",
+      "mode": "no_memory",
+      "retrieved": [],
+      "sql": "SELECT products.sku, products.category\nFROM products",
+      "columns": [
+        "sku",
+        "category"
+      ],
+      "rows": [
+        [
+          "WID-100",
+          "hardware"
+        ],
+        [
+          "GAD-200",
+          "hardware"
+        ],
+        [
+          "SUB-300",
+          "services"
+        ]
+      ],
+      "verdict": "correct",
+      "expected_row_count": 3,
+      "model_id": "amazon.nova-lite-v1:0",
+      "elapsed_ms": 0,
+      "source": "recorded",
+      "error": null
+    },
+    "with_memory": {
+      "question": "List all product SKUs with their category. Return columns: sku, category.",
+      "mode": "with_memory",
+      "retrieved": [
+        {
+          "rule_key": "join:orders_customers_regions",
+          "statement": "(recorded run \u2014 statement not archived)"
+        },
+        {
+          "rule_key": "calendar:fiscal",
+          "statement": "(recorded run \u2014 statement not archived)"
+        },
+        {
+          "rule_key": "filter:orders_soft_delete",
+          "statement": "(recorded run \u2014 statement not archived)"
+        },
+        {
+          "rule_key": "filter:orders_not_cancelled",
+          "statement": "(recorded run \u2014 statement not archived)"
+        },
+        {
+          "rule_key": "metric:revenue",
+          "statement": "(recorded run \u2014 statement not archived)"
+        }
+      ],
+      "sql": "WITH orders_filtered AS (\n    SELECT od.order_id\n    FROM orders od\n    WHERE od.deleted_at IS NULL\n    AND od.status <> 'cancelled'\n    AND od.ordered_at BETWEEN '2026-05-01' AND '2026-08-01'\n),\nrefunds_aggregated AS (\n    SELECT ol.order_id, SUM(r.amount_cents) AS total_refunded\n    FROM order_lines ol\n    JOIN refunds r ON ol.order_id = r.order_id\n    GROUP BY ol.order_id\n)\nSELECT p.sku, p.category\nFROM products p\nJOIN order_lines ol ON p.product_id = ol.product_id\nJOIN orders_filtered od ON ol.order_id = od.order_id\nLEFT JOIN refunds_aggregated r ON ol.order_id = r.order_id\nGROUP BY p.sku, p.category\nHAVING SUM(ol.amount_cents) - COALESCE(r.total_refunded, 0) > 0",
+      "columns": [
+        "sku",
+        "category"
+      ],
+      "rows": [
+        [
+          "WID-100",
+          "hardware"
+        ]
+      ],
+      "verdict": "wrong",
+      "expected_row_count": 3,
+      "model_id": "amazon.nova-lite-v1:0",
+      "elapsed_ms": 0,
+      "source": "recorded",
+      "error": null
+    }
+  },
+  "q35": {
+    "no_memory": {
+      "question": "How many customers are based in each region? Return columns: region, customer_count.",
+      "mode": "no_memory",
+      "retrieved": [],
+      "sql": "SELECT r.name AS region, COUNT(c.customer_id) AS customer_count\nFROM regions r\nLEFT JOIN customers c ON r.region_id = c.region_id\nGROUP BY r.name",
+      "columns": [
+        "region",
+        "customer_count"
+      ],
+      "rows": [
+        [
+          "AMER",
+          1
+        ],
+        [
+          "APAC",
+          1
+        ],
+        [
+          "EMEA",
+          1
+        ]
+      ],
+      "verdict": "correct",
+      "expected_row_count": 3,
+      "model_id": "amazon.nova-lite-v1:0",
+      "elapsed_ms": 0,
+      "source": "recorded",
+      "error": null
+    },
+    "with_memory": {
+      "question": "How many customers are based in each region? Return columns: region, customer_count.",
+      "mode": "with_memory",
+      "retrieved": [
+        {
+          "rule_key": "join:orders_customers_regions",
+          "statement": "(recorded run \u2014 statement not archived)"
+        },
+        {
+          "rule_key": "metric:revenue",
+          "statement": "(recorded run \u2014 statement not archived)"
+        },
+        {
+          "rule_key": "filter:orders_soft_delete",
+          "statement": "(recorded run \u2014 statement not archived)"
+        },
+        {
+          "rule_key": "filter:orders_not_cancelled",
+          "statement": "(recorded run \u2014 statement not archived)"
+        },
+        {
+          "rule_key": "calendar:fiscal",
+          "statement": "(recorded run \u2014 statement not archived)"
+        }
+      ],
+      "sql": "WITH region_customers AS (\n    SELECT r.name AS region, COUNT(c.customer_id) AS customer_count\n    FROM regions r\n    JOIN customers c ON r.region_id = c.region_id\n    GROUP BY r.name\n)\nSELECT region, customer_count\nFROM region_customers",
+      "columns": [
+        "region",
+        "customer_count"
+      ],
+      "rows": [
+        [
+          "AMER",
+          1
+        ],
+        [
+          "APAC",
+          1
+        ],
+        [
+          "EMEA",
+          1
+        ]
+      ],
+      "verdict": "correct",
+      "expected_row_count": 3,
+      "model_id": "amazon.nova-lite-v1:0",
+      "elapsed_ms": 0,
+      "source": "recorded",
+      "error": null
+    }
+  },
+  "q36": {
+    "no_memory": {
+      "question": "What was net revenue for calendar Q3 2026 - the July-through-September calendar window, explicitly NOT the fiscal quarter? Return columns: revenue_cents.",
+      "mode": "no_memory",
+      "retrieved": [],
+      "sql": "WITH ordered_sales AS (\n    SELECT\n        o.order_id,\n        ol.line_id,\n        ol.amount_cents AS line_amount_cents,\n        o.ordered_at\n    FROM orders o\n    JOIN order_lines ol ON o.order_id = ol.order_id\n    WHERE o.status = 'shipped'\n        AND o.ordered_at BETWEEN '2026-07-01' AND '2026-09-30'\n), refunded_sales AS (\n    SELECT\n        r.order_id,\n        SUM(r.amount_cents) AS refund_amount_cents\n    FROM refunds r\n    JOIN orders o ON r.order_id = o.order_id\n    WHERE o.ordered_at BETWEEN '2026-07-01' AND '2026-09-30'\n    GROUP BY r.order_id\n)\nSELECT\n    SUM(os.line_amount_cents - COALESCE(rs.refund_amount_cents, 0)) AS revenue_cents\nFROM ordered_sales os\nLEFT JOIN refunded_sales rs ON os.order_id = rs.order_id",
+      "columns": [
+        "revenue_cents"
+      ],
+      "rows": [
+        [
+          615000
+        ]
+      ],
+      "verdict": "wrong",
+      "expected_row_count": 1,
+      "model_id": "amazon.nova-lite-v1:0",
+      "elapsed_ms": 0,
+      "source": "recorded",
+      "error": null
+    },
+    "with_memory": {
+      "question": "What was net revenue for calendar Q3 2026 - the July-through-September calendar window, explicitly NOT the fiscal quarter? Return columns: revenue_cents.",
+      "mode": "with_memory",
+      "retrieved": [
+        {
+          "rule_key": "metric:revenue",
+          "statement": "(recorded run \u2014 statement not archived)"
+        },
+        {
+          "rule_key": "calendar:fiscal",
+          "statement": "(recorded run \u2014 statement not archived)"
+        },
+        {
+          "rule_key": "join:orders_customers_regions",
+          "statement": "(recorded run \u2014 statement not archived)"
+        },
+        {
+          "rule_key": "filter:orders_not_cancelled",
+          "statement": "(recorded run \u2014 statement not archived)"
+        },
+        {
+          "rule_key": "filter:orders_soft_delete",
+          "statement": "(recorded run \u2014 statement not archived)"
+        }
+      ],
+      "sql": "WITH revenue_data AS (\n    SELECT\n        ol.order_id,\n        SUM(ol.amount_cents) AS order_revenue,\n        SUM(r.amount_cents) AS refund_revenue\n    FROM\n        order_lines ol\n    LEFT JOIN\n        refunds r ON ol.order_id = r.order_id\n    WHERE\n        ol.order_id IN (\n            SELECT\n                order_id\n            FROM\n                orders\n            WHERE\n                status <> 'cancelled'\n                AND deleted_at IS NULL\n                AND strftime('%Y-%m-%d', ordered_at) BETWEEN '2026-07-01' AND '2026-09-30'\n        )\n    GROUP BY\n        ol.order_id\n)\nSELECT\n    SUM(order_revenue - COALESCE(refund_revenue, 0)) AS revenue_cents\nFROM\n    revenue_data",
+      "columns": [
+        "revenue_cents"
+      ],
+      "rows": [
+        [
+          115000
+        ]
+      ],
+      "verdict": "correct",
+      "expected_row_count": 1,
+      "model_id": "amazon.nova-lite-v1:0",
+      "elapsed_ms": 0,
+      "source": "recorded",
+      "error": null
+    }
+  },
+  "q37": {
+    "no_memory": {
+      "question": "How many live, non-cancelled orders were placed in fiscal Q3 2026? Return columns: order_count.",
+      "mode": "no_memory",
+      "retrieved": [],
+      "sql": "WITH live_orders AS (\n    SELECT o.order_id\n    FROM orders o\n    WHERE o.deleted_at IS NULL\n    AND o.status!= 'cancelled'\n    AND o.ordered_at BETWEEN '2026-07-01' AND '2026-09-30'\n)\nSELECT COUNT(DISTINCT lo.order_id) AS order_count\nFROM live_orders lo",
+      "columns": [
+        "order_count"
+      ],
+      "rows": [
+        [
+          2
+        ]
+      ],
+      "verdict": "correct",
+      "expected_row_count": 1,
+      "model_id": "amazon.nova-lite-v1:0",
+      "elapsed_ms": 0,
+      "source": "recorded",
+      "error": null
+    },
+    "with_memory": {
+      "question": "How many live, non-cancelled orders were placed in fiscal Q3 2026? Return columns: order_count.",
+      "mode": "with_memory",
+      "retrieved": [
+        {
+          "rule_key": "filter:orders_not_cancelled",
+          "statement": "(recorded run \u2014 statement not archived)"
+        },
+        {
+          "rule_key": "calendar:fiscal",
+          "statement": "(recorded run \u2014 statement not archived)"
+        },
+        {
+          "rule_key": "filter:orders_soft_delete",
+          "statement": "(recorded run \u2014 statement not archived)"
+        },
+        {
+          "rule_key": "metric:revenue",
+          "statement": "(recorded run \u2014 statement not archived)"
+        },
+        {
+          "rule_key": "join:orders_customers_regions",
+          "statement": "(recorded run \u2014 statement not archived)"
+        }
+      ],
+      "sql": "WITH live_orders AS (\n    SELECT\n        o.order_id\n    FROM\n        orders o\n    WHERE\n        o.status <> 'cancelled' AND\n        o.deleted_at IS NULL AND\n        o.ordered_at >= '2026-05-01' AND\n        o.ordered_at < '2026-08-01'\n)\nSELECT\n    COUNT(lo.order_id) AS order_count\nFROM\n    live_orders lo",
+      "columns": [
+        "order_count"
+      ],
+      "rows": [
+        [
+          2
+        ]
+      ],
+      "verdict": "correct",
+      "expected_row_count": 1,
+      "model_id": "amazon.nova-lite-v1:0",
+      "elapsed_ms": 0,
+      "source": "recorded",
+      "error": null
+    }
+  },
+  "q38": {
+    "no_memory": {
+      "question": "For the board deck: FY2026 revenue so far, as of 2026-11-05 - one number. Return columns: fytd_revenue_cents.",
+      "mode": "no_memory",
+      "retrieved": [],
+      "sql": "WITH order_revenue AS (\n    SELECT\n        o.order_id,\n        SUM(ol.qty * ol.amount_cents) AS order_total_cents\n    FROM\n        orders o\n    JOIN\n        order_lines ol ON o.order_id = ol.order_id\n    WHERE\n        o.ordered_at <= '2026-11-05'\n        AND o.status ='shipped'\n    GROUP BY\n        o.order_id\n),\nrefund_revenue AS (\n    SELECT\n        r.order_id,\n        SUM(r.amount_cents) AS refund_total_cents\n    FROM\n        refunds r\n    WHERE\n        r.refunded_at <= '2026-11-05'\n    GROUP BY\n        r.order_id\n),\nnet_revenue AS (\n    SELECT\n        o.order_id,\n        COALESCE(orev.order_total_cents, 0) - COALESCE(rrev.refund_total_cents, 0) AS net_order_total_cents\n    FROM\n        orders o\n    LEFT JOIN\n        order_revenue orev ON o.order_id = orev.order_id\n    LEFT JOIN\n        refund_revenue rrev ON o.order_id = rrev.order_id\n    WHERE\n        o.ordered_at <= '2026-11-05'\n        AND o.status ='shipped'\n)\nSELECT\n    SUM(net_order_total_cents) AS fytd_revenue_cents\nFROM\n    net_revenue",
+      "columns": [
+        "fytd_revenue_cents"
+      ],
+      "rows": [
+        [
+          26425000
+        ]
+      ],
+      "verdict": "wrong",
+      "expected_row_count": 1,
+      "model_id": "amazon.nova-lite-v1:0",
+      "elapsed_ms": 0,
+      "source": "recorded",
+      "error": null
+    },
+    "with_memory": {
+      "question": "For the board deck: FY2026 revenue so far, as of 2026-11-05 - one number. Return columns: fytd_revenue_cents.",
+      "mode": "with_memory",
+      "retrieved": [
+        {
+          "rule_key": "metric:revenue",
+          "statement": "(recorded run \u2014 statement not archived)"
+        },
+        {
+          "rule_key": "calendar:fiscal",
+          "statement": "(recorded run \u2014 statement not archived)"
+        },
+        {
+          "rule_key": "filter:orders_not_cancelled",
+          "statement": "(recorded run \u2014 statement not archived)"
+        },
+        {
+          "rule_key": "join:orders_customers_regions",
+          "statement": "(recorded run \u2014 statement not archived)"
+        },
+        {
+          "rule_key": "filter:orders_soft_delete",
+          "statement": "(recorded run \u2014 statement not archived)"
+        }
+      ],
+      "sql": "WITH revenue_lines AS (\n    SELECT\n        ol.order_id,\n        SUM(ol.amount_cents) AS order_revenue_cents\n    FROM\n        order_lines ol\n    WHERE\n        ol.order_id IN (\n            SELECT\n                o.order_id\n            FROM\n                orders o\n            WHERE\n                o.status <> 'cancelled'\n                AND o.deleted_at IS NULL\n                AND o.ordered_at BETWEEN '2026-05-01' AND '2026-11-05'\n        )\n    GROUP BY\n        ol.order_id\n),\nrefunds_summary AS (\n    SELECT\n        r.order_id,\n        SUM(r.amount_cents) AS order_refund_cents\n    FROM\n        refunds r\n    WHERE\n        r.refund_id IN (\n            SELECT\n                o.order_id\n            FROM\n                orders o\n            WHERE\n                o.status <> 'cancelled'\n                AND o.deleted_at IS NULL\n                AND o.ordered_at BETWEEN '2026-05-01' AND '2026-11-05'\n        )\n    GROUP BY\n        r.order_id\n)\nSELECT\n    SUM(rl.order_revenue_cents - COALESCE(rs.order_refund_cents, 0)) AS fytd_revenue_cents\nFROM\n    revenue_lines rl\n    LEFT JOIN refunds_summary rs ON rl.order_id = rs.order_id",
+      "columns": [
+        "fytd_revenue_cents"
+      ],
+      "rows": [
+        [
+          410000
+        ]
+      ],
+      "verdict": "wrong",
+      "expected_row_count": 1,
+      "model_id": "amazon.nova-lite-v1:0",
+      "elapsed_ms": 0,
+      "source": "recorded",
+      "error": null
+    }
+  },
+  "q39": {
+    "no_memory": {
+      "question": "What amount did we make from Rhine Goods in Q3 2026, net of everything? Return columns: amount_cents.",
+      "mode": "no_memory",
+      "retrieved": [],
+      "sql": "WITH sales AS (\n    SELECT\n        SUM(ol.amount_cents) AS amount_cents\n    FROM\n        order_lines ol\n    JOIN\n        orders o ON ol.order_id = o.order_id\n    JOIN\n        customers c ON o.customer_id = c.customer_id\n    WHERE\n        o.ordered_at BETWEEN '2026-07-01' AND '2026-09-30'\n        AND c.name = 'Rhine Goods'\n),\nrefunds AS (\n    SELECT\n        SUM(r.amount_cents) AS amount_cents\n    FROM\n        refunds r\n    JOIN\n        orders o ON r.order_id = o.order_id\n    WHERE\n        r.refunded_at BETWEEN '2026-07-01' AND '2026-09-30'\n)\nSELECT\n    (s.amount_cents - COALESCE(r.amount_cents, 0)) AS amount_cents\nFROM\n    sales s\nLEFT JOIN\n    refunds r ON 1=1",
+      "columns": [],
+      "rows": [],
+      "verdict": "error",
+      "expected_row_count": 1,
+      "model_id": "amazon.nova-lite-v1:0",
+      "elapsed_ms": 0,
+      "source": "recorded",
+      "error": "circular reference: refunds"
+    },
+    "with_memory": {
+      "question": "What amount did we make from Rhine Goods in Q3 2026, net of everything? Return columns: amount_cents.",
+      "mode": "with_memory",
+      "retrieved": [
+        {
+          "rule_key": "metric:revenue",
+          "statement": "(recorded run \u2014 statement not archived)"
+        },
+        {
+          "rule_key": "join:orders_customers_regions",
+          "statement": "(recorded run \u2014 statement not archived)"
+        },
+        {
+          "rule_key": "calendar:fiscal",
+          "statement": "(recorded run \u2014 statement not archived)"
+        },
+        {
+          "rule_key": "filter:orders_not_cancelled",
+          "statement": "(recorded run \u2014 statement not archived)"
+        },
+        {
+          "rule_key": "filter:orders_soft_delete",
+          "statement": "(recorded run \u2014 statement not archived)"
+        }
+      ],
+      "sql": "WITH relevant_orders AS (\n    SELECT\n        ol.order_id,\n        ol.amount_cents,\n        r.amount_cents AS refund_amount\n    FROM\n        order_lines ol\n    JOIN\n        orders o ON ol.order_id = o.order_id\n    LEFT JOIN\n        refunds r ON o.order_id = r.order_id\n    WHERE\n        o.ordered_at BETWEEN '2026-05-01' AND '2026-08-01'\n        AND o.status <> 'cancelled'\n        AND o.deleted_at IS NULL\n),\nnet_revenue AS (\n    SELECT\n        SUM(ro.amount_cents - COALESCE(ro.refund_amount, 0)) AS amount_cents\n    FROM\n        relevant_orders ro\n    JOIN\n        products p ON ro.product_id = p.product_id\n    WHERE\n        p.category = 'Rhine Goods'\n)\nSELECT\n    amount_cents\nFROM\n    net_revenue",
+      "columns": [],
+      "rows": [],
+      "verdict": "error",
+      "expected_row_count": 1,
+      "model_id": "amazon.nova-lite-v1:0",
+      "elapsed_ms": 0,
+      "source": "recorded",
+      "error": "no such column: ro.product_id"
+    }
+  },
+  "q40": {
+    "no_memory": {
+      "question": "What was net revenue by region for May 2026? Include only regions with revenue. Return columns: region, revenue_cents.",
+      "mode": "no_memory",
+      "retrieved": [],
+      "sql": "WITH order_revenue AS (\n    SELECT\n        r.name AS region,\n        SUM(ol.amount_cents) AS revenue_cents\n    FROM\n        orders o\n    JOIN\n        customers c ON o.customer_id = c.customer_id\n    JOIN\n        regions r ON c.region_id = r.region_id\n    JOIN\n        order_lines ol ON o.order_id = ol.order_id\n    WHERE\n        o.ordered_at BETWEEN '2026-05-01' AND '2026-05-31'\n        AND o.status ='shipped'\n    GROUP BY\n        r.name\n),\nrefund_revenue AS (\n    SELECT\n        r.name AS region,\n        SUM(r.amount_cents) AS refund_cents\n    FROM\n        refunds re\n    JOIN\n        orders o ON re.order_id = o.order_id\n    JOIN\n        customers c ON o.customer_id = c.customer_id\n    JOIN\n        regions r ON c.region_id = r.region_id\n    WHERE\n        re.refunded_at BETWEEN '2026-05-01' AND '2026-05-31'\n    GROUP BY\n        r.name\n)\nSELECT\n    rr.region,\n    COALESCE(SUM(rr.revenue_cents), 0) - COALESCE(SUM(rrr.refund_cents), 0) AS revenue_cents\nFROM\n    order_revenue rr\nLEFT JOIN\n    refund_revenue rrr ON rr.region = rrr.region\nGROUP BY\n    rr.region\nHAVING\n    SUM(rr.revenue_cents) - COALESCE(SUM(rrr.refund_cents), 0) > 0",
+      "columns": [],
+      "rows": [],
+      "verdict": "error",
+      "expected_row_count": 1,
+      "model_id": "amazon.nova-lite-v1:0",
+      "elapsed_ms": 0,
+      "source": "recorded",
+      "error": "no such column: r.amount_cents"
+    },
+    "with_memory": {
+      "question": "What was net revenue by region for May 2026? Include only regions with revenue. Return columns: region, revenue_cents.",
+      "mode": "with_memory",
+      "retrieved": [
+        {
+          "rule_key": "metric:revenue",
+          "statement": "(recorded run \u2014 statement not archived)"
+        },
+        {
+          "rule_key": "join:orders_customers_regions",
+          "statement": "(recorded run \u2014 statement not archived)"
+        },
+        {
+          "rule_key": "calendar:fiscal",
+          "statement": "(recorded run \u2014 statement not archived)"
+        },
+        {
+          "rule_key": "filter:orders_not_cancelled",
+          "statement": "(recorded run \u2014 statement not archived)"
+        },
+        {
+          "rule_key": "filter:orders_soft_delete",
+          "statement": "(recorded run \u2014 statement not archived)"
+        }
+      ],
+      "sql": "WITH revenue_by_region AS (\n    SELECT\n        r.name AS region,\n        SUM(ol.qty * ol.amount_cents) - SUM(re.amount_cents) AS revenue_cents\n    FROM\n        orders od\n    JOIN\n        customers c ON od.customer_id = c.customer_id\n    JOIN\n        regions r ON c.region_id = r.region_id\n    LEFT JOIN\n        order_lines ol ON od.order_id = ol.order_id\n    LEFT JOIN\n        refunds re ON od.order_id = re.order_id\n    WHERE\n        od.ordered_at BETWEEN '2026-05-01' AND '2026-08-01'\n        AND od.status <> 'cancelled'\n        AND od.deleted_at IS NULL\n    GROUP BY\n        r.name\n    HAVING\n        SUM(ol.qty * ol.amount_cents) - SUM(re.amount_cents) > 0\n)\nSELECT\n    region,\n    revenue_cents\nFROM\n    revenue_by_region\nORDER BY\n    revenue_cents DESC",
+      "columns": [
+        "region",
+        "revenue_cents"
+      ],
+      "rows": [
+        [
+          "AMER",
+          975000
+        ]
+      ],
+      "verdict": "wrong",
+      "expected_row_count": 1,
+      "model_id": "amazon.nova-lite-v1:0",
+      "elapsed_ms": 0,
+      "source": "recorded",
+      "error": null
+    }
+  },
+  "q41": {
+    "no_memory": {
+      "question": "What share of fiscal Q2 2026 gross billings (live, non-cancelled orders) was refunded? Report a ratio between 0 and 1. Return columns: refund_share.",
+      "mode": "no_memory",
+      "retrieved": [],
+      "sql": "WITH q2_orders AS (\n    SELECT order_id\n    FROM orders\n    WHERE strftime('%Y', ordered_at) = '2026' AND strftime('%m', ordered_at) BETWEEN '04' AND '06' AND status = 'shipped' AND deleted_at IS NULL\n),\nq2_refunds AS (\n    SELECT order_id, SUM(amount_cents) AS total_refunded_cents\n    FROM refunds\n    WHERE strftime('%Y', refunded_at) = '2026' AND strftime('%m', refunded_at) BETWEEN '04' AND '06'\n    GROUP BY order_id\n),\nq2_gross_billings AS (\n    SELECT SUM(amount_cents) AS total_gross_billings\n    FROM order_lines\n    WHERE order_id IN (SELECT order_id FROM q2_orders)\n),\nq2_total_refunds AS (\n    SELECT COALESCE(SUM(total_refunded_cents), 0) AS total_refunded_cents\n    FROM q2_refunds\n)\nSELECT COALESCE(SUM(total_refunded_cents) / NULLIF(total_gross_billings, 0), 0) AS refund_share\nFROM q2_refunds, q2_gross_billings, q2_total_refunds",
+      "columns": [],
+      "rows": [],
+      "verdict": "error",
+      "expected_row_count": 1,
+      "model_id": "amazon.nova-lite-v1:0",
+      "elapsed_ms": 0,
+      "source": "recorded",
+      "error": "ambiguous column name: total_refunded_cents"
+    },
+    "with_memory": {
+      "question": "What share of fiscal Q2 2026 gross billings (live, non-cancelled orders) was refunded? Report a ratio between 0 and 1. Return columns: refund_share.",
+      "mode": "with_memory",
+      "retrieved": [
+        {
+          "rule_key": "metric:revenue",
+          "statement": "(recorded run \u2014 statement not archived)"
+        },
+        {
+          "rule_key": "filter:orders_not_cancelled",
+          "statement": "(recorded run \u2014 statement not archived)"
+        },
+        {
+          "rule_key": "join:orders_customers_regions",
+          "statement": "(recorded run \u2014 statement not archived)"
+        },
+        {
+          "rule_key": "calendar:fiscal",
+          "statement": "(recorded run \u2014 statement not archived)"
+        },
+        {
+          "rule_key": "filter:orders_soft_delete",
+          "statement": "(recorded run \u2014 statement not archived)"
+        }
+      ],
+      "sql": "WITH live_orders AS (\n    SELECT\n        o.order_id,\n        o.amount_cents\n    FROM orders o\n    WHERE o.status <> 'cancelled'\n        AND o.deleted_at IS NULL\n        AND o.ordered_at BETWEEN '2026-05-01' AND '2026-08-01'\n),\ngross_billings AS (\n    SELECT\n        SUM(amount_cents) AS total_billings\n    FROM live_orders\n),\nrefunds_in_period AS (\n    SELECT\n        SUM(amount_cents) AS total_refunds\n    FROM refunds r\n    JOIN orders o ON r.order_id = o.order_id\n    WHERE o.ordered_at BETWEEN '2026-05-01' AND '2026-08-01'\n        AND o.status <> 'cancelled'\n        AND o.deleted_at IS NULL\n)\nSELECT\n    COALESCE(SUM(total_refunds) / NULLIF(SUM(total_billings), 0), 0) AS refund_share\nFROM gross_billings, refunds_in_period",
+      "columns": [],
+      "rows": [],
+      "verdict": "error",
+      "expected_row_count": 1,
+      "model_id": "amazon.nova-lite-v1:0",
+      "elapsed_ms": 0,
+      "source": "recorded",
+      "error": "no such column: o.amount_cents"
+    }
+  },
+  "q42": {
+    "no_memory": {
+      "question": "What was net revenue for the AMER region in fiscal Q2 2026? Return 0 if none. Return columns: revenue_cents.",
+      "mode": "no_memory",
+      "retrieved": [],
+      "sql": "WITH region_orders AS (\n    SELECT o.order_id, ol.amount_cents\n    FROM orders o\n    JOIN customers c ON o.customer_id = c.customer_id\n    JOIN regions r ON c.region_id = r.region_id\n    JOIN order_lines ol ON o.order_id = ol.order_id\n    WHERE r.name = 'AMER'\n    AND o.status ='shipped'\n    AND o.ordered_at BETWEEN '2026-04-01' AND '2026-06-30'\n), refunds_subtracted AS (\n    SELECT ro.order_id, SUM(r.amount_cents) AS refund_cents\n    FROM region_orders ro\n    JOIN refunds r ON ro.order_id = r.order_id\n    GROUP BY ro.order_id\n), net_revenue AS (\n    SELECT ro.order_id, ro.amount_cents - COALESCE(rs.refund_cents, 0) AS net_revenue_cents\n    FROM region_orders ro\n    LEFT JOIN refunds_subtracted rs ON ro.order_id = rs.order_id\n)\nSELECT COALESCE(SUM(net_revenue_cents), 0) AS revenue_cents\nFROM net_revenue",
+      "columns": [
+        "revenue_cents"
+      ],
+      "rows": [
+        [
+          0
+        ]
+      ],
+      "verdict": "wrong",
+      "expected_row_count": 1,
+      "model_id": "amazon.nova-lite-v1:0",
+      "elapsed_ms": 0,
+      "source": "recorded",
+      "error": null
+    },
+    "with_memory": {
+      "question": "What was net revenue for the AMER region in fiscal Q2 2026? Return 0 if none. Return columns: revenue_cents.",
+      "mode": "with_memory",
+      "retrieved": [
+        {
+          "rule_key": "metric:revenue",
+          "statement": "(recorded run \u2014 statement not archived)"
+        },
+        {
+          "rule_key": "join:orders_customers_regions",
+          "statement": "(recorded run \u2014 statement not archived)"
+        },
+        {
+          "rule_key": "calendar:fiscal",
+          "statement": "(recorded run \u2014 statement not archived)"
+        },
+        {
+          "rule_key": "filter:orders_not_cancelled",
+          "statement": "(recorded run \u2014 statement not archived)"
+        },
+        {
+          "rule_key": "filter:orders_soft_delete",
+          "statement": "(recorded run \u2014 statement not archived)"
+        }
+      ],
+      "sql": "WITH revenue_data AS (\n    SELECT\n        o.order_id,\n        ol.amount_cents,\n        r.amount_cents AS refund_amount_cents\n    FROM orders o\n    JOIN order_lines ol ON o.order_id = ol.order_id\n    LEFT JOIN refunds r ON o.order_id = r.order_id\n    WHERE o.status <> 'cancelled'\n        AND o.deleted_at IS NULL\n        AND o.ordered_at BETWEEN '2026-05-01' AND '2026-08-01'\n), net_revenue AS (\n    SELECT\n        SUM(rd.amount_cents - COALESCE(rd.refund_amount_cents, 0)) AS revenue_cents\n    FROM revenue_data rd\n    JOIN orders o ON rd.order_id = o.order_id\n    JOIN customers c ON o.customer_id = c.customer_id\n    JOIN regions r ON c.region_id = r.region_id\n    WHERE r.name = 'AMER'\n)\nSELECT\n    COALESCE(SUM(revenue_cents), 0) AS revenue_cents\nFROM net_revenue",
+      "columns": [
+        "revenue_cents"
+      ],
+      "rows": [
+        [
+          75000
+        ]
+      ],
+      "verdict": "correct",
+      "expected_row_count": 1,
+      "model_id": "amazon.nova-lite-v1:0",
+      "elapsed_ms": 0,
+      "source": "recorded",
+      "error": null
+    }
+  },
+  "q43": {
+    "no_memory": {
+      "question": "How many Widget units (SKU WID-100) were sold on live, non-cancelled orders in calendar 2026? Return columns: widget_units.",
+      "mode": "no_memory",
+      "retrieved": [],
+      "sql": "WITH live_orders AS (\n    SELECT o.order_id\n    FROM orders o\n    WHERE o.ordered_at >= '2026-01-01' AND o.ordered_at < '2027-01-01'\n        AND o.status ='shipped'\n        AND o.deleted_at IS NULL\n),\nwidget_units AS (\n    SELECT ol.order_id, SUM(ol.qty) AS units\n    FROM order_lines ol\n    JOIN products p ON ol.product_id = p.product_id\n    WHERE p.sku = 'WID-100'\n    GROUP BY ol.order_id\n)\nSELECT COALESCE(SUM(wu.units), 0) AS widget_units\nFROM widget_units wu\nJOIN live_orders lo ON wu.order_id = lo.order_id",
+      "columns": [
+        "widget_units"
+      ],
+      "rows": [
+        [
+          12
+        ]
+      ],
+      "verdict": "correct",
+      "expected_row_count": 1,
+      "model_id": "amazon.nova-lite-v1:0",
+      "elapsed_ms": 0,
+      "source": "recorded",
+      "error": null
+    },
+    "with_memory": {
+      "question": "How many Widget units (SKU WID-100) were sold on live, non-cancelled orders in calendar 2026? Return columns: widget_units.",
+      "mode": "with_memory",
+      "retrieved": [
+        {
+          "rule_key": "filter:orders_not_cancelled",
+          "statement": "(recorded run \u2014 statement not archived)"
+        },
+        {
+          "rule_key": "calendar:fiscal",
+          "statement": "(recorded run \u2014 statement not archived)"
+        },
+        {
+          "rule_key": "filter:orders_soft_delete",
+          "statement": "(recorded run \u2014 statement not archived)"
+        },
+        {
+          "rule_key": "join:orders_customers_regions",
+          "statement": "(recorded run \u2014 statement not archived)"
+        },
+        {
+          "rule_key": "metric:revenue",
+          "statement": "(recorded run \u2014 statement not archived)"
+        }
+      ],
+      "sql": "WITH live_orders AS (\n    SELECT\n        ol.line_id,\n        ol.order_id,\n        ol.product_id,\n        ol.qty\n    FROM\n        order_lines ol\n    JOIN\n        orders od ON ol.order_id = od.order_id\n    WHERE\n        od.status <> 'cancelled'\n        AND od.deleted_at IS NULL\n        AND od.ordered_at BETWEEN '2026-01-01' AND '2026-12-31'\n),\nwidget_units AS (\n    SELECT\n        SUM(ol.qty) AS total_units\n    FROM\n        live_orders ol\n    JOIN\n        products p ON ol.product_id = p.product_id\n    WHERE\n        p.sku = 'WID-100'\n)\nSELECT\n    COALESCE(SUM(wu.total_units), 0) AS widget_units\nFROM\n    widget_units wu",
+      "columns": [
+        "widget_units"
+      ],
+      "rows": [
+        [
+          12
+        ]
+      ],
+      "verdict": "correct",
+      "expected_row_count": 1,
+      "model_id": "amazon.nova-lite-v1:0",
+      "elapsed_ms": 0,
+      "source": "recorded",
+      "error": null
+    }
+  },
+  "q44": {
+    "no_memory": {
+      "question": "Which single region generated the most net revenue in fiscal 2026, and how much? Return one row. Return columns: region, revenue_cents.",
+      "mode": "no_memory",
+      "retrieved": [],
+      "sql": "WITH region_revenue AS (\n    SELECT\n        r.name AS region,\n        SUM(ol.amount_cents) AS revenue_cents\n    FROM\n        orders o\n    JOIN\n        customers c ON o.customer_id = c.customer_id\n    JOIN\n        regions r ON c.region_id = r.region_id\n    JOIN\n        order_lines ol ON o.order_id = ol.order_id\n    LEFT JOIN\n        refunds r ON o.order_id = r.order_id\n    WHERE\n        o.ordered_at BETWEEN '2026-01-01' AND '2026-12-31'\n        AND o.status ='shipped'\n    GROUP BY\n        r.name\n),\nregion_refunds AS (\n    SELECT\n        r.name AS region,\n        SUM(refunds.amount_cents) AS refund_cents\n    FROM\n        refunds\n    JOIN\n        orders o ON refunds.order_id = o.order_id\n    JOIN\n        customers c ON o.customer_id = c.customer_id\n    JOIN\n        regions r ON c.region_id = r.region_id\n    WHERE\n        refunds.refunded_at BETWEEN '2026-01-01' AND '2026-12-31'\n    GROUP BY\n        r.name\n)\nSELECT\n    rr.region,\n    COALESCE(rr.revenue_cents, 0) - COALESCE(re.refund_cents, 0) AS revenue_cents\nFROM\n    region_revenue rr\nLEFT JOIN\n    region_refunds re ON rr.region = re.region\nGROUP BY\n    rr.region\nORDER BY\n    revenue_cents DESC\nLIMIT 1",
+      "columns": [
+        "region",
+        "revenue_cents"
+      ],
+      "rows": [
+        [
+          "APAC",
+          520000
+        ]
+      ],
+      "verdict": "wrong",
+      "expected_row_count": 1,
+      "model_id": "amazon.nova-lite-v1:0",
+      "elapsed_ms": 0,
+      "source": "recorded",
+      "error": null
+    },
+    "with_memory": {
+      "question": "Which single region generated the most net revenue in fiscal 2026, and how much? Return one row. Return columns: region, revenue_cents.",
+      "mode": "with_memory",
+      "retrieved": [
+        {
+          "rule_key": "metric:revenue",
+          "statement": "(recorded run \u2014 statement not archived)"
+        },
+        {
+          "rule_key": "join:orders_customers_regions",
+          "statement": "(recorded run \u2014 statement not archived)"
+        },
+        {
+          "rule_key": "calendar:fiscal",
+          "statement": "(recorded run \u2014 statement not archived)"
+        },
+        {
+          "rule_key": "filter:orders_not_cancelled",
+          "statement": "(recorded run \u2014 statement not archived)"
+        },
+        {
+          "rule_key": "filter:orders_soft_delete",
+          "statement": "(recorded run \u2014 statement not archived)"
+        }
+      ],
+      "sql": "WITH region_revenue AS (\n    SELECT\n        r.name AS region,\n        SUM(ol.amount_cents) - COALESCE(SUM(rf.amount_cents), 0) AS revenue_cents\n    FROM orders od\n    JOIN customers c ON od.customer_id = c.customer_id\n    JOIN regions r ON c.region_id = r.region_id\n    JOIN order_lines ol ON od.order_id = ol.order_id\n    LEFT JOIN refunds rf ON od.order_id = rf.order_id\n    WHERE\n        od.ordered_at BETWEEN '2026-05-01' AND '2026-08-01'\n        AND od.status <> 'cancelled'\n        AND od.deleted_at IS NULL\n    GROUP BY r.name\n)\nSELECT\n    region,\n    SUM(revenue_cents) AS revenue_cents\nFROM region_revenue\nGROUP BY region\nORDER BY revenue_cents DESC\nLIMIT 1",
+      "columns": [
+        "region",
+        "revenue_cents"
+      ],
+      "rows": [
+        [
+          "AMER",
+          75000
+        ]
+      ],
+      "verdict": "wrong",
+      "expected_row_count": 1,
+      "model_id": "amazon.nova-lite-v1:0",
+      "elapsed_ms": 0,
+      "source": "recorded",
+      "error": null
+    }
+  },
+  "q45": {
+    "no_memory": {
+      "question": "What was net revenue from the Widget product (SKU WID-100) in fiscal 2026? Return columns: widget_revenue_cents.",
+      "mode": "no_memory",
+      "retrieved": [],
+      "sql": "WITH widget_orders AS (\n    SELECT\n        ol.line_id,\n        ol.order_id,\n        ol.amount_cents AS line_amount_cents,\n        o.ordered_at,\n        o.status\n    FROM\n        order_lines ol\n    JOIN\n        orders o ON ol.order_id = o.order_id\n    JOIN\n        products p ON ol.product_id = p.product_id\n    WHERE\n        p.sku = 'WID-100'\n        AND o.ordered_at BETWEEN '2026-01-01' AND '2026-12-31'\n        AND o.status ='shipped'\n),\nwidget_refunds AS (\n    SELECT\n        r.order_id,\n        SUM(r.amount_cents) AS refunded_cents\n    FROM\n        refunds r\n    JOIN\n        orders o ON r.order_id = o.order_id\n    WHERE\n        o.order_id IN (SELECT order_id FROM widget_orders)\n    GROUP BY\n        r.order_id\n)\nSELECT\n    SUM(wo.line_amount_cents - COALESCE(wr.refunded_cents, 0)) AS widget_revenue_cents\nFROM\n    widget_orders wo\nLEFT JOIN\n    widget_refunds wr ON wo.order_id = wr.order_id",
+      "columns": [
+        "widget_revenue_cents"
+      ],
+      "rows": [
+        [
+          595000
+        ]
+      ],
+      "verdict": "wrong",
+      "expected_row_count": 1,
+      "model_id": "amazon.nova-lite-v1:0",
+      "elapsed_ms": 0,
+      "source": "recorded",
+      "error": null
+    },
+    "with_memory": {
+      "question": "What was net revenue from the Widget product (SKU WID-100) in fiscal 2026? Return columns: widget_revenue_cents.",
+      "mode": "with_memory",
+      "retrieved": [
+        {
+          "rule_key": "metric:revenue",
+          "statement": "(recorded run \u2014 statement not archived)"
+        },
+        {
+          "rule_key": "calendar:fiscal",
+          "statement": "(recorded run \u2014 statement not archived)"
+        },
+        {
+          "rule_key": "join:orders_customers_regions",
+          "statement": "(recorded run \u2014 statement not archived)"
+        },
+        {
+          "rule_key": "filter:orders_not_cancelled",
+          "statement": "(recorded run \u2014 statement not archived)"
+        },
+        {
+          "rule_key": "filter:orders_soft_delete",
+          "statement": "(recorded run \u2014 statement not archived)"
+        }
+      ],
+      "sql": "WITH relevant_orders AS (\n    SELECT \n        ol.order_id,\n        ol.amount_cents,\n        r.amount_cents AS refund_amount_cents\n    FROM order_lines ol\n    LEFT JOIN refunds r ON ol.order_id = r.order_id\n    WHERE ol.product_id = (SELECT product_id FROM products WHERE sku = 'WID-100')\n),\nfiltered_orders AS (\n    SELECT \n        order_id,\n        SUM(amount_cents) AS total_order_amount_cents,\n        SUM(refund_amount_cents) AS total_refund_amount_cents\n    FROM relevant_orders\n    GROUP BY order_id\n),\nnet_revenue AS (\n    SELECT \n        order_id,\n        total_order_amount_cents - total_refund_amount_cents AS net_order_revenue_cents\n    FROM filtered_orders\n    WHERE total_order_amount_cents - total_refund_amount_cents > 0\n)\nSELECT \n    SUM(net_order_revenue_cents) AS widget_revenue_cents\nFROM net_revenue\nWHERE EXISTS (\n    SELECT 1 FROM orders WHERE order_id = net_revenue.order_id\n    AND status <> 'cancelled'\n    AND deleted_at IS NULL\n    AND ordered_at BETWEEN '2026-05-01' AND '2026-08-01'\n)",
+      "columns": [
+        "widget_revenue_cents"
+      ],
+      "rows": [
+        [
+          75000
+        ]
+      ],
+      "verdict": "wrong",
+      "expected_row_count": 1,
+      "model_id": "amazon.nova-lite-v1:0",
+      "elapsed_ms": 0,
+      "source": "recorded",
+      "error": null
+    }
+  },
+  "q46": {
+    "no_memory": {
+      "question": "Which region is credited with our October 2026 revenue, and how much net? Return columns: region, october_revenue_cents.",
+      "mode": "no_memory",
+      "retrieved": [],
+      "sql": "WITH region_revenue AS (\n    SELECT\n        r.name AS region,\n        SUM(ol.amount_cents) AS revenue_cents\n    FROM\n        orders o\n    JOIN\n        customers c ON o.customer_id = c.customer_id\n    JOIN\n        regions r ON c.region_id = r.region_id\n    JOIN\n        order_lines ol ON o.order_id = ol.order_id\n    LEFT JOIN\n        refunds r ON o.order_id = r.order_id\n    WHERE\n        o.ordered_at BETWEEN '2026-10-01' AND '2026-10-31'\n        AND o.status ='shipped'\n        AND o.deleted_at IS NULL\n    GROUP BY\n        r.name\n),\nregion_refunds AS (\n    SELECT\n        r.name AS region,\n        SUM(r.amount_cents) AS refund_cents\n    FROM\n        refunds r\n    JOIN\n        orders o ON r.order_id = o.order_id\n    JOIN\n        customers c ON o.customer_id = c.customer_id\n    JOIN\n        regions r ON c.region_id = r.region_id\n    WHERE\n        r.refunded_at BETWEEN '2026-10-01' AND '2026-10-31'\n    GROUP BY\n        r.name\n)\nSELECT\n    rr.region,\n    COALESCE(rr.revenue_cents, 0) - COALESCE(rr.refund_cents, 0) AS october_revenue_cents\nFROM\n    region_revenue rr\nLEFT JOIN\n    region_refunds rr ON rr.region = rr.region",
+      "columns": [],
+      "rows": [],
+      "verdict": "error",
+      "expected_row_count": 1,
+      "model_id": "amazon.nova-lite-v1:0",
+      "elapsed_ms": 0,
+      "source": "recorded",
+      "error": "ambiguous column name: rr.region"
+    },
+    "with_memory": {
+      "question": "Which region is credited with our October 2026 revenue, and how much net? Return columns: region, october_revenue_cents.",
+      "mode": "with_memory",
+      "retrieved": [
+        {
+          "rule_key": "metric:revenue",
+          "statement": "(recorded run \u2014 statement not archived)"
+        },
+        {
+          "rule_key": "join:orders_customers_regions",
+          "statement": "(recorded run \u2014 statement not archived)"
+        },
+        {
+          "rule_key": "calendar:fiscal",
+          "statement": "(recorded run \u2014 statement not archived)"
+        },
+        {
+          "rule_key": "filter:orders_not_cancelled",
+          "statement": "(recorded run \u2014 statement not archived)"
+        },
+        {
+          "rule_key": "filter:orders_soft_delete",
+          "statement": "(recorded run \u2014 statement not archived)"
+        }
+      ],
+      "sql": "WITH filtered_orders AS (\n    SELECT\n        o.order_id,\n        o.customer_id,\n        o.ordered_at,\n        ol.product_id,\n        ol.qty,\n        ol.amount_cents,\n        r.amount_cents AS refund_amount_cents\n    FROM orders o\n    JOIN order_lines ol ON o.order_id = ol.order_id\n    LEFT JOIN refunds r ON o.order_id = r.order_id\n    WHERE o.status <> 'cancelled'\n        AND o.deleted_at IS NULL\n        AND o.ordered_at BETWEEN '2026-10-01' AND '2026-10-31'\n), net_order_lines AS (\n    SELECT\n        fo.order_id,\n        fo.customer_id,\n        fo.ordered_at,\n        fo.product_id,\n        fo.qty,\n        fo.amount_cents - COALESCE(fo.refund_amount_cents, 0) AS net_amount_cents\n    FROM filtered_orders fo\n), region_revenue AS (\n    SELECT\n        r.name AS region,\n        SUM(nol.net_amount_cents) AS october_revenue_cents\n    FROM net_order_lines nol\n    JOIN customers c ON nol.customer_id = c.customer_id\n    JOIN regions r ON c.region_id = r.region_id\n    GROUP BY r.name\n)\nSELECT\n    region,\n    october_revenue_cents\nFROM region_revenue",
+      "columns": [
+        "region",
+        "october_revenue_cents"
+      ],
+      "rows": [
+        [
+          "AMER",
+          250000
+        ]
+      ],
+      "verdict": "correct",
+      "expected_row_count": 1,
+      "model_id": "amazon.nova-lite-v1:0",
+      "elapsed_ms": 0,
+      "source": "recorded",
+      "error": null
+    }
+  },
+  "q47": {
+    "no_memory": {
+      "question": "For the audit: what is the total amount originally billed on soft-deleted orders? Return 0 if none. Return columns: billed_cents.",
+      "mode": "no_memory",
+      "retrieved": [],
+      "sql": "WITH billed_orders AS (\n    SELECT\n        o.order_id,\n        SUM(ol.amount_cents) AS billed_cents\n    FROM\n        orders o\n    JOIN\n        order_lines ol ON o.order_id = ol.order_id\n    WHERE\n        o.deleted_at IS NOT NULL\n    GROUP BY\n        o.order_id\n)\nSELECT\n    COALESCE(SUM(billed_cents), 0) AS billed_cents\nFROM\n    billed_orders",
+      "columns": [
+        "billed_cents"
+      ],
+      "rows": [
+        [
+          500000
+        ]
+      ],
+      "verdict": "correct",
+      "expected_row_count": 1,
+      "model_id": "amazon.nova-lite-v1:0",
+      "elapsed_ms": 0,
+      "source": "recorded",
+      "error": null
+    },
+    "with_memory": {
+      "question": "For the audit: what is the total amount originally billed on soft-deleted orders? Return 0 if none. Return columns: billed_cents.",
+      "mode": "with_memory",
+      "retrieved": [
+        {
+          "rule_key": "metric:revenue",
+          "statement": "(recorded run \u2014 statement not archived)"
+        },
+        {
+          "rule_key": "join:orders_customers_regions",
+          "statement": "(recorded run \u2014 statement not archived)"
+        },
+        {
+          "rule_key": "filter:orders_not_cancelled",
+          "statement": "(recorded run \u2014 statement not archived)"
+        },
+        {
+          "rule_key": "filter:orders_soft_delete",
+          "statement": "(recorded run \u2014 statement not archived)"
+        },
+        {
+          "rule_key": "calendar:fiscal",
+          "statement": "(recorded run \u2014 statement not archived)"
+        }
+      ],
+      "sql": "WITH billed_orders AS (\n    SELECT\n        ol.line_id,\n        ol.order_id,\n        ol.amount_cents\n    FROM\n        order_lines ol\n    JOIN\n        orders od ON ol.order_id = od.order_id\n    WHERE\n        od.deleted_at IS NULL\n        AND od.status <> 'cancelled'\n)\nSELECT\n    SUM(billed_cents) AS billed_cents\nFROM\n    billed_orders",
+      "columns": [],
+      "rows": [],
+      "verdict": "error",
+      "expected_row_count": 1,
+      "model_id": "amazon.nova-lite-v1:0",
+      "elapsed_ms": 0,
+      "source": "recorded",
+      "error": "no such column: billed_cents"
+    }
+  },
+  "q48": {
+    "no_memory": {
+      "question": "How many total units (qty) shipped on live, non-cancelled orders in fiscal Q3 2026? Return columns: units.",
+      "mode": "no_memory",
+      "retrieved": [],
+      "sql": "WITH live_orders AS (\n    SELECT o.order_id\n    FROM orders o\n    WHERE o.status ='shipped'\n    AND o.ordered_at >= '2026-07-01'\n    AND o.ordered_at < '2026-10-01'\n    AND o.deleted_at IS NULL\n),\nshipped_units AS (\n    SELECT ol.qty\n    FROM order_lines ol\n    JOIN live_orders lo ON ol.order_id = lo.order_id\n)\nSELECT SUM(qty) AS units\nFROM shipped_units",
+      "columns": [
+        "units"
+      ],
+      "rows": [
+        [
+          14
+        ]
+      ],
+      "verdict": "wrong",
+      "expected_row_count": 1,
+      "model_id": "amazon.nova-lite-v1:0",
+      "elapsed_ms": 0,
+      "source": "recorded",
+      "error": null
+    },
+    "with_memory": {
+      "question": "How many total units (qty) shipped on live, non-cancelled orders in fiscal Q3 2026? Return columns: units.",
+      "mode": "with_memory",
+      "retrieved": [
+        {
+          "rule_key": "filter:orders_not_cancelled",
+          "statement": "(recorded run \u2014 statement not archived)"
+        },
+        {
+          "rule_key": "calendar:fiscal",
+          "statement": "(recorded run \u2014 statement not archived)"
+        },
+        {
+          "rule_key": "filter:orders_soft_delete",
+          "statement": "(recorded run \u2014 statement not archived)"
+        },
+        {
+          "rule_key": "join:orders_customers_regions",
+          "statement": "(recorded run \u2014 statement not archived)"
+        },
+        {
+          "rule_key": "metric:revenue",
+          "statement": "(recorded run \u2014 statement not archived)"
+        }
+      ],
+      "sql": "WITH live_orders AS (\n    SELECT\n        ol.line_id,\n        ol.qty\n    FROM\n        order_lines ol\n    JOIN\n        orders od ON ol.order_id = od.order_id\n    WHERE\n        od.status ='shipped'\n        AND od.ordered_at BETWEEN '2026-05-01' AND '2026-08-01'\n        AND od.deleted_at IS NULL\n        AND od.status <> 'cancelled'\n),\nunits_shipped AS (\n    SELECT\n        SUM(qty) AS units\n    FROM\n        live_orders\n)\nSELECT\n    units\nFROM\n    units_shipped\n",
+      "columns": [
+        "units"
+      ],
+      "rows": [
+        [
+          12
+        ]
+      ],
+      "verdict": "wrong",
+      "expected_row_count": 1,
+      "model_id": "amazon.nova-lite-v1:0",
+      "elapsed_ms": 0,
+      "source": "recorded",
+      "error": null
+    }
+  },
+  "q49": {
+    "no_memory": {
+      "question": "What was total net revenue for fiscal Q3 2026? Return columns: revenue_cents.",
+      "mode": "no_memory",
+      "retrieved": [],
+      "sql": "WITH orders_q3 AS (\n    SELECT o.order_id\n    FROM orders o\n    WHERE o.ordered_at BETWEEN '2026-07-01' AND '2026-09-30'\n        AND o.status ='shipped'\n        AND o.deleted_at IS NULL\n), \norder_lines_q3 AS (\n    SELECT ol.order_id, SUM(ol.amount_cents) AS total_amount_cents\n    FROM order_lines ol\n    JOIN orders_q3 oq ON ol.order_id = oq.order_id\n    GROUP BY ol.order_id\n), \nrefunds_q3 AS (\n    SELECT r.order_id, SUM(r.amount_cents) AS total_refund_cents\n    FROM refunds r\n    JOIN orders_q3 oq ON r.order_id = oq.order_id\n    GROUP BY r.order_id\n), \nnet_revenue_q3 AS (\n    SELECT \n        ol.order_id, \n        ol.total_amount_cents - COALESCE(rf.total_refund_cents, 0) AS net_revenue_cents\n    FROM order_lines_q3 ol\n    LEFT JOIN refunds_q3 rf ON ol.order_id = rf.order_id\n)\nSELECT SUM(net_revenue_cents) AS revenue_cents\nFROM net_revenue_q3",
+      "columns": [
+        "revenue_cents"
+      ],
+      "rows": [
+        [
+          115000
+        ]
+      ],
+      "verdict": "wrong",
+      "expected_row_count": 1,
+      "model_id": "amazon.nova-lite-v1:0",
+      "elapsed_ms": 0,
+      "source": "recorded",
+      "error": null
+    },
+    "with_memory": {
+      "question": "What was total net revenue for fiscal Q3 2026? Return columns: revenue_cents.",
+      "mode": "with_memory",
+      "retrieved": [
+        {
+          "rule_key": "metric:revenue",
+          "statement": "(recorded run \u2014 statement not archived)"
+        },
+        {
+          "rule_key": "calendar:fiscal",
+          "statement": "(recorded run \u2014 statement not archived)"
+        },
+        {
+          "rule_key": "join:orders_customers_regions",
+          "statement": "(recorded run \u2014 statement not archived)"
+        },
+        {
+          "rule_key": "filter:orders_not_cancelled",
+          "statement": "(recorded run \u2014 statement not archived)"
+        },
+        {
+          "rule_key": "filter:orders_soft_delete",
+          "statement": "(recorded run \u2014 statement not archived)"
+        }
+      ],
+      "sql": "WITH relevant_orders AS (\n    SELECT\n        ol.line_id,\n        ol.order_id,\n        ol.amount_cents,\n        r.amount_cents AS refund_amount_cents\n    FROM order_lines ol\n    LEFT JOIN refunds r ON ol.order_id = r.order_id\n    WHERE ol.order_id IN (\n        SELECT order_id\n        FROM orders\n        WHERE status <> 'cancelled'\n        AND deleted_at IS NULL\n        AND ordered_at BETWEEN '2026-05-01' AND '2026-08-01'\n    )\n),\nnet_revenue AS (\n    SELECT\n        order_id,\n        SUM(amount_cents) AS total_order_amount_cents,\n        SUM(refund_amount_cents) AS total_refund_amount_cents\n    FROM relevant_orders\n    GROUP BY order_id\n)\nSELECT\n    SUM(total_order_amount_cents - COALESCE(total_refund_amount_cents, 0)) AS revenue_cents\nFROM net_revenue",
+      "columns": [
+        "revenue_cents"
+      ],
+      "rows": [
+        [
+          95000
+        ]
+      ],
+      "verdict": "wrong",
+      "expected_row_count": 1,
+      "model_id": "amazon.nova-lite-v1:0",
+      "elapsed_ms": 0,
+      "source": "recorded",
+      "error": null
+    }
+  },
+  "q50": {
+    "no_memory": {
+      "question": "How many orders were placed in calendar 2026? Soft-deleted records are not live facts; a cancelled order was still placed. Return columns: placed_order_count.",
+      "mode": "no_memory",
+      "retrieved": [],
+      "sql": "WITH placed_orders AS (\n    SELECT o.order_id\n    FROM orders o\n    WHERE o.status = 'placed'\n        AND o.ordered_at >= '2026-01-01'\n        AND o.ordered_at < '2027-01-01'\n        AND o.deleted_at IS NULL\n)\nSELECT COUNT(order_id) AS placed_order_count\nFROM placed_orders",
+      "columns": [
+        "placed_order_count"
+      ],
+      "rows": [
+        [
+          0
+        ]
+      ],
+      "verdict": "wrong",
+      "expected_row_count": 1,
+      "model_id": "amazon.nova-lite-v1:0",
+      "elapsed_ms": 0,
+      "source": "recorded",
+      "error": null
+    },
+    "with_memory": {
+      "question": "How many orders were placed in calendar 2026? Soft-deleted records are not live facts; a cancelled order was still placed. Return columns: placed_order_count.",
+      "mode": "with_memory",
+      "retrieved": [
+        {
+          "rule_key": "calendar:fiscal",
+          "statement": "(recorded run \u2014 statement not archived)"
+        },
+        {
+          "rule_key": "filter:orders_not_cancelled",
+          "statement": "(recorded run \u2014 statement not archived)"
+        },
+        {
+          "rule_key": "filter:orders_soft_delete",
+          "statement": "(recorded run \u2014 statement not archived)"
+        },
+        {
+          "rule_key": "join:orders_customers_regions",
+          "statement": "(recorded run \u2014 statement not archived)"
+        },
+        {
+          "rule_key": "metric:revenue",
+          "statement": "(recorded run \u2014 statement not archived)"
+        }
+      ],
+      "sql": "WITH relevant_orders AS (\n    SELECT\n        o.order_id\n    FROM\n        orders o\n    WHERE\n        o.ordered_at BETWEEN '2026-01-01' AND '2026-12-31'\n        AND o.status <> 'cancelled'\n        AND o.deleted_at IS NULL\n)\nSELECT\n    COUNT(ro.order_id) AS placed_order_count\nFROM\n    relevant_orders ro",
+      "columns": [
+        "placed_order_count"
+      ],
+      "rows": [
+        [
+          4
+        ]
+      ],
+      "verdict": "wrong",
+      "expected_row_count": 1,
+      "model_id": "amazon.nova-lite-v1:0",
+      "elapsed_ms": 0,
+      "source": "recorded",
+      "error": null
+    }
+  }
+}

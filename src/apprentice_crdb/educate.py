@@ -38,23 +38,41 @@ def answers_oracle(items: list[dict], live_keys: set[str]) -> dict[str, str]:
     return {q["id"]: choose_sql(q, live_keys) for q in items}
 
 
-def teach_item(item: dict) -> list[str]:
-    written: list[str] = []
+def teach_correction(question: str, attempt_sql: str, correction_sql: str) -> dict[str, Any]:
+    """Persist one correction and the reusable rules distilled from its SQL diff."""
+    candidates = distill(attempt_sql, correction_sql)
     episode_id = record_episode(
-        item["question"],
-        item["naive_sql"],
-        gold_sql=item["gold_sql"],
+        question,
+        attempt_sql,
+        gold_sql=correction_sql,
         result_ok=False,
     )
-    for cand in distill(item["naive_sql"], item["gold_sql"]):
-        upsert_rule(
+    rules = []
+    for cand in candidates:
+        rule_id = upsert_rule(
             cand.rule_key,
             cand.rule_type,
             cand.statement,
             evidence_episode_id=episode_id,
         )
-        written.append(cand.rule_key)
-    return written
+        rules.append(
+            {
+                "id": str(rule_id),
+                "rule_key": cand.rule_key,
+                "rule_type": cand.rule_type,
+                "statement": cand.statement,
+            }
+        )
+    return {"episode_id": str(episode_id), "rules": rules}
+
+
+def teach_item(item: dict) -> list[str]:
+    report = teach_correction(
+        item["question"],
+        item["naive_sql"],
+        item["gold_sql"],
+    )
+    return [rule["rule_key"] for rule in report["rules"]]
 
 
 def _git_head() -> str:

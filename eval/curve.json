@@ -1,40 +1,40 @@
 {
-  "policy": "agent",
+  "policy": "oracle",
   "curves": {
-    "agent": [
+    "oracle": [
       {
         "name": "memory_zero",
-        "as_of": "1786465354301706939.0000000000",
+        "as_of": "1786789108747571733.0000000000",
         "taught": [],
         "live_keys": [],
-        "answers_path": "eval/runs/agent_memory_zero_answers.json",
-        "accuracy": 0.28,
-        "correct": 14,
+        "answers_path": "eval/runs/oracle_memory_zero_answers.json",
+        "accuracy": 0.12,
+        "correct": 6,
         "by_stratum": {
           "composition": {
             "n": 8,
-            "correct": 1,
-            "accuracy": 0.125
+            "correct": 0,
+            "accuracy": 0.0
           },
           "fiscal_calendar": {
             "n": 8,
-            "correct": 2,
-            "accuracy": 0.25
+            "correct": 0,
+            "accuracy": 0.0
           },
           "join_path": {
             "n": 6,
-            "correct": 1,
-            "accuracy": 0.1667
+            "correct": 0,
+            "accuracy": 0.0
           },
           "metric_revenue": {
             "n": 10,
-            "correct": 3,
-            "accuracy": 0.3
+            "correct": 0,
+            "accuracy": 0.0
           },
           "soft_delete": {
             "n": 8,
-            "correct": 1,
-            "accuracy": 0.125
+            "correct": 0,
+            "accuracy": 0.0
           },
           "trap": {
             "n": 4,
@@ -58,7 +58,7 @@
       },
       {
         "name": "filters",
-        "as_of": "1786465377696004361.0000000000",
+        "as_of": "1786789114779681507.0000000000",
         "taught": [
           "filter:orders_soft_delete",
           "filter:orders_not_cancelled",
@@ -69,34 +69,34 @@
           "filter:orders_not_cancelled",
           "filter:orders_soft_delete"
         ],
-        "answers_path": "eval/runs/agent_filters_answers.json",
-        "accuracy": 0.38,
-        "correct": 19,
+        "answers_path": "eval/runs/oracle_filters_answers.json",
+        "accuracy": 0.14,
+        "correct": 7,
         "by_stratum": {
           "composition": {
             "n": 8,
-            "correct": 1,
-            "accuracy": 0.125
+            "correct": 0,
+            "accuracy": 0.0
           },
           "fiscal_calendar": {
             "n": 8,
-            "correct": 2,
-            "accuracy": 0.25
+            "correct": 0,
+            "accuracy": 0.0
           },
           "join_path": {
             "n": 6,
-            "correct": 4,
-            "accuracy": 0.6667
+            "correct": 0,
+            "accuracy": 0.0
           },
           "metric_revenue": {
             "n": 10,
-            "correct": 4,
-            "accuracy": 0.4
+            "correct": 0,
+            "accuracy": 0.0
           },
           "soft_delete": {
             "n": 8,
-            "correct": 5,
-            "accuracy": 0.625
+            "correct": 4,
+            "accuracy": 0.5
           },
           "trap": {
             "n": 4,
@@ -110,17 +110,17 @@
           }
         },
         "regression_bait": {
-          "q03": "correct",
-          "q07": "correct",
+          "q03": "wrong",
+          "q07": "wrong",
           "q31": "wrong",
-          "q36": "correct",
+          "q36": "wrong",
           "q47": "wrong",
           "q50": "wrong"
         }
       },
       {
         "name": "revenue_and_fiscal",
-        "as_of": "1786465413926189107.0000000000",
+        "as_of": "1786789124745577203.0000000000",
         "taught": [
           "filter:orders_soft_delete",
           "filter:orders_not_cancelled",
@@ -137,19 +137,19 @@
           "filter:orders_soft_delete",
           "metric:revenue"
         ],
-        "answers_path": "eval/runs/agent_revenue_and_fiscal_answers.json",
-        "accuracy": 0.38,
-        "correct": 19,
+        "answers_path": "eval/runs/oracle_revenue_and_fiscal_answers.json",
+        "accuracy": 0.62,
+        "correct": 31,
         "by_stratum": {
           "composition": {
             "n": 8,
-            "correct": 1,
-            "accuracy": 0.125
+            "correct": 5,
+            "accuracy": 0.625
           },
           "fiscal_calendar": {
             "n": 8,
-            "correct": 5,
-            "accuracy": 0.625
+            "correct": 7,
+            "accuracy": 0.875
           },
           "join_path": {
             "n": 6,
@@ -158,37 +158,37 @@
           },
           "metric_revenue": {
             "n": 10,
-            "correct": 4,
-            "accuracy": 0.4
+            "correct": 6,
+            "accuracy": 0.6
           },
           "soft_delete": {
             "n": 8,
-            "correct": 3,
-            "accuracy": 0.375
+            "correct": 6,
+            "accuracy": 0.75
           },
           "trap": {
             "n": 4,
-            "correct": 2,
-            "accuracy": 0.5
+            "correct": 4,
+            "accuracy": 1.0
           },
           "unaffected": {
             "n": 6,
-            "correct": 4,
-            "accuracy": 0.6667
+            "correct": 3,
+            "accuracy": 0.5
           }
         },
         "regression_bait": {
-          "q03": "correct",
-          "q07": "correct",
-          "q31": "correct",
-          "q36": "error: near \"or\": syntax error",
+          "q03": "wrong",
+          "q07": "wrong",
+          "q31": "wrong",
+          "q36": "wrong",
           "q47": "wrong",
           "q50": "wrong"
         }
       },
       {
         "name": "join_path",
-        "as_of": "1786465431761315414.0000000000",
+        "as_of": "1786789129569453065.0000000000",
         "taught": [
           "filter:orders_soft_delete",
           "filter:orders_not_cancelled",
@@ -201,52 +201,52 @@
           "join:orders_customers_regions",
           "metric:revenue"
         ],
-        "answers_path": "eval/runs/agent_join_path_answers.json",
-        "accuracy": 0.32,
-        "correct": 16,
+        "answers_path": "eval/runs/oracle_join_path_answers.json",
+        "accuracy": 0.88,
+        "correct": 44,
         "by_stratum": {
           "composition": {
             "n": 8,
-            "correct": 0,
-            "accuracy": 0.0
+            "correct": 8,
+            "accuracy": 1.0
           },
           "fiscal_calendar": {
             "n": 8,
-            "correct": 5,
-            "accuracy": 0.625
+            "correct": 7,
+            "accuracy": 0.875
           },
           "join_path": {
             "n": 6,
-            "correct": 1,
-            "accuracy": 0.1667
+            "correct": 6,
+            "accuracy": 1.0
           },
           "metric_revenue": {
             "n": 10,
-            "correct": 3,
-            "accuracy": 0.3
+            "correct": 9,
+            "accuracy": 0.9
           },
           "soft_delete": {
             "n": 8,
-            "correct": 2,
-            "accuracy": 0.25
+            "correct": 7,
+            "accuracy": 0.875
           },
           "trap": {
             "n": 4,
-            "correct": 1,
-            "accuracy": 0.25
+            "correct": 4,
+            "accuracy": 1.0
           },
           "unaffected": {
             "n": 6,
-            "correct": 4,
-            "accuracy": 0.6667
+            "correct": 3,
+            "accuracy": 0.5
           }
         },
         "regression_bait": {
-          "q03": "correct",
-          "q07": "correct",
-          "q31": "correct",
-          "q36": "correct",
-          "q47": "error: no such column: billed_cents",
+          "q03": "wrong",
+          "q07": "wrong",
+          "q31": "wrong",
+          "q36": "wrong",
+          "q47": "wrong",
           "q50": "wrong"
         }
       }

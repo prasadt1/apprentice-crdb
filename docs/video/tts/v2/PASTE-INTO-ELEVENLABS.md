@@ -1,9 +1,9 @@
-# VO v2 — record as TEN separate files
+# VO v2 — record as ELEVEN separate files
 
 **Do not paste this as one block.** v1 was a single 85s read, which is exactly why every
 paragraph landed on the wrong picture. Synthesise each segment separately, save as
-`s0.mp3` … `s9.mp3`, and cut each picture segment to its own audio file. Sync then cannot
-drift.
+`s0.mp3`, `s0b.mp3`, `s1.mp3` … `s9.mp3`, and cut each picture segment to its own audio
+file. Sync then cannot drift.
 
 Voice: calm, first person, **speed 1.0**, no SSML. Target ~140 wpm.
 After each download, check the length against the target below.
@@ -15,16 +15,18 @@ ffprobe -v error -show_entries format=duration -of default=nk=1:nw=1 sN.mp3
 Numbers spoken aloud: *forty-four out of forty-four* · *twenty thousand* ·
 *ninety-five thousand* · *eighty-eight percent*.
 
-> **v2.1 (2026-08-15): s2–s5 rewritten for q02.** The q11 cold failure was luck-based —
-> Nova Lite answered it correctly cold on 2026-08-14. q02's cold failure is
-> knowledge-based (1-Feb fiscal year + refund netting) and was cold-wrong in both
-> archived arms. Only s2–s5 need re-recording; s0, s1, s6–s9 are unchanged.
+> **v2.2 (2026-08-15):** terminal agenda beat added (`s0b`); s2–s5 rewritten for q02.
+> Re-record: **s0b + s2–s5**. Keep s0, s1, s6–s9 if you still have them.
 
 ---
 
 ## s0 — title · target 12–13s (unchanged)
 
 Analyst agents write confident SQL, and still get the house rules wrong. Soft-deleted orders. Cancelled orders. Fiscal calendars. Correct them today, and the same mistake comes back next week.
+
+## s0b — terminal agenda · target 10–12s (NEW)
+
+This is the live path. CockroachDB holds the rules and the timestamps. Bedrock embeds and generates. Six beats: empty memory, ask cold, teach, ask again, rewind, then scale the exam.
 
 ## s1 — empty memory · target 9–10s (unchanged)
 
@@ -38,9 +40,9 @@ I ask one question from the fifty-question exam I froze before any agent existed
 
 Now one correction. sqlglot diffs the fix against the attempt as syntax trees — no model in this path — and distils four rules: the fiscal calendar, refund netting, two hygiene filters. They land in CockroachDB under a new timestamp.
 
-## s4 — ask again · target 15–17s (REWRITTEN for q02)
+## s4 — ask again · target 16–18s (REWRITTEN for q02 · honest)
 
-Same question, same model. This time recall returns those rules, the window shifts to May through July, refunds come off, and the answer is ninety-five thousand. The frozen exam says correct. One correction moved the behaviour.
+Same question, same model. Recall returns those four rules and the window shifts to May through July. The house correction we taught executes to ninety-five thousand — the frozen exam says correct. Whether the agent utilizes the rules at scale is what comes next.
 
 ## s5 — rewind · target 15–17s (REWRITTEN: four rules)
 

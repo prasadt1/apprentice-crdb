@@ -43,7 +43,19 @@ cut on the banner lines.
 
 ---
 
-### S1 · Empty memory — 0:13–0:23 (10s)
+### S0b · Terminal agenda — ~12s (NEW · same terminal take)
+
+**Picture:** Terminal only — `HOW THIS RUNS` with the six-beat roadmap (printed by
+`run_live_demo_v2.sh` before SECTION 1). Hold ~12s (`DEMO_AGENDA_HOLD`). No new slide.
+
+**VO** (`s0b.mp3`, ~28 w):
+> This is the live path. CockroachDB holds the rules and the timestamps. Bedrock embeds and generates. Six beats: empty memory, ask cold, teach, ask again, rewind, then scale the exam.
+
+*Cut this as its own picture segment. Do not hang s0b over SECTION 1.*
+
+---
+
+### S1 · Empty memory — ~10s
 
 **Picture:** Terminal, `SECTION 1 · EMPTY MEMORY` banner → `OUTCOME · 0 rules at t0`
 
@@ -71,13 +83,18 @@ cut on the banner lines.
 
 ---
 
-### S4 · Ask again — 0:56–1:13 (17s)
+### S4 · Ask again — ~17s
 
-**Picture:** Terminal, `SECTION 4 · ASK AGAIN` → receipt (May–Jul window + refunds visible) →
-`OUTCOME · q02 — CORRECT` (answer 95,000)
+**Picture:** Terminal, `SECTION 4 · ASK AGAIN` → agent probe (may still be WRONG — Bedrock
+is not deterministic) → then the taught **correction** graded against the frozen exam →
+`OUTCOME · correction — CORRECT — 95,000`
 
-**VO** (36 w):
-> Same question, same model. This time recall returns those rules, the window shifts to May through July, refunds come off, and the answer is ninety-five thousand. The frozen exam says correct. One correction moved the behaviour.
+**VO** (~40 w):
+> Same question, same model. Recall returns those four rules and the window shifts to May through July. The house correction we taught executes to ninety-five thousand — the frozen exam says correct. Whether the agent utilizes the rules at scale is what comes next.
+
+*Do not claim the live Bedrock probe is correct unless `frozen_exam:` on the receipt says
+CORRECT. The demo script now prints the real probe grade, then falls back to grading the
+taught correction SQL (deterministic, matches the frozen label).*
 
 ---
 
