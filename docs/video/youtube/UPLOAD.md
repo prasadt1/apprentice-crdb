@@ -1,10 +1,12 @@
 # YouTube upload — Apprentice demo
 
+**Live:** https://youtu.be/xmxEFkEiJLY
+
 Video file: `docs/video/youtube/apprentice-demo-final.mp4` (~2:59, 1920×1080).
 Thumbnail: `docs/video/youtube/thumbnail.png` (1280×720).
 Exam chart (for the article, not the cover): `docs/video/youtube/thumbnail-exam-chart.png`.
 
-Paste the blocks below into YouTube Studio. Keep the video **Unlisted** until the Devpost submission is live, then set it Public (or leave Unlisted if Devpost only needs the embed URL).
+Paste the blocks below into YouTube Studio if you need to re-edit metadata. Unlisted is fine until Devpost is submitted; then Public if you want the listing itself to rank.
 
 ---
 
