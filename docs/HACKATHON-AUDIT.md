@@ -36,7 +36,7 @@ Lambda ran the live agent turn but the form said Bedrock singular. **Fixed in dr
 
 **What's next hygiene:** removed stale “Bedrock chat skin” (already shipped as live Ask). Replaced with: demo teach path — judge supplies a correction, rule lands under a new timestamp.
 
-**Architecture diagram:** pre-dates Lambda. Leave it — product loop vs demo hosting; no rebuild in the last two days.
+**Architecture diagram:** updated (`07131e0`) — four doors (CLI / frozen exam / Cloud MCP / hosted Lambda demo); Bedrock panel + footer name both AWS services. Re-upload `docs/media/architecture.png` to the Devpost gallery.
 
 ## Your form checklist (do these)
 
@@ -54,4 +54,6 @@ Lambda ran the live agent turn but the form said Bedrock singular. **Fixed in dr
 ## Done in repo
 
 - [x] Draft Lambda claims + What's next fix
+- [x] Architecture diagram includes Lambda door + footer
+- [x] README + `docs/proof/README.md` AWS tables list Bedrock + Lambda
 - [x] GitHub topics: `cockroachdb`, `agentic-memory`, `amazon-bedrock`, `aws-lambda`, `vector-search`, `llm-evaluation`

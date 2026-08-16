@@ -1,5 +1,7 @@
 # Apprentice
 
+![Apprentice — memory you can rewind](docs/video/youtube/thumbnail.png)
+
 **memory that helps, then hurts**
 
 Apprentice is an analyst agent that ships its own learning curve.
@@ -10,7 +12,7 @@ Apprentice freezes a 50-question exam, teaches the house rules into CockroachDB,
 
 Built for the [CockroachDB × AWS Agentic Memory Hackathon](https://cockroachdb-ai.devpost.com/) (Apache-2.0).
 
-Primary user: the analytics engineer whose house rules live in people’s heads. Secondary: the reviewer who has to trust the agent next week, and needs to see what it knew. Apprentice is a CLI + CockroachDB Cloud + Bedrock — not a BI fork. The warehouse is a local SQLite prop. CockroachDB holds the brain.
+Primary user: the analytics engineer whose house rules live in people’s heads. Secondary: the reviewer who has to trust the agent next week, and needs to see what it knew. Apprentice is a CLI + CockroachDB Cloud + Bedrock, with an AWS Lambda Function URL for the hosted demo — not a BI fork. The warehouse is a local SQLite prop. CockroachDB holds the brain.
 
 > ### For judges — fastest paths in
 >
@@ -159,9 +161,9 @@ One loop. Four compressed epochs (live GC TTL on Basic is **75 minutes**, so the
 
 CockroachDB is the memory plane — rules, episodes, vectors, AOST. The warehouse is a prop. One teaching path; one answering path that cannot see the labels.
 
-The cluster is CockroachDB Cloud on AWS (eu-central-1). That satisfies “deployed on AWS.” The AWS service I use is **Amazon Bedrock** — Titan embeddings on write and query, Converse for generation. I will not call the cluster an AWS service I built.
+The cluster is CockroachDB Cloud on AWS (eu-central-1). That satisfies “deployed on AWS.” The AWS services I use are **Amazon Bedrock** (Titan embeddings + Converse generation) and **AWS Lambda** (hosted demo Function URL runs the full agent turn). I will not call the cluster an AWS service I built.
 
-![Agent loop on top; then three doors (CLI, frozen exam, Cloud MCP); CockroachDB memory plane; Bedrock + SQLite edges](docs/media/architecture.png)
+![Agent loop on top; then four doors (CLI, frozen exam, Cloud MCP, hosted Lambda demo); CockroachDB memory plane; Bedrock + SQLite edges](docs/media/architecture.png)
 
 | CockroachDB tool | How it is used — not just that it is configured |
 | --- | --- |
@@ -172,6 +174,7 @@ The cluster is CockroachDB Cloud on AWS (eu-central-1). That satisfies “deploy
 | AWS service | How |
 | --- | --- |
 | **Amazon Bedrock** | Titan Text Embeddings V2 (`amazon.titan-embed-text-v2:0`, 1024-d) on write and query. Converse API for generation. Pre-registered: `amazon.nova-micro-v1:0`. Replication arm, added after seeing the Micro drop and disclosed: `amazon.nova-lite-v1:0` |
+| **AWS Lambda** | Serverless agent execution for the [hosted live demo](https://prasadt1.github.io/apprentice-crdb/). Function URL runs Titan embed → `embedding <->` recall → Converse → execute → grade. Read-only SQL user, fixed question set, rate limit + daily cap; degrades to recorded answers if unavailable. Deploy: [`lambda/demo_ask/README.md`](lambda/demo_ask/README.md). Receipts: [`docs/proof/README.md`](docs/proof/README.md) |
 
 ### What happens when things go wrong
 
