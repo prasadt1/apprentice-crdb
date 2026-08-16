@@ -163,7 +163,7 @@ CockroachDB is the memory plane — rules, episodes, vectors, AOST. The warehous
 
 The cluster is CockroachDB Cloud on AWS (eu-central-1). That satisfies “deployed on AWS.” The AWS services I use are **Amazon Bedrock** (Titan embeddings + Converse generation) and **AWS Lambda** (hosted demo Function URL runs the full agent turn). I will not call the cluster an AWS service I built.
 
-![Agent loop on top; then four doors (CLI, frozen exam, Cloud MCP, hosted Lambda demo); CockroachDB memory plane; Bedrock + SQLite edges](docs/media/architecture.png)
+![Agent loop on top; then four doors (CLI, frozen exam, Cloud MCP, hosted Lambda demo); CockroachDB memory plane; Bedrock + SQLite edges](docs/media/architecture.png?v=4doors)
 
 | CockroachDB tool | How it is used — not just that it is configured |
 | --- | --- |

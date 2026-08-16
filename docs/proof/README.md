@@ -13,7 +13,7 @@ Receipts for the two AWS services the submission claims, plus the CockroachDB Cl
 
 Architecture (four doors into the same memory — CLI, frozen exam, Cloud MCP, hosted Lambda demo):
 
-![Architecture: four doors, CockroachDB memory plane, Bedrock + Lambda + SQLite edges](../media/architecture.png)
+![Architecture: four doors, CockroachDB memory plane, Bedrock + Lambda + SQLite edges](../media/architecture.png?v=4doors)
 
 ## Official CLI (preferred)
 
