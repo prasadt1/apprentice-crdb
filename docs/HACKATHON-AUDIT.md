@@ -34,9 +34,13 @@ Rob Reid FAQ alignment: SERIALIZABLE ✓ · agentic not pure-ReAct ✓ · creati
 
 Lambda ran the live agent turn but the form said Bedrock singular. **Fixed in draft** (story AWS table, gallery ticks, meaningfully-integrated paragraph, testing instructions, Built With `aws-lambda`).
 
+**What's next hygiene:** removed stale “Bedrock chat skin” (already shipped as live Ask). Replaced with: demo teach path — judge supplies a correction, rule lands under a new timestamp.
+
+**Architecture diagram:** pre-dates Lambda. Leave it — product loop vs demo hosting; no rebuild in the last two days.
+
 ## Your form checklist (do these)
 
-1. Re-paste story between markers in `docs/devpost-article-draft.md`
+1. Re-paste story between markers in `docs/devpost-article-draft.md` (Lambda row + updated What's next)
 2. Tick **Amazon Bedrock** + **AWS Lambda**
 3. Confirm three CRDB tools (not Agent Skills)
 4. Re-paste “meaningfully integrated” (§7) — includes Lambda
@@ -49,5 +53,5 @@ Lambda ran the live agent turn but the form said Bedrock singular. **Fixed in dr
 
 ## Done in repo
 
-- [x] Draft Lambda claims
+- [x] Draft Lambda claims + What's next fix
 - [x] GitHub topics: `cockroachdb`, `agentic-memory`, `amazon-bedrock`, `aws-lambda`, `vector-search`, `llm-evaluation`
