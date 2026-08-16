@@ -112,6 +112,17 @@
       max-width: 42rem;
       font-size: 0.98rem;
     }
+    .try .do-this {
+      margin: 0 0 1.15rem;
+      padding: 0.75rem 0.9rem;
+      max-width: 42rem;
+      font-size: 1.05rem;
+      line-height: 1.45;
+      color: #fffaf4;
+      background: rgba(196, 90, 40, 0.16);
+      border-left: 3px solid var(--accent);
+    }
+    .try .do-this strong { color: #fffaf4; font-weight: 700; }
     .try .flow {
       display: flex;
       flex-direction: column;
@@ -424,6 +435,8 @@
         whether the graded answer flips. The ★ recommended item is the cleanest contrast;
         Step 2 runs once on page load for that item so you are not staring at a blank panel.
       </p>
+      <p class="do-this"><strong>Ask the agent a question below.</strong> Once with an empty
+        memory, once with memory — and watch the answer change.</p>
 
       <div class="flow">
         <div class="step" id="step-pick">
@@ -515,16 +528,15 @@ refunds    → order_id, amount_cents</div>
 
       <p class="foot">
         Live path: recall from CockroachDB → SQL from Bedrock → execute on the prop warehouse
-        → grade vs labels at <code>b043aea</code>. The curve below is <em>recorded</em>
-        (epoch HLCs are past the 75-minute GC window). Optional
+        → grade vs labels at <code>b043aea</code>. Epoch HLCs for the curve below are past the
+        75-minute GC window, so that chart is a published snapshot — the try widget uses
+        <em>current</em> memory. Optional
         <a href="https://youtu.be/xmxEFkEiJLY" style="color:#e8c4a8">3‑min walkthrough</a>.
       </p>
     </section>
 
     <p class="bridge" id="curve">
-      <strong>What you just saw on one question</strong> — cold wrong, memory correct —
-      is the easy case. Scale it to a 50-question exam and the story flips: retrieval stays high,
-      accuracy peaks early, then falls.
+      That worked. At fifty questions it stops working — here is the honest version.
     </p>
 
     <h2 class="section">At exam scale — the recorded curve</h2>
@@ -546,7 +558,7 @@ refunds    → order_id, amount_cents</div>
     <figure>
       <img src="media/learning-curve.png" width="1200" height="800" alt="Three curves: oracle rises to 44/50; Nova Micro 8-21-18-13; Nova Lite 14-19-19-16" />
       <figcaption>
-        <strong>Recorded.</strong> Oracle is a selector over frozen SQL — a ceiling, not an agent.
+        Oracle is a selector over frozen SQL — a ceiling, not an agent.
         Both agents peak <em>before</em> full memory. Source: eval/RESULTS.md, labels frozen at b043aea.
       </figcaption>
     </figure>
@@ -638,7 +650,7 @@ refunds    → order_id, amount_cents</div>
     <figure>
       <img src="media/aost-replay.png" width="1200" height="800" alt="AOST rewind: same cluster, earlier brain, zero rules at memory_zero" />
       <figcaption>
-        <strong>Recorded.</strong> Replay is a timestamp, not a backup restore. Published
+        Replay is a timestamp, not a backup restore. Published
         epoch HLCs are outside Basic’s 75-minute GC window — they cannot be re-queried live.
         The try widget at the top uses <em>current</em> memory (cold vs full rules), not those
         historical HLCs.
