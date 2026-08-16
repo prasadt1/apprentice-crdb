@@ -61,28 +61,32 @@
   <!-- BAND 1 -->
   <rect x="48" y="252" width="1104" height="148" rx="12" fill="#eceae4" stroke="#898781" stroke-width="2"/>
   <text x="68" y="276" font-size="14" font-weight="700" fill="#0b0b0b" letter-spacing="0.4">1   /   HOW YOU INVOKE IT</text>
-  <text x="300" y="276" font-size="13" font-weight="600" fill="#52514e">three doors into the same memory</text>
+  <text x="300" y="276" font-size="13" font-weight="600" fill="#52514e">four doors into the same memory</text>
 
-  <rect x="68" y="292" width="340" height="92" rx="10" fill="#ffffff" stroke="#52514e" stroke-width="1.5"/>
-  <rect x="86" y="308" width="22" height="18" rx="3" fill="none" stroke="#0b0b0b" stroke-width="1.5"/>
-  <path d="M92 314 L98 317 L92 320" fill="none" stroke="#0b0b0b" stroke-width="1.5" stroke-linecap="round"/>
-  <text x="118" y="322" font-size="15" font-weight="700" fill="#0b0b0b">CLI</text>
-  <text x="86" y="354" font-size="12" font-family="ui-monospace, Menlo, monospace" fill="#0b0b0b">apprentice educate  /  recall</text>
-  <text x="86" y="370" font-size="12" fill="#52514e">writes stay here  not in the editor MCP</text>
+  <rect x="68" y="292" width="250" height="92" rx="10" fill="#ffffff" stroke="#52514e" stroke-width="1.5"/>
+  <text x="86" y="322" font-size="15" font-weight="700" fill="#0b0b0b">CLI</text>
+  <text x="86" y="348" font-size="11.5" font-family="ui-monospace, Menlo, monospace" fill="#0b0b0b">apprentice educate / recall</text>
+  <text x="86" y="368" font-size="11.5" fill="#52514e">the only write path</text>
 
-  <rect x="428" y="292" width="340" height="92" rx="10" fill="#ffffff" stroke="#eb6834" stroke-width="2.5"/>
-  <text x="448" y="322" font-size="15" font-weight="700" fill="#0b0b0b">Frozen exam</text>
-  <text x="448" y="346" font-size="12" font-family="ui-monospace, Menlo, monospace" fill="#0b0b0b">eval/run_exam.py questions</text>
-  <text x="448" y="366" font-size="12" fill="#eb6834">agent sees id + question only</text>
+  <rect x="338" y="292" width="250" height="92" rx="10" fill="#ffffff" stroke="#eb6834" stroke-width="2.5"/>
+  <text x="356" y="322" font-size="15" font-weight="700" fill="#0b0b0b">Frozen exam</text>
+  <text x="356" y="348" font-size="11.5" font-family="ui-monospace, Menlo, monospace" fill="#0b0b0b">run_exam.py questions</text>
+  <text x="356" y="368" font-size="11.5" fill="#eb6834">agent sees id + question</text>
 
-  <rect x="788" y="292" width="340" height="92" rx="10" fill="#ffffff" stroke="#52514e" stroke-width="1.5"/>
-  <text x="808" y="322" font-size="15" font-weight="700" fill="#0b0b0b">Cloud MCP</text>
-  <text x="808" y="346" font-size="12" fill="#52514e">Cursor inspects semantic_rules</text>
-  <text x="808" y="366" font-size="12" fill="#52514e">read path  audit, not writes</text>
+  <rect x="608" y="292" width="250" height="92" rx="10" fill="#ffffff" stroke="#52514e" stroke-width="1.5"/>
+  <text x="626" y="322" font-size="15" font-weight="700" fill="#0b0b0b">Cloud MCP</text>
+  <text x="626" y="348" font-size="11.5" fill="#52514e">Cursor inspects schema</text>
+  <text x="626" y="368" font-size="11.5" fill="#52514e">read only, never writes</text>
 
-  <path d="M238 400 L238 422" stroke="#52514e" stroke-width="2" marker-end="url(#ar)"/>
-  <path d="M598 400 L598 422" stroke="#eb6834" stroke-width="2.5" marker-end="url(#aro)"/>
-  <path d="M958 400 L958 422" stroke="#52514e" stroke-width="2" marker-end="url(#ar)"/>
+  <rect x="878" y="292" width="250" height="92" rx="10" fill="#ffffff" stroke="#2a78d6" stroke-width="2.5"/>
+  <text x="896" y="322" font-size="15" font-weight="700" fill="#0b0b0b">Hosted demo</text>
+  <text x="896" y="348" font-size="11.5" font-weight="700" fill="#2a78d6">AWS Lambda Function URL</text>
+  <text x="896" y="368" font-size="11.5" fill="#52514e">judges run the loop live</text>
+
+  <path d="M193 400 L193 422" stroke="#52514e" stroke-width="2" marker-end="url(#ar)"/>
+  <path d="M463 400 L463 422" stroke="#eb6834" stroke-width="2.5" marker-end="url(#aro)"/>
+  <path d="M733 400 L733 422" stroke="#52514e" stroke-width="2" marker-end="url(#ar)"/>
+  <path d="M1003 400 L1003 422" stroke="#2a78d6" stroke-width="2.5" marker-end="url(#ar)"/>
 
   <!-- BAND 2 CORE -->
   <rect x="48" y="424" width="1104" height="248" rx="12" fill="#fbf6f2" stroke="#eb6834" stroke-width="2.5"/>
@@ -135,7 +139,8 @@
   <text x="88" y="794" font-size="13" fill="#0b0b0b">Titan Text Embeddings V2    1024-d, on write and query</text>
   <text x="88" y="818" font-size="13" fill="#0b0b0b">Converse API    amazon.nova-micro-v1:0, temperature 0</text>
   <text x="88" y="842" font-size="13" fill="#0b0b0b">Model id is an env var. Call shape does not change.</text>
-  <text x="88" y="874" font-size="13" font-weight="700" fill="#5c6b7a">Never sees gold / naive / bait / house_rules</text>
+  <text x="88" y="866" font-size="13" font-weight="700" fill="#5c6b7a">Never sees gold / naive / bait / house_rules</text>
+  <text x="88" y="886" font-size="13" font-weight="700" fill="#2a78d6">AWS Lambda runs this turn for the hosted demo</text>
 
   <rect x="612" y="738" width="516" height="156" rx="10" fill="#ffffff" stroke="#a8a59d" stroke-width="1.5"/>
   <text x="632" y="766" font-size="14" font-weight="700" fill="#0b0b0b">SQLite warehouse   /   local prop</text>
@@ -144,5 +149,5 @@
   <text x="632" y="842" font-size="13" fill="#0b0b0b">schema.sql is in the agent prompt.</text>
   <text x="632" y="874" font-size="13" font-weight="700" fill="#52514e">seed.sql is not.</text>
 
-  <text x="60" y="950" font-size="14" fill="#52514e">CockroachDB Cloud on AWS is the memory plane. Bedrock is the generator. I will not call the cluster an AWS service I built.</text>
+  <text x="60" y="950" font-size="14" fill="#52514e">CockroachDB Cloud on AWS is the memory plane. Amazon Bedrock generates; AWS Lambda executes the hosted turn. I will not call the cluster an AWS service I built.</text>
 </svg>
