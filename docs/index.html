@@ -711,11 +711,23 @@ python eval/run_exam.py verify</pre>
       const v = data.verdict || "error";
       verdictEl.textContent = v;
       verdictEl.className = "verdict " + v;
-      metaEl.textContent =
+      let meta =
         (data.mode === "with_memory" ? "with memory" : "without memory") +
         " · " + (data.model_id || "—") +
         (data.elapsed_ms ? " · " + data.elapsed_ms + " ms" : "") +
         " · source: " + (data.source || "?");
+      if (v === "error" || v === "rejected") {
+        meta +=
+          " · agent miss — " +
+          (v === "rejected"
+            ? "SQL rejected by the guard"
+            : "generated SQL failed to run on the warehouse");
+      } else if (v === "wrong") {
+        meta += " · agent miss — SQL ran, result did not match the frozen label";
+      } else if (v === "correct") {
+        meta += " · matched frozen label";
+      }
+      metaEl.textContent = meta;
       rulesEl.innerHTML = "";
       const rules = data.retrieved || [];
       if (!rules.length) {
