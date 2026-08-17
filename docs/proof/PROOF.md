@@ -86,11 +86,15 @@ Files: [`../../eval/runs-nova-micro/agent_manifest.json`](../../eval/runs-nova-m
 [`../../eval/runs-nova-lite/agent_manifest.json`](../../eval/runs-nova-lite/agent_manifest.json).
 Every generated SQL string from both arms is committed under `eval/runs-*/`.
 
-**b. CloudWatch invocation metrics** — `proof-bedrock-invocations.png` *(to add)*:
-AWS/Bedrock namespace, By Model, showing `Invocations` / `InputTokenCount` /
-`OutputTokenCount` against `titan-embed-text-v2` and the Nova models over the run window.
-This is the receipt the model-catalog page never was: it shows calls happened, not that
-the models exist.
+**b. CloudWatch invocation metrics** (us-east-1, AWS/Bedrock namespace, one week):
+
+![CloudWatch Bedrock dashboard: Invocation Count and Token Counts by Model for amazon.titan-embed-text-v2:0, amazon.nova-lite-v1:0 and amazon.nova-micro-v1:0 in us-east-1](../media/proof-bedrock-invocations.png)
+
+Invocation Count, Token Counts, InputTokenCount/OutputTokenCount and latency, split by
+model, for `amazon.titan-embed-text-v2:0`, `amazon.nova-lite-v1:0` and
+`amazon.nova-micro-v1:0`. The spikes on Aug 11–15 are the education runs; Aug 16–17 are
+live-demo calls. This is the receipt the model-catalog page never was: it shows the
+models were **invoked**, with token accounting, not merely that they exist.
 
 **c. Code** — [`src/apprentice_crdb/generate.py`](../../src/apprentice_crdb/generate.py)
 (`bedrock-runtime.converse()`) and
