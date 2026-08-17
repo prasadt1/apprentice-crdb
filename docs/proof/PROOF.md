@@ -57,6 +57,14 @@ JSON is committed so the control-plane claim is verifiable, not asserted:
   `eu-central-1`, `cockroach_version v26.2.5`
 - Secondary receipt (Cloud API / MCP, same control plane): [`ccloud.txt`](ccloud.txt)
 
+The same cluster in the console — the visual "deployed on AWS" receipt:
+
+![CockroachDB Cloud console, Cluster overview: solid-unicorn, AVAILABLE, Basic / AWS / Frankfurt (eu-central-1), over a live SQL throughput chart](../media/proof-crdb-on-aws.png)
+
+Cluster overview: `solid-unicorn`, **AVAILABLE**, **Basic / AWS / Frankfurt
+(eu-central-1)**, over a live throughput chart. This is where the rules, vectors, and
+timestamps in the demo actually live.
+
 ### 3. Cloud Managed MCP Server — dev-side, read-only, boundary stated
 
 Cursor was connected to the live cluster over the managed MCP endpoint to inspect the
@@ -143,9 +151,3 @@ Protocol: [`../../eval/PROTOCOL.md`](../../eval/PROTOCOL.md).
 
 ---
 
-## Deployment receipt
-
-`proof-crdb-on-aws.png` (in the Devpost gallery): the CockroachDB Cloud console —
-Cluster overview, `solid-unicorn`, **AVAILABLE**, **Basic / AWS / Frankfurt
-(eu-central-1)**, over a live throughput chart. This is where the rules, vectors, and
-timestamps in the demo actually live.
