@@ -202,6 +202,7 @@ The cluster is CockroachDB Cloud on AWS (eu-central-1). That satisfies “deploy
 
 | Doc | What |
 | --- | --- |
+| [`docs/proof/PROOF.md`](docs/proof/PROOF.md) | **Every tool claim → its receipt, one page** (vector-index EXPLAIN, ccloud binary, MCP boundary, Bedrock manifests + metrics, live Lambda, freeze hashes) |
 | [`eval/RESULTS.md`](eval/RESULTS.md) | Published curves, retrieval, baits, limitations |
 | [`eval/FREEZE.md`](eval/FREEZE.md) | Freeze commit, sha256s, what must not change |
 | [`eval/PROTOCOL.md`](eval/PROTOCOL.md) | Strata, invariants, how grading works |
