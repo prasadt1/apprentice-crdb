@@ -18,12 +18,12 @@ Primary user: the analytics engineer whose house rules live in people’s heads.
 >
 > | Path | Link | Time |
 > | --- | --- | --- |
-> | **Hosted page** | [prasadt1.github.io/apprentice-crdb](https://prasadt1.github.io/apprentice-crdb/) | 30 s |
-> | **The finding** | [`eval/RESULTS.md`](eval/RESULTS.md) | 2 min |
-> | **Three-curve chart** | [`docs/media/learning-curve.png`](docs/media/learning-curve.png) | 20 s |
-> | **Try it locally (no cluster)** | [Quick start below](#try-it-locally-cli--no-cluster) | ~2 min |
-> | **Reproduce the freeze** | `pytest -q` then `python eval/run_exam.py verify` | ~1 min |
-> | **Every generated string** | [`eval/runs-nova-micro/`](eval/runs-nova-micro) · [`eval/runs-nova-lite/`](eval/runs-nova-lite) | — |
+> | **Ask the agent yourself — live** | [prasadt1.github.io/apprentice-crdb ↗](https://prasadt1.github.io/apprentice-crdb/) | 60 s |
+> | **Watch the demo** | [youtu.be/xmxEFkEiJLY ↗](https://youtu.be/xmxEFkEiJLY) | 2:59 |
+> | **Source** | [github.com/prasadt1/apprentice-crdb ↗](https://github.com/prasadt1/apprentice-crdb) | 30 s |
+> | **Published curve, with every limitation** | [eval/RESULTS.md ↗](eval/RESULTS.md) | 60 s |
+> | **Proof package — every claim → its receipt** | [docs/proof/PROOF.md ↗](docs/proof/PROOF.md) | 90 s |
+> | **Verify the freeze yourself** | `pytest -q` then `python eval/run_exam.py verify` | ~1 min |
 >
 > **TL;DR:** Teach a correction → the agent's memory lives in CockroachDB → replay its education at any timestamp. Freeze a 50-question exam → score each AOST epoch. Oracle rises to 88%. Two Bedrock agents peak before full memory and decline. Retrieval at that last epoch is **44/44**. Storage and recall look perfect. Utilization does not.
 
@@ -202,13 +202,13 @@ The cluster is CockroachDB Cloud on AWS (eu-central-1). That satisfies “deploy
 
 | Doc | What |
 | --- | --- |
-| [`docs/proof/PROOF.md`](docs/proof/PROOF.md) | **Every tool claim → its receipt, one page** (vector-index EXPLAIN, ccloud binary, MCP boundary, Bedrock manifests + metrics, live Lambda, freeze hashes) |
-| [`eval/RESULTS.md`](eval/RESULTS.md) | Published curves, retrieval, baits, limitations |
-| [`eval/FREEZE.md`](eval/FREEZE.md) | Freeze commit, sha256s, what must not change |
-| [`eval/PROTOCOL.md`](eval/PROTOCOL.md) | Strata, invariants, how grading works |
-| [`eval/README.md`](eval/README.md) | Exam file map |
-| [`docs/CURSOR-AGENT-SEAM-SPEC.md`](docs/CURSOR-AGENT-SEAM-SPEC.md) | Bedrock answering-path spec |
+| [docs/proof/PROOF.md ↗](docs/proof/PROOF.md) | **Every tool claim → its receipt, one page** (vector-index EXPLAIN, ccloud binary, MCP boundary, Bedrock manifests + metrics, live Lambda, freeze hashes) |
+| [eval/RESULTS.md ↗](eval/RESULTS.md) | Published curves, retrieval, baits, limitations |
+| [eval/FREEZE.md ↗](eval/FREEZE.md) | Freeze commit, sha256s, what must not change |
+| [eval/PROTOCOL.md ↗](eval/PROTOCOL.md) | Strata, invariants, how grading works |
+| [eval/README.md ↗](eval/README.md) | Exam file map |
+| [docs/CURSOR-AGENT-SEAM-SPEC.md ↗](docs/CURSOR-AGENT-SEAM-SPEC.md) | Bedrock answering-path spec |
 
 ## License
 
-Apache-2.0 — see [`LICENSE`](LICENSE).
+Apache-2.0 — see [LICENSE ↗](LICENSE).
