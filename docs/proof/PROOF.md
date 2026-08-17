@@ -148,6 +148,3 @@ Expect `VERIFY OK` with these sha256s, unchanged since the freeze commit `b043ae
 
 Freeze record: [`../../eval/FREEZE.md`](../../eval/FREEZE.md) ·
 Protocol: [`../../eval/PROTOCOL.md`](../../eval/PROTOCOL.md).
-
----
-
